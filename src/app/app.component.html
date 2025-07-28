@@ -1,1 +1,7 @@
-<router-outlet></router-outlet>
+<ng-container *ngIf="authService.isLoading$ | async; else content">
+  <app-loading></app-loading>
+</ng-container>
+
+<ng-template #content>
+  <router-outlet></router-outlet>
+</ng-template>

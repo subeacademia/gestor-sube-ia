@@ -9,10 +9,12 @@ import { BehaviorSubject, Observable } from 'rxjs';
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  public isLoading$ = new BehaviorSubject<boolean>(true);
 
   constructor(private auth: Auth, private router: Router) {
     onAuthStateChanged(this.auth, (user) => {
       this.currentUserSubject.next(user);
+      this.isLoading$.next(false);
     });
   }
 

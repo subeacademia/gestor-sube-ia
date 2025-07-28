@@ -5,8 +5,8 @@
     <div class="dashboard-content">
       <!-- Título del Dashboard -->
       <div class="dashboard-header">
-        <h1>📊 Panel de Administración</h1>
-        <p>Bienvenido al sistema de gestión SUBE IA</p>
+        <h1>📊 Panel de Control SUBE IA</h1>
+        <p>Visión general del negocio y métricas clave para la toma de decisiones</p>
       </div>
 
       <!-- Indicador de carga -->
@@ -17,99 +17,91 @@
 
       <!-- Contenido principal cuando no está cargando -->
       <div *ngIf="!cargando" class="dashboard-content-main">
-        <!-- Tarjetas de Estadísticas -->
-        <div class="stats-section">
-          <app-stat-card 
-            title="Total Cotizaciones" 
-            [value]="estadisticas.totalCotizaciones.toString()" 
-            icon="📋"
-            color="primary">
-          </app-stat-card>
-          
-          <app-stat-card 
-            title="Este Mes" 
-            [value]="estadisticas.cotizacionesMes.toString()" 
-            icon="📅"
-            color="info">
-          </app-stat-card>
-          
-          <app-stat-card 
-            title="Valor Total" 
-            [value]="formatearMoneda(estadisticas.valorTotal)" 
-            icon="💰"
-            color="success">
-          </app-stat-card>
-          
-          <app-stat-card 
-            title="Total Aceptado" 
-            [value]="formatearMoneda(estadisticas.totalAceptadas)" 
-            icon="✅"
-            color="warning">
-          </app-stat-card>
-          
-          <app-stat-card 
-            title="Total Contratos" 
-            [value]="estadisticas.totalContratos.toString()" 
-            icon="📄"
-            color="secondary">
-          </app-stat-card>
-          
-          <app-stat-card 
-            title="Contratos Pendientes" 
-            [value]="estadisticas.contratosPendientes.toString()" 
-            icon="⏳"
-            color="danger">
-          </app-stat-card>
-          
-          <app-stat-card 
-            title="Tasa de Éxito" 
-            [value]="estadisticas.tasaExito + '%'" 
-            icon="📈"
-            color="accent">
-          </app-stat-card>
+        <!-- Tarjetas de KPIs -->
+        <div class="kpis-section">
+          <h2 class="section-title">📈 Indicadores Clave de Rendimiento</h2>
+          <div class="kpis-grid">
+            <div class="kpi-card">
+              <div class="kpi-icon">📋</div>
+              <div class="kpi-content">
+                <h3>Total Cotizaciones</h3>
+                <p class="kpi-value">{{ kpis.totalCotizaciones }}</p>
+                <span class="kpi-description">Cotizaciones generadas</span>
+              </div>
+            </div>
+            
+            <div class="kpi-card">
+              <div class="kpi-icon">💰</div>
+              <div class="kpi-content">
+                <h3>Valor Total</h3>
+                <p class="kpi-value">{{ formatearMoneda(kpis.valorTotalCotizaciones) }}</p>
+                <span class="kpi-description">Valor de todas las cotizaciones</span>
+              </div>
+            </div>
+            
+            <div class="kpi-card">
+              <div class="kpi-icon">✅</div>
+              <div class="kpi-content">
+                <h3>Contratos Cerrados</h3>
+                <p class="kpi-value">{{ kpis.totalContratosCerrados }}</p>
+                <span class="kpi-description">Contratos firmados</span>
+              </div>
+            </div>
+            
+            <div class="kpi-card">
+              <div class="kpi-icon">📊</div>
+              <div class="kpi-content">
+                <h3>Tasa de Conversión</h3>
+                <p class="kpi-value">{{ kpis.tasaConversion }}%</p>
+                <span class="kpi-description">Aceptadas → Firmadas</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Gráficos -->
         <div class="charts-section">
-          <!-- Gráfico de Tendencias -->
+          <h2 class="section-title">📊 Análisis de Datos</h2>
+          
+          <!-- Gráfico de Tendencia de Ventas -->
           <div class="chart-container">
             <div class="chart-header">
-              <h3>📈 Tendencias de Cotizaciones</h3>
-              <p>Evolución mensual de cotizaciones y valores</p>
+              <h3>📈 Tendencia de Ventas</h3>
+              <p>Evolución mensual de cotizaciones aceptadas vs contratos firmados</p>
             </div>
             <div class="chart-wrapper">
-              <canvas #tendenciasChart></canvas>
+              <canvas #tendenciasVentasChart></canvas>
             </div>
           </div>
 
-          <!-- Gráfico de Estados -->
+          <!-- Gráfico de Rendimiento por Usuario -->
           <div class="chart-container">
             <div class="chart-header">
-              <h3>🎯 Distribución por Estados</h3>
-              <p>Distribución de cotizaciones por estado actual</p>
+              <h3>👥 Rendimiento por Usuario</h3>
+              <p>Cantidad de cotizaciones aceptadas por cada usuario</p>
             </div>
             <div class="chart-wrapper">
-              <canvas #estadosChart></canvas>
+              <canvas #rendimientoUsuariosChart></canvas>
             </div>
           </div>
 
-          <!-- Gráfico de Ventas -->
+          <!-- Gráfico de Embudo de Ventas -->
           <div class="chart-container">
             <div class="chart-header">
-              <h3>💰 Ventas Mensuales</h3>
-              <p>Ventas totales por mes (cotizaciones aceptadas + contratos)</p>
+              <h3>🎯 Embudo de Ventas</h3>
+              <p>Distribución de cotizaciones por estado en el proceso de venta</p>
             </div>
             <div class="chart-wrapper">
-              <canvas #ventasChart></canvas>
+              <canvas #embudoVentasChart></canvas>
             </div>
           </div>
         </div>
 
         <!-- Tarjetas de Navegación -->
         <div class="navigation-section">
-          <h2>🚀 Acciones Rápidas</h2>
+          <h2 class="section-title">🚀 Acciones Rápidas</h2>
           <div class="navigation-cards">
-            <!-- Panel de Administración -->
+            <!-- Gestión de Cotizaciones -->
             <div class="nav-card" routerLink="/cotizaciones">
               <div class="nav-card-icon">📊</div>
               <div class="nav-card-content">
