@@ -72,39 +72,54 @@ export class FirebaseService {
   async crearDatosPrueba(): Promise<void> {
     console.log('🧪 FirebaseService: Creando datos de prueba...');
     try {
-      // Crear cotización de prueba
-      const cotizacionPrueba = {
-        codigo: `COT-${Date.now()}`,
-        nombre: 'Cliente de Prueba',
-        email: 'prueba@test.com',
-        rut: '12345678-9',
-        empresa: 'Empresa de Prueba',
-        moneda: 'CLP',
-        servicios: [
-          {
-            nombre: 'Servicio de Prueba',
-            detalle: 'Descripción del servicio de prueba',
-            modalidad: 'Online',
-            alumnos: 5,
-            tipoCobro: 'sesion',
-            subtotal: 50000,
-            detallesCobro: {
-              sesiones: 2,
-              valorSesion: 25000
+      // Crear múltiples cotizaciones de prueba con diferentes estados
+      const estados = ['Emitida', 'Contestada', 'En Negociación', 'Aceptada', 'Rechazada'];
+      const atendidos = ['Rodrigo Carrillo', 'Bruno Villalobos', 'Mario Muñoz', 'Nicolás Valenzuela', 'Ignacio Villarroel'];
+      const empresas = ['Empresa Test SPA', 'Corporación Demo', 'Startup Innovación', 'Consultora Avanzada', 'Tech Solutions'];
+      
+      const cotizacionesCollection = collection(this.firestore, 'cotizaciones');
+      
+      // Crear 21 cotizaciones de prueba
+      for (let i = 0; i < 21; i++) {
+        const cotizacionPrueba = {
+          codigo: `SUBEIA-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(i).padStart(4, '0')}`,
+          nombre: `Cliente Test ${i + 1}`,
+          email: `cliente${i + 1}@test.com`,
+          rut: `${12345678 + i}-${9 + (i % 10)}`,
+          empresa: empresas[i % empresas.length],
+          moneda: 'CLP',
+          servicios: [
+            {
+              nombre: `Servicio ${i + 1}`,
+              detalle: `Descripción del servicio ${i + 1}`,
+              modalidad: i % 2 === 0 ? 'Online' : 'Presencial',
+              alumnos: 5 + (i % 10),
+              tipoCobro: 'sesion',
+              subtotal: 50000 + (i * 5000),
+              detallesCobro: {
+                sesiones: 2 + (i % 3),
+                valorSesion: 25000 + (i * 1000)
+              }
             }
-          }
-        ],
-        atendido: 'Rodrigo Carrillo',
-        subtotal: 50000,
-        descuento: 0,
-        descuentoValor: 0,
-        totalConDescuento: 50000,
-        total: 50000,
-        notas: 'Cotización de prueba creada automáticamente',
-        estado: 'Pendiente',
-        fechaTimestamp: new Date(),
-        fecha: new Date().toLocaleDateString('es-CL')
-      };
+          ],
+          atendido: atendidos[i % atendidos.length],
+          subtotal: 50000 + (i * 5000),
+          descuento: 0,
+          descuentoValor: 0,
+          totalConDescuento: 50000 + (i * 5000),
+          total: 50000 + (i * 5000),
+          valor: 50000 + (i * 5000), // Campo adicional para compatibilidad
+          valorTotal: 50000 + (i * 5000), // Campo adicional para compatibilidad
+          notas: `Cotización de prueba ${i + 1} creada automáticamente`,
+          estado: estados[i % estados.length],
+          fechaTimestamp: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)), // Fechas diferentes
+          fecha: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)).toLocaleDateString('es-CL'),
+          fechaCreacion: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)) // Campo adicional para compatibilidad
+        };
+
+        await addDoc(cotizacionesCollection, cotizacionPrueba);
+        console.log(`✅ FirebaseService: Cotización ${i + 1} creada con código: ${cotizacionPrueba.codigo}`);
+      }
 
       // Crear contrato de prueba
       const contratoPrueba = {
@@ -136,11 +151,6 @@ export class FirebaseService {
           }
         ]
       };
-
-      // Guardar cotización
-      const cotizacionesCollection = collection(this.firestore, 'cotizaciones');
-      const cotizacionRef = await addDoc(cotizacionesCollection, cotizacionPrueba);
-      console.log('✅ FirebaseService: Cotización de prueba creada con ID:', cotizacionRef.id);
 
       // Guardar contrato
       const contratosCollection = collection(this.firestore, 'contratos');
@@ -198,15 +208,30 @@ export class FirebaseService {
     console.log('🔍 FirebaseService: Obteniendo cotizaciones (método async)...');
     try {
       const cotizacionesCollection = collection(this.firestore, 'cotizaciones');
+      
+      // Crear query sin límites para obtener todas las cotizaciones
       const q = query(cotizacionesCollection);
       const snapshot = await getDocs(q);
       
-      const cotizaciones = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      console.log('📊 FirebaseService: Snapshot obtenido, documentos:', snapshot.size);
       
-      console.log('✅ FirebaseService: Cotizaciones obtenidas:', cotizaciones.length);
+      const cotizaciones = snapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('📄 FirebaseService: Documento ID:', doc.id, 'Data:', data);
+        return {
+          id: doc.id,
+          ...data,
+          // Normalizar campos para compatibilidad
+          nombreCliente: data['nombreCliente'] || data['nombre'],
+          emailCliente: data['emailCliente'] || data['email'],
+          valorTotal: data['valorTotal'] || data['total'],
+          fechaCreacion: data['fechaCreacion'] || data['fechaTimestamp'] || data['fecha']
+        } as any;
+      });
+      
+      console.log('✅ FirebaseService: Cotizaciones procesadas:', cotizaciones.length);
+      console.log('📋 FirebaseService: Estados encontrados:', [...new Set(cotizaciones.map(c => c['estado']))]);
+      
       return cotizaciones;
     } catch (error) {
       console.error('❌ FirebaseService: Error en getCotizacionesAsync:', error);

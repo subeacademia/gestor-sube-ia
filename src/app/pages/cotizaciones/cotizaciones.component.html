@@ -75,10 +75,16 @@
           <option value="Rechazada">Rechazada</option>
         </select>
       </div>
-      <button (click)="aplicarFiltros()" class="btn btn-filter">
-        <span class="btn-icon">🔍</span>
-        Aplicar Filtros
-      </button>
+      <div class="filter-buttons">
+        <button (click)="aplicarFiltros()" class="btn btn-filter">
+          <span class="btn-icon">🔍</span>
+          Aplicar Filtros
+        </button>
+        <button (click)="crearDatosPrueba()" class="btn btn-test">
+          <span class="btn-icon">🧪</span>
+          Crear 21 Cotizaciones de Prueba
+        </button>
+      </div>
     </div>
 
     <div class="cotizaciones-section">
@@ -121,7 +127,8 @@
               [draggable]="true"
               (dragstart)="onDragStart($event, cotizacion)"
               (estadoChanged)="onEstadoChanged($event)"
-              (cotizacionDeleted)="onCotizacionDeleted($event)">
+              (cotizacionDeleted)="onCotizacionDeleted($event)"
+              (generarContratoEvent)="onGenerarContrato($event)">
             </app-quote-card>
             <div class="empty-state" *ngIf="getCotizacionesPorEstado('Emitida').length === 0">
               <div class="empty-icon">📄</div>
@@ -149,7 +156,8 @@
               [draggable]="true"
               (dragstart)="onDragStart($event, cotizacion)"
               (estadoChanged)="onEstadoChanged($event)"
-              (cotizacionDeleted)="onCotizacionDeleted($event)">
+              (cotizacionDeleted)="onCotizacionDeleted($event)"
+              (generarContratoEvent)="onGenerarContrato($event)">
             </app-quote-card>
             <div class="empty-state" *ngIf="getCotizacionesPorEstado('Contestada').length === 0">
               <div class="empty-icon">💬</div>
@@ -177,7 +185,8 @@
               [draggable]="true"
               (dragstart)="onDragStart($event, cotizacion)"
               (estadoChanged)="onEstadoChanged($event)"
-              (cotizacionDeleted)="onCotizacionDeleted($event)">
+              (cotizacionDeleted)="onCotizacionDeleted($event)"
+              (generarContratoEvent)="onGenerarContrato($event)">
             </app-quote-card>
             <div class="empty-state" *ngIf="getCotizacionesPorEstado('En Negociación').length === 0">
               <div class="empty-icon">🤝</div>
@@ -205,7 +214,8 @@
               [draggable]="true"
               (dragstart)="onDragStart($event, cotizacion)"
               (estadoChanged)="onEstadoChanged($event)"
-              (cotizacionDeleted)="onCotizacionDeleted($event)">
+              (cotizacionDeleted)="onCotizacionDeleted($event)"
+              (generarContratoEvent)="onGenerarContrato($event)">
             </app-quote-card>
             <div class="empty-state" *ngIf="getCotizacionesPorEstado('Aceptada').length === 0">
               <div class="empty-icon">✅</div>
@@ -233,7 +243,8 @@
               [draggable]="true"
               (dragstart)="onDragStart($event, cotizacion)"
               (estadoChanged)="onEstadoChanged($event)"
-              (cotizacionDeleted)="onCotizacionDeleted($event)">
+              (cotizacionDeleted)="onCotizacionDeleted($event)"
+              (generarContratoEvent)="onGenerarContrato($event)">
             </app-quote-card>
             <div class="empty-state" *ngIf="getCotizacionesPorEstado('Rechazada').length === 0">
               <div class="empty-icon">❌</div>
@@ -245,36 +256,139 @@
 
       <!-- Vista Lista -->
       <div class="list-view" *ngIf="viewMode === 'list'">
-        <div class="list-header">
-          <div class="list-column">Código</div>
-          <div class="list-column">Cliente</div>
-          <div class="list-column">Empresa</div>
-          <div class="list-column">Total</div>
-          <div class="list-column">Estado</div>
-          <div class="list-column">Fecha</div>
-          <div class="list-column">Acciones</div>
+        <!-- Estado de carga -->
+        <div *ngIf="cotizaciones.length === 0" class="list-loading">
+          <div class="loading-spinner">⏳</div>
+          <p>Cargando cotizaciones...</p>
         </div>
-        <div class="list-item" *ngFor="let cotizacion of cotizacionesFiltradas">
-          <div class="list-column">{{ cotizacion.codigo }}</div>
-          <div class="list-column">{{ cotizacion.nombre }}</div>
-          <div class="list-column">{{ cotizacion.empresa }}</div>
-          <div class="list-column">{{ formatCurrency(cotizacion.valor) }}</div>
-          <div class="list-column">
-            <span class="status-badge" [class]="'status-' + cotizacion.estado.toLowerCase().replace(' ', '-')">
-              {{ cotizacion.estado }}
-            </span>
+
+        <!-- Estado vacío -->
+        <div *ngIf="cotizaciones.length > 0 && cotizacionesFiltradas.length === 0" class="list-empty">
+          <div class="empty-icon">📄</div>
+          <p>No se encontraron cotizaciones con los filtros aplicados</p>
+          <button class="btn btn-secondary" (click)="aplicarFiltros(true)">Limpiar Filtros</button>
+        </div>
+
+        <!-- Lista con datos -->
+        <div *ngIf="cotizacionesFiltradas.length > 0">
+          <div class="list-header">
+            <div class="list-column">Código</div>
+            <div class="list-column">Cliente</div>
+            <div class="list-column">Empresa</div>
+            <div class="list-column">Total</div>
+            <div class="list-column">Estado</div>
+            <div class="list-column">Fecha</div>
+            <div class="list-column">Acciones</div>
           </div>
-          <div class="list-column">{{ formatDate(cotizacion.fecha) }}</div>
-          <div class="list-column">
-            <div class="list-actions">
-              <button class="btn-action btn-info" (click)="verPDF(cotizacion)" title="Ver PDF">📄</button>
-              <button class="btn-action btn-success" (click)="generarContrato(cotizacion)" title="Generar Contrato">📋</button>
-              <button class="btn-action btn-warning" (click)="editarCotizacion(cotizacion)" title="Editar">✏️</button>
-              <button class="btn-action btn-danger" (click)="eliminarCotizacion(cotizacion)" title="Eliminar">🗑️</button>
+          <div class="list-item" *ngFor="let cotizacion of cotizacionesFiltradas; trackBy: trackByCotizacion">
+            <div class="list-column">{{ cotizacion.codigo }}</div>
+            <div class="list-column">{{ cotizacion.nombre }}</div>
+            <div class="list-column">{{ cotizacion.empresa }}</div>
+            <div class="list-column">{{ formatCurrency(cotizacion.valor) }}</div>
+            <div class="list-column">
+              <span class="status-badge" [class]="'status-' + cotizacion.estado.toLowerCase().replace(' ', '-')">
+                {{ cotizacion.estado }}
+              </span>
+            </div>
+            <div class="list-column">{{ formatDate(cotizacion.fecha) }}</div>
+            <div class="list-column">
+              <div class="list-actions">
+                <button class="btn-action btn-info" (click)="verPDF(cotizacion)" title="Ver PDF">📄</button>
+                <button class="btn-action btn-success" (click)="generarContrato(cotizacion)" title="Generar Contrato">📋</button>
+                <button class="btn-action btn-warning" (click)="editarCotizacion(cotizacion)" title="Editar">✏️</button>
+                <button class="btn-action btn-danger" (click)="eliminarCotizacion(cotizacion)" title="Eliminar">🗑️</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </main>
+</div>
+
+<!-- Modal de Vista Previa PDF -->
+<div class="modal-overlay" [class.show]="mostrarModalPDF" (click)="cerrarModalPDF()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📄 Vista Previa - {{ cotizacionSeleccionada?.codigo }}</h3>
+      <button class="modal-close" (click)="cerrarModalPDF()">×</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="cotizacionSeleccionada">
+      <div class="pdf-preview">
+        <div class="pdf-header">
+          <h1 class="pdf-title">COTIZACIÓN</h1>
+          <p class="pdf-subtitle">{{ cotizacionSeleccionada.codigo }}</p>
+          <p class="pdf-subtitle">Fecha: {{ formatDate(cotizacionSeleccionada.fecha) }}</p>
+        </div>
+
+        <div class="pdf-section">
+          <h3>📋 Información del Cliente</h3>
+          <div class="pdf-info-grid">
+            <div class="pdf-info-item">
+              <span class="pdf-label">Nombre:</span>
+              <span class="pdf-value">{{ cotizacionSeleccionada.nombre || 'No especificado' }}</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-label">Empresa:</span>
+              <span class="pdf-value">{{ cotizacionSeleccionada.empresa || 'No especificada' }}</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-label">Email:</span>
+              <span class="pdf-value">{{ cotizacionSeleccionada.email || 'No especificado' }}</span>
+            </div>
+            <div class="pdf-info-item">
+              <span class="pdf-label">Atendido por:</span>
+              <span class="pdf-value">{{ cotizacionSeleccionada.atendido || 'No especificado' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pdf-section" *ngIf="cotizacionSeleccionada.servicios">
+          <h3>💰 Servicios Cotizados</h3>
+          <div class="pdf-services">
+            <div class="pdf-service-item" *ngFor="let servicio of cotizacionSeleccionada.servicios">
+              <div class="pdf-info-item">
+                <span class="pdf-label">Servicio:</span>
+                <span class="pdf-value">{{ servicio.nombre || 'Sin nombre' }}</span>
+              </div>
+              <div class="pdf-info-item">
+                <span class="pdf-label">Detalle:</span>
+                <span class="pdf-value">{{ servicio.detalle || 'Sin detalle' }}</span>
+              </div>
+              <div class="pdf-info-item">
+                <span class="pdf-label">Modalidad:</span>
+                <span class="pdf-value">{{ servicio.modalidad || 'No especificada' }}</span>
+              </div>
+              <div class="pdf-info-item">
+                <span class="pdf-label">Alumnos:</span>
+                <span class="pdf-value">{{ servicio.alumnos || 0 }}</span>
+              </div>
+              <div class="pdf-info-item">
+                <span class="pdf-label">Subtotal:</span>
+                <span class="pdf-value">{{ formatCurrency(servicio.subtotal || 0) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pdf-total">
+          <div class="pdf-info-item">
+            <span class="pdf-label">TOTAL:</span>
+            <span class="pdf-value total">{{ formatCurrency(cotizacionSeleccionada.valor || 0) }}</span>
+          </div>
+        </div>
+
+        <div class="pdf-footer">
+          <p>Esta cotización es válida por 30 días desde su emisión.</p>
+          <p>Para cualquier consulta, contacte a {{ cotizacionSeleccionada.atendido || 'nuestro equipo' }}.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalPDF()">Cerrar</button>
+      <button class="btn btn-primary" (click)="descargarPDF()">📥 Descargar PDF</button>
+    </div>
+  </div>
 </div>
