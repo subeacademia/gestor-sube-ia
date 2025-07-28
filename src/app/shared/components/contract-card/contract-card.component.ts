@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -49,6 +49,13 @@ export class ContractCardComponent {
   toggleDropdown(event: Event) {
     event.stopPropagation();
     this.dropdownOpen = !this.dropdownOpen;
+  }
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    if (this.dropdownOpen) {
+      this.dropdownOpen = false;
+    }
   }
 
   getEstadoClass(estado: string): string {

@@ -87,10 +87,13 @@
           <button class="btn btn-secondary" (click)="crearContratoPrueba()">
             🧪 Crear Contrato de Prueba
           </button>
+          <button class="btn btn-info" (click)="cargarContratos()">
+            🔄 Recargar Contratos
+          </button>
           <button class="btn btn-warning" (click)="verificarCargaContratos()">
             🔍 Verificar Carga
           </button>
-          <button class="btn btn-primary">
+          <button class="btn btn-primary" (click)="mostrarModalCrearContrato()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
@@ -99,8 +102,91 @@
         </div>
       </div>
 
-      <!-- Vista de lista de contratos -->
-      <div class="contratos-list">
+      <!-- Tablero Kanban -->
+      <div class="kanban-board" *ngIf="!cargando && contratosFiltrados.length > 0">
+        <!-- Columna: Pendiente de Firma -->
+        <div class="kanban-column">
+          <div class="kanban-column-header">
+            <h3>⏳ Pendiente de Firma</h3>
+            <span class="column-count">{{ getContratosPorEstado('Pendiente de Firma').length }}</span>
+          </div>
+          <div class="kanban-column-content">
+            <app-contract-card 
+              *ngFor="let contrato of getContratosPorEstado('Pendiente de Firma')"
+              [contrato]="contrato"
+              (verContrato)="onVerContrato($event)"
+              (editarContrato)="onEditarContrato($event)"
+              (eliminarContrato)="onEliminarContrato($event)"
+              (cambiarEstado)="onCambiarEstado($event)"
+              (enviarFirma)="onEnviarFirma($event)"
+              (generarPDF)="onGenerarPDF($event)">
+            </app-contract-card>
+          </div>
+        </div>
+        
+        <!-- Columna: Enviado -->
+        <div class="kanban-column">
+          <div class="kanban-column-header">
+            <h3>📤 Enviado</h3>
+            <span class="column-count">{{ getContratosPorEstado('Enviado').length }}</span>
+          </div>
+          <div class="kanban-column-content">
+            <app-contract-card 
+              *ngFor="let contrato of getContratosPorEstado('Enviado')"
+              [contrato]="contrato"
+              (verContrato)="onVerContrato($event)"
+              (editarContrato)="onEditarContrato($event)"
+              (eliminarContrato)="onEliminarContrato($event)"
+              (cambiarEstado)="onCambiarEstado($event)"
+              (enviarFirma)="onEnviarFirma($event)"
+              (generarPDF)="onGenerarPDF($event)">
+            </app-contract-card>
+          </div>
+        </div>
+        
+        <!-- Columna: Firmado -->
+        <div class="kanban-column">
+          <div class="kanban-column-header">
+            <h3>✅ Firmado</h3>
+            <span class="column-count">{{ getContratosPorEstado('Firmado').length }}</span>
+          </div>
+          <div class="kanban-column-content">
+            <app-contract-card 
+              *ngFor="let contrato of getContratosPorEstado('Firmado')"
+              [contrato]="contrato"
+              (verContrato)="onVerContrato($event)"
+              (editarContrato)="onEditarContrato($event)"
+              (eliminarContrato)="onEliminarContrato($event)"
+              (cambiarEstado)="onCambiarEstado($event)"
+              (enviarFirma)="onEnviarFirma($event)"
+              (generarPDF)="onGenerarPDF($event)">
+            </app-contract-card>
+          </div>
+        </div>
+        
+        <!-- Columna: Finalizado -->
+        <div class="kanban-column">
+          <div class="kanban-column-header">
+            <h3>🎉 Finalizado</h3>
+            <span class="column-count">{{ getContratosPorEstado('Finalizado').length }}</span>
+          </div>
+          <div class="kanban-column-content">
+            <app-contract-card 
+              *ngFor="let contrato of getContratosPorEstado('Finalizado')"
+              [contrato]="contrato"
+              (verContrato)="onVerContrato($event)"
+              (editarContrato)="onEditarContrato($event)"
+              (eliminarContrato)="onEliminarContrato($event)"
+              (cambiarEstado)="onCambiarEstado($event)"
+              (enviarFirma)="onEnviarFirma($event)"
+              (generarPDF)="onGenerarPDF($event)">
+            </app-contract-card>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista de lista tradicional (cuando no hay contratos o está cargando) -->
+      <div class="contratos-list" *ngIf="cargando || contratosFiltrados.length === 0">
         <div *ngIf="cargando" class="loading-container">
           <div class="loading-spinner">⏳</div>
           <p>Cargando contratos...</p>
@@ -110,19 +196,6 @@
           <div class="empty-icon">📄</div>
           <p>No se encontraron contratos con los filtros aplicados</p>
           <p class="empty-subtitle">Los contratos aparecerán aquí una vez que se creen</p>
-        </div>
-
-        <div *ngIf="!cargando && contratosFiltrados.length > 0" class="contratos-grid">
-          <app-contract-card 
-            *ngFor="let contrato of contratosFiltrados"
-            [contrato]="contrato"
-            (verContrato)="onVerContrato($event)"
-            (editarContrato)="onEditarContrato($event)"
-            (eliminarContrato)="onEliminarContrato($event)"
-            (cambiarEstado)="onCambiarEstado($event)"
-            (enviarFirma)="onEnviarFirma($event)"
-            (generarPDF)="onGenerarPDF($event)">
-          </app-contract-card>
         </div>
       </div>
     </div>

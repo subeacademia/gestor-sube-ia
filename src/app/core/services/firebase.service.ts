@@ -504,4 +504,20 @@ export class FirebaseService {
       throw error;
     }
   }
+
+  // Método para obtener contratos como Observable
+  getContratos(): Observable<any[]> {
+    console.log('📋 FirebaseService: Obteniendo contratos como Observable...');
+    try {
+      const contratosCollection = collection(this.firestore, 'contratos');
+      const q = query(contratosCollection, orderBy('fechaCreacionContrato', 'desc'));
+      return collectionData(q, { idField: 'id' });
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener contratos Observable:', error);
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+  }
 }
