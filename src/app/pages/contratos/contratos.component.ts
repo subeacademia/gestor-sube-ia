@@ -79,8 +79,23 @@ export class ContratosComponent implements OnInit {
   async cargarContratos() {
     try {
       this.contratos = await this.firebaseService.getContratosAsync();
+      console.log('🔍 ContratosComponent: Contratos cargados:', this.contratos.length);
+      console.log('📋 ContratosComponent: Estados de contratos:', this.contratos.map(c => ({ id: c.id, estado: c.estado, codigo: c.codigo })));
+      
       this.contratosFiltrados = [...this.contratos];
       this.calcularEstadisticas();
+      
+      // Debug: Verificar contratos por estado
+      console.log('🔍 ContratosComponent: Contratos por estado:');
+      console.log('Pendiente de Firma:', this.getContratosPorEstado('Pendiente de Firma').length);
+      console.log('Enviado:', this.getContratosPorEstado('Enviado').length);
+      console.log('Firmado:', this.getContratosPorEstado('Firmado').length);
+      console.log('Finalizado:', this.getContratosPorEstado('Finalizado').length);
+      
+      // Debug: Verificar estados únicos
+      const estadosUnicos = [...new Set(this.contratos.map(c => c.estado))];
+      console.log('🔍 ContratosComponent: Estados únicos encontrados:', estadosUnicos);
+      
     } catch (error) {
       console.error('Error al cargar contratos:', error);
     }
@@ -128,8 +143,59 @@ export class ContratosComponent implements OnInit {
     this.contratosFiltrados = filtradas;
   }
 
+  getEstadosUnicos(): string[] {
+    return [...new Set(this.contratos.map(c => c.estado))];
+  }
+
+  trackByContratoId(index: number, contrato: Contrato): string {
+    return contrato.id;
+  }
+
+  getEstadoClass(estado: string): string {
+    if (!estado) return 'desconocido';
+    return estado.toLowerCase().replace(/\s+/g, '-');
+  }
+
   getContratosPorEstado(estado: string): Contrato[] {
-    return this.contratosFiltrados.filter(cont => cont.estado === estado);
+    console.log(`🔍 ContratosComponent: Filtrando contratos por estado "${estado}"`);
+    
+    const contratosEnEstado = this.contratosFiltrados.filter(cont => {
+      const contratoEstado = cont.estado?.toLowerCase() || '';
+      const estadoBuscado = estado.toLowerCase();
+      
+      // Mapeo de estados para mayor flexibilidad
+      const mapeoEstados: { [key: string]: string[] } = {
+        'pendiente de firma': ['pendiente de firma', 'pendiente', 'nuevo', 'creado'],
+        'enviado': ['enviado', 'enviado para firma', 'pendiente firma cliente'],
+        'firmado': ['firmado', 'completado', 'finalizado'],
+        'finalizado': ['finalizado', 'completado', 'cerrado']
+      };
+      
+      // Verificar coincidencia exacta
+      if (contratoEstado === estadoBuscado) {
+        return true;
+      }
+      
+      // Verificar mapeo de estados
+      if (mapeoEstados[estadoBuscado]) {
+        return mapeoEstados[estadoBuscado].includes(contratoEstado);
+      }
+      
+      // Para estados desconocidos, incluir todos los que no coincidan con estados conocidos
+      if (estadoBuscado === 'desconocido') {
+        const estadosConocidos = [
+          'pendiente de firma', 'pendiente', 'nuevo', 'creado',
+          'enviado', 'enviado para firma', 'pendiente firma cliente',
+          'firmado', 'completado', 'finalizado', 'cerrado'
+        ];
+        return !estadosConocidos.includes(contratoEstado);
+      }
+      
+      return false;
+    });
+    
+    console.log(`📋 ContratosComponent: Encontrados ${contratosEnEstado.length} contratos en estado "${estado}"`);
+    return contratosEnEstado;
   }
 
   // Métodos para cambio de vista

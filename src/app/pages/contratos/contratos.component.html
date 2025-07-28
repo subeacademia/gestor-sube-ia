@@ -85,6 +85,12 @@
       
       <!-- Vista Kanban -->
       <div class="kanban-board" *ngIf="viewMode === 'kanban'">
+        <!-- Debug Info -->
+        <div class="debug-info" style="background: rgba(255,0,0,0.1); padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+          <p><strong>Debug:</strong> Total contratos: {{ contratos.length }} | Filtrados: {{ contratosFiltrados.length }}</p>
+          <p>Estados únicos: {{ getEstadosUnicos().join(', ') }}</p>
+        </div>
+        
         <!-- Columna: Pendiente de Firma -->
         <div class="kanban-column" 
              [class.column-pendiente]="true"
@@ -204,40 +210,160 @@
             </div>
           </div>
         </div>
+        
+        <!-- Columna: Estados Desconocidos -->
+        <div class="kanban-column" 
+             [class.column-desconocido]="true"
+             (dragover)="onDragOver($event)"
+             (drop)="onDrop($event, 'Pendiente de Firma')">
+          <div class="kanban-column-header">
+            <div class="column-icon">❓</div>
+            <div class="column-info">
+              <h3>Estados Desconocidos</h3>
+              <span class="column-count">{{ getContratosPorEstado('Desconocido').length }}</span>
+            </div>
+          </div>
+          <div class="kanban-column-content">
+            <app-contract-card 
+              *ngFor="let contrato of getContratosPorEstado('Desconocido')"
+              [contrato]="contrato"
+              [draggable]="true"
+              (dragstart)="onDragStart($event, contrato)"
+              (estadoChanged)="onEstadoChanged($event)"
+              (contratoDeleted)="onContratoDeleted($event)"
+              (firmaRepresentante)="onFirmaRepresentante($event)"
+              (enviarCliente)="onEnviarCliente($event)">
+            </app-contract-card>
+            <div class="empty-state" *ngIf="getContratosPorEstado('Desconocido').length === 0">
+              <div class="empty-icon">❓</div>
+              <p>Sin contratos con estados desconocidos</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Vista Lista -->
       <div class="list-view" *ngIf="viewMode === 'list'">
         <div class="list-header">
-          <div class="list-column">Código</div>
-          <div class="list-column">Título</div>
-          <div class="list-column">Cliente</div>
-          <div class="list-column">Empresa</div>
-          <div class="list-column">Total</div>
-          <div class="list-column">Estado</div>
-          <div class="list-column">Fecha</div>
-          <div class="list-column">Acciones</div>
+          <div class="list-column">📋 Código</div>
+          <div class="list-column">📄 Título</div>
+          <div class="list-column">👤 Cliente</div>
+          <div class="list-column">🏢 Empresa</div>
+          <div class="list-column">💰 Total</div>
+          <div class="list-column">✍️ Firmas</div>
+          <div class="list-column">🏷️ Estado</div>
+          <div class="list-column">📅 Fecha</div>
+          <div class="list-column">⚡ Acciones</div>
         </div>
-        <div class="list-item" *ngFor="let contrato of contratosFiltrados">
-          <div class="list-column">{{ contrato.codigo }}</div>
-          <div class="list-column">{{ contrato.titulo }}</div>
-          <div class="list-column">{{ contrato.nombreCliente }}</div>
-          <div class="list-column">{{ contrato.empresa }}</div>
-          <div class="list-column">{{ formatCurrency(contrato.valorTotal) }}</div>
+        
+        <div class="list-item" *ngFor="let contrato of contratosFiltrados; trackBy: trackByContratoId">
           <div class="list-column">
-            <span class="status-badge" [class]="'status-' + contrato.estado.toLowerCase().replace(' ', '-')">
-              {{ contrato.estado }}
-            </span>
-          </div>
-          <div class="list-column">{{ formatDate(contrato.fechaCreacionContrato) }}</div>
-          <div class="list-column">
-            <div class="list-actions">
-              <button class="btn-action btn-info" (click)="verPDF(contrato)" title="Ver PDF">📄</button>
-              <button class="btn-action btn-success" (click)="enviarCliente(contrato)" title="Enviar a Cliente">📧</button>
-              <button class="btn-action btn-warning" (click)="editarContrato(contrato)" title="Editar">✏️</button>
-              <button class="btn-action btn-danger" (click)="eliminarContrato(contrato)" title="Eliminar">🗑️</button>
+            <div class="codigo-cell">
+              <span class="codigo-text">{{ contrato.codigo || contrato.id }}</span>
             </div>
           </div>
+          
+          <div class="list-column">
+            <div class="titulo-cell">
+              <span class="titulo-text">{{ contrato.titulo || 'Sin título' }}</span>
+            </div>
+          </div>
+          
+          <div class="list-column">
+            <div class="cliente-cell">
+              <span class="cliente-nombre">{{ contrato.nombreCliente || 'Sin cliente' }}</span>
+              <span class="cliente-email">{{ contrato.emailCliente || '' }}</span>
+            </div>
+          </div>
+          
+          <div class="list-column">
+            <div class="empresa-cell">
+              <span class="empresa-text">{{ contrato.empresa || 'Sin empresa' }}</span>
+            </div>
+          </div>
+          
+          <div class="list-column">
+            <div class="total-cell">
+              <span class="total-valor">{{ formatCurrency(contrato.valorTotal || 0) }}</span>
+            </div>
+          </div>
+          
+          <div class="list-column">
+            <div class="firmas-cell" *ngIf="contrato.firmas">
+              <div class="firma-status">
+                <span class="firma-icon" [class.firmado]="contrato.firmas.representante">
+                  {{ contrato.firmas.representante ? '✅' : '⏳' }}
+                </span>
+                <span class="firma-label">Rep.</span>
+              </div>
+              <div class="firma-status">
+                <span class="firma-icon" [class.firmado]="contrato.firmas.cliente">
+                  {{ contrato.firmas.cliente ? '✅' : '⏳' }}
+                </span>
+                <span class="firma-label">Cli.</span>
+              </div>
+            </div>
+            <div class="firmas-cell" *ngIf="!contrato.firmas">
+              <span class="no-firmas">Sin firmas</span>
+            </div>
+          </div>
+          
+          <div class="list-column">
+            <div class="estado-cell">
+              <span class="status-badge" [class]="'status-' + getEstadoClass(contrato.estado)">
+                {{ contrato.estado || 'Sin estado' }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="list-column">
+            <div class="fecha-cell">
+              <span class="fecha-text">{{ formatDate(contrato.fechaCreacionContrato) }}</span>
+            </div>
+          </div>
+          
+          <div class="list-column">
+            <div class="list-actions">
+              <button class="btn-action btn-info" (click)="verPDF(contrato)" title="Ver PDF">
+                <span class="btn-icon">📄</span>
+                <span class="btn-text">PDF</span>
+              </button>
+              
+              <button 
+                class="btn-action btn-success" 
+                (click)="enviarCliente(contrato)" 
+                title="Enviar a Cliente"
+                *ngIf="contrato.estado === 'Pendiente de Firma'">
+                <span class="btn-icon">📧</span>
+                <span class="btn-text">Enviar</span>
+              </button>
+              
+              <button 
+                class="btn-action btn-primary" 
+                (click)="onFirmaRepresentante({contratoId: contrato.id})" 
+                title="Firmar como Representante"
+                *ngIf="contrato.estado === 'Pendiente de Firma' && !contrato.firmas?.representante">
+                <span class="btn-icon">✍️</span>
+                <span class="btn-text">Firmar</span>
+              </button>
+              
+              <button class="btn-action btn-warning" (click)="editarContrato(contrato)" title="Editar">
+                <span class="btn-icon">✏️</span>
+                <span class="btn-text">Editar</span>
+              </button>
+              
+              <button class="btn-action btn-danger" (click)="eliminarContrato(contrato)" title="Eliminar">
+                <span class="btn-icon">🗑️</span>
+                <span class="btn-text">Eliminar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Estado vacío -->
+        <div class="list-empty" *ngIf="contratosFiltrados.length === 0">
+          <div class="empty-icon">📋</div>
+          <p>No se encontraron contratos</p>
         </div>
       </div>
     </div>

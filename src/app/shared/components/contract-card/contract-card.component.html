@@ -1,9 +1,10 @@
 <div class="contrato-card" 
      [class]="'card-estado-' + getEstadoClass()"
      [draggable]="draggable"
-     (dragstart)="onDragStart($event)">
+     (dragstart)="onDragStart($event)"
+     (click)="abrirModal()">
   
-  <!-- Header con código y fecha -->
+  <!-- Header ultra compacto -->
   <div class="contrato-header">
     <div class="codigo-section">
       <div class="codigo-icon">📋</div>
@@ -18,109 +19,85 @@
     </div>
   </div>
   
-  <!-- Información del contrato -->
+  <!-- Información ultra compacta -->
   <div class="contrato-body">
     <div class="titulo-section">
-      <div class="titulo-header">
-        <span class="titulo-icon">📄</span>
-        <span class="titulo-label">Título</span>
-      </div>
       <p class="titulo-text">{{ contrato.titulo }}</p>
     </div>
     
     <div class="cliente-section">
-      <div class="cliente-header">
-        <span class="cliente-icon">👤</span>
-        <span class="cliente-label">Cliente</span>
-      </div>
       <div class="cliente-info">
         <p class="cliente-nombre">{{ contrato.nombreCliente }}</p>
         <p class="cliente-empresa">{{ contrato.empresa }}</p>
         <p class="cliente-email">{{ contrato.emailCliente }}</p>
-        <p class="cliente-rut">RUT: {{ contrato.rutCliente }}</p>
       </div>
     </div>
     
-    <!-- Información financiera -->
-    <div class="financiero-section">
+    <div class="info-row">
       <div class="total-info">
-        <div class="total-icon">💰</div>
-        <div class="total-content">
-          <span class="total-label">Total</span>
-          <span class="total-valor">{{ formatCurrency(contrato.valorTotal) }}</span>
-        </div>
+        <span class="info-icon">💰</span>
+        <span class="info-label">Total:</span>
+        <span class="info-value">{{ formatCurrency(contrato.valorTotal) }}</span>
       </div>
     </div>
 
-    <!-- Estado de firmas -->
+    <!-- Estado de firmas ultra compacto -->
     <div class="firmas-section" *ngIf="contrato.firmas">
-      <div class="firmas-header">
-        <span class="firmas-icon">✍️</span>
-        <span class="firmas-label">Estado de Firmas</span>
-      </div>
       <div class="firmas-status">
         <div class="firma-item" [class.firmado]="contrato.firmas.representante">
           <span class="firma-icon">{{ contrato.firmas.representante ? '✅' : '⏳' }}</span>
-          <span class="firma-text">Representante Legal</span>
+          <span class="firma-text">Rep.</span>
         </div>
         <div class="firma-item" [class.firmado]="contrato.firmas.cliente">
           <span class="firma-icon">{{ contrato.firmas.cliente ? '✅' : '⏳' }}</span>
-          <span class="firma-text">Cliente</span>
+          <span class="firma-text">Cli.</span>
         </div>
       </div>
     </div>
   </div>
   
-  <!-- Acciones -->
+  <!-- Acciones ultra compactas -->
   <div class="contrato-actions">
-    <!-- Selector de estado -->
     <div class="estado-selector">
-      <label for="estado-{{ contrato.id }}">Cambiar Estado:</label>
       <select 
-        id="estado-{{ contrato.id }}"
         class="estado-select" 
         [value]="contrato.estado"
-        (change)="onEstadoChange($event)">
-        <option value="Pendiente de Firma">⏳ Pendiente de Firma</option>
+        (change)="onEstadoChange($event)"
+        (click)="$event.stopPropagation()">
+        <option value="Pendiente de Firma">⏳ Pendiente</option>
         <option value="Enviado">📤 Enviado</option>
         <option value="Firmado">✅ Firmado</option>
         <option value="Finalizado">🎉 Finalizado</option>
       </select>
     </div>
     
-    <!-- Botones de acción -->
     <div class="action-buttons">
-      <button class="btn-action btn-info" (click)="verPDF()" title="Ver PDF">
+      <button class="btn-action btn-info" (click)="verPDF($event)" title="Ver PDF">
         <span class="btn-icon">📄</span>
-        <span class="btn-text">PDF</span>
       </button>
       
       <button 
         class="btn-action btn-success" 
-        (click)="enviarFirma()" 
+        (click)="enviarFirma($event)" 
         title="Enviar para Firma"
         *ngIf="contrato.estado === 'Pendiente de Firma'">
         <span class="btn-icon">📧</span>
-        <span class="btn-text">Enviar</span>
       </button>
       
       <button 
         class="btn-action btn-primary" 
-        (click)="firmarRepresentante()" 
-        title="Firmar como Representante Legal"
+        (click)="firmarRepresentante($event)" 
+        title="Firmar como Representante"
         *ngIf="contrato.estado === 'Pendiente de Firma' && !contrato.firmas?.representante">
         <span class="btn-icon">✍️</span>
-        <span class="btn-text">Firmar</span>
       </button>
       
-      <button class="btn-action btn-warning" (click)="editarContrato()" title="Editar">
+      <button class="btn-action btn-warning" (click)="editarContrato($event)" title="Editar">
         <span class="btn-icon">✏️</span>
-        <span class="btn-text">Editar</span>
       </button>
       
-      <button class="btn-action btn-danger" (click)="eliminarContrato()" title="Eliminar">
+      <button class="btn-action btn-danger" (click)="eliminarContrato($event)" title="Eliminar">
         <span class="btn-icon">🗑️</span>
-        <span class="btn-text">Eliminar</span>
       </button>
     </div>
   </div>
@@ -128,6 +105,117 @@
   <!-- Indicador de drag -->
   <div class="drag-indicator">
     <span class="drag-icon">↕️</span>
-    <span class="drag-text">Arrastrar para cambiar estado</span>
+  </div>
+</div>
+
+<!-- Modal de detalles -->
+<div class="modal-overlay" [class.show]="mostrarModal" (click)="cerrarModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📋 Detalles del Contrato</h3>
+      <button class="modal-close" (click)="cerrarModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="detail-section">
+        <h4>📋 Información General</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Código:</span>
+            <span class="detail-value">{{ contrato.codigo || contrato.id }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Fecha:</span>
+            <span class="detail-value">{{ formatDate(contrato.fechaCreacionContrato) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Estado:</span>
+            <span class="detail-value estado-badge" [class]="'estado-' + getEstadoClass()">
+              {{ getEstadoIcon() }} {{ contrato.estado }}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="detail-section">
+        <h4>📄 Información del Contrato</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Título:</span>
+            <span class="detail-value">{{ contrato.titulo }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="detail-section">
+        <h4>👤 Información del Cliente</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Nombre:</span>
+            <span class="detail-value">{{ contrato.nombreCliente }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Empresa:</span>
+            <span class="detail-value">{{ contrato.empresa }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ contrato.emailCliente }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">RUT:</span>
+            <span class="detail-value">{{ contrato.rutCliente }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="detail-section">
+        <h4>💰 Información Financiera</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Total:</span>
+            <span class="detail-value total">{{ formatCurrency(contrato.valorTotal) }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="detail-section" *ngIf="contrato.firmas">
+        <h4>✍️ Estado de Firmas</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Representante Legal:</span>
+            <span class="detail-value" [class.firmado]="contrato.firmas.representante">
+              {{ contrato.firmas.representante ? '✅ Firmado' : '⏳ Pendiente' }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Cliente:</span>
+            <span class="detail-value" [class.firmado]="contrato.firmas.cliente">
+              {{ contrato.firmas.cliente ? '✅ Firmado' : '⏳ Pendiente' }}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="detail-section" *ngIf="contrato.historialEstados && contrato.historialEstados.length > 0">
+        <h4>📊 Historial de Estados</h4>
+        <div class="detail-content">
+          <div class="historial-item" *ngFor="let historial of contrato.historialEstados">
+            <span class="historial-fecha">{{ formatDate(historial.fecha) }}</span>
+            <span class="historial-estado">{{ historial.estado }}</span>
+            <span class="historial-usuario">{{ historial.usuario }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModal()">Cerrar</button>
+      <button class="btn btn-info" (click)="verPDF($event)">📄 Ver PDF</button>
+      <button class="btn btn-success" (click)="enviarFirma($event)" *ngIf="contrato.estado === 'Pendiente de Firma'">📧 Enviar</button>
+      <button class="btn btn-primary" (click)="firmarRepresentante($event)" *ngIf="contrato.estado === 'Pendiente de Firma' && !contrato.firmas?.representante">✍️ Firmar</button>
+      <button class="btn btn-warning" (click)="editarContrato($event)">✏️ Editar</button>
+      <button class="btn btn-danger" (click)="eliminarContrato($event)">🗑️ Eliminar</button>
+    </div>
   </div>
 </div>
