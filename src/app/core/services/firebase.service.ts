@@ -520,4 +520,173 @@ export class FirebaseService {
       });
     }
   }
+
+  // ===== MÉTODOS PARA MANEJO DE FIRMAS =====
+
+  // Método para obtener un contrato específico por ID
+  async getContratoById(contratoId: string): Promise<any> {
+    console.log('🔍 FirebaseService: Obteniendo contrato por ID:', contratoId);
+    try {
+      const contratos = await this.getContratosAsync();
+      const contrato = contratos.find(c => c.id === contratoId);
+      
+      if (!contrato) {
+        throw new Error('Contrato no encontrado');
+      }
+      
+      console.log('✅ FirebaseService: Contrato encontrado:', contrato);
+      return contrato;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener contrato por ID:', error);
+      throw error;
+    }
+  }
+
+  // Método para actualizar firma del representante
+  async actualizarFirmaRepresentante(contratoId: string, firmaBase64: string, representanteLegal: string): Promise<void> {
+    console.log('✍️ FirebaseService: Actualizando firma del representante...');
+    try {
+      await this.updateContrato(contratoId, {
+        firmaRepresentanteBase64: firmaBase64,
+        representanteLegal: representanteLegal,
+        fechaFirmaRepresentante: new Date(),
+        estadoContrato: 'Firma Representante Completada'
+      });
+      console.log('✅ FirebaseService: Firma del representante actualizada');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al actualizar firma del representante:', error);
+      throw error;
+    }
+  }
+
+  // Método para actualizar firma del cliente
+  async actualizarFirmaCliente(contratoId: string, firmaBase64: string): Promise<void> {
+    console.log('✍️ FirebaseService: Actualizando firma del cliente...');
+    try {
+      // Verificar si ya tiene firma del representante
+      const contrato = await this.getContratoById(contratoId);
+      const tieneFirmaRepresentante = contrato.firmaRepresentanteBase64;
+
+      // Determinar el estado final
+      let estadoFinal = 'Firmado';
+      if (tieneFirmaRepresentante) {
+        estadoFinal = 'Finalizado'; // Ambas firmas completadas
+      }
+
+      await this.updateContrato(contratoId, {
+        firmaClienteBase64: firmaBase64,
+        fechaFirmaCliente: new Date(),
+        estadoContrato: estadoFinal,
+        fechaFirmaFinal: new Date(),
+        contratoValido: true,
+        esPreContrato: false,
+        fechaCompletado: new Date(),
+        ambasFirmasCompletadas: tieneFirmaRepresentante ? true : false
+      });
+      
+      console.log('✅ FirebaseService: Firma del cliente actualizada');
+      console.log(`📋 Estado actualizado a: ${estadoFinal}`);
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al actualizar firma del cliente:', error);
+      throw error;
+    }
+  }
+
+  // Método para finalizar contrato
+  async finalizarContrato(contratoId: string): Promise<void> {
+    console.log('🎯 FirebaseService: Finalizando contrato...');
+    try {
+      await this.updateContrato(contratoId, {
+        estadoContrato: 'Firmado',
+        fechaFirmaFinal: new Date(),
+        contratoValido: true,
+        esPreContrato: false,
+        fechaCompletado: new Date()
+      });
+      
+      console.log('✅ FirebaseService: Contrato finalizado exitosamente');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al finalizar contrato:', error);
+      throw error;
+    }
+  }
+
+  // Método para generar token de firma
+  async generarTokenFirma(contratoId: string): Promise<string> {
+    console.log('🔗 FirebaseService: Generando token de firma...');
+    try {
+      const token = this.generarTokenUnico();
+      
+      await this.updateContrato(contratoId, {
+        tokenFirma: token,
+        fechaGeneracionToken: new Date(),
+        linkFirmaActivo: true,
+        estadoContrato: 'Enviado'
+      });
+      
+      console.log('✅ FirebaseService: Token de firma generado:', token);
+      return token;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al generar token de firma:', error);
+      throw error;
+    }
+  }
+
+  // Método para validar token de firma
+  async validarTokenFirma(contratoId: string, token: string): Promise<boolean> {
+    console.log('🔍 FirebaseService: Validando token de firma...');
+    try {
+      const contrato = await this.getContratoById(contratoId);
+      
+      if (contrato.tokenFirma !== token) {
+        console.log('❌ FirebaseService: Token inválido');
+        return false;
+      }
+      
+      // Verificar que el contrato esté en estado válido para firma
+      if (contrato.estadoContrato !== 'Enviado' && contrato.estadoContrato !== 'Pendiente de Firma') {
+        console.log('❌ FirebaseService: Contrato no disponible para firma');
+        return false;
+      }
+      
+      // Verificar que no haya sido firmado ya
+      if (contrato.firmaClienteBase64) {
+        console.log('❌ FirebaseService: Contrato ya ha sido firmado');
+        return false;
+      }
+      
+      console.log('✅ FirebaseService: Token válido');
+      return true;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al validar token de firma:', error);
+      return false;
+    }
+  }
+
+  // Método para registrar envío de email
+  async registrarEnvioEmail(contratoId: string, email: string, asunto: string, mensaje: string, linkFirma: string): Promise<void> {
+    console.log('📧 FirebaseService: Registrando envío de email...');
+    try {
+      await this.updateContrato(contratoId, {
+        emailEnviado: true,
+        fechaEnvioEmail: new Date(),
+        emailDestinatario: email,
+        asuntoEmail: asunto,
+        mensajeEmail: mensaje,
+        linkEnviado: linkFirma
+      });
+      
+      console.log('✅ FirebaseService: Envío de email registrado');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al registrar envío de email:', error);
+      throw error;
+    }
+  }
+
+  // Método auxiliar para generar token único
+  private generarTokenUnico(): string {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 15);
+    return `${timestamp}-${random}`;
+  }
 }

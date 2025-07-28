@@ -46,6 +46,16 @@ export const routes: Routes = [
   },
   {
     path: 'firmar-contrato/:id',
-    loadComponent: () => import('./pages/firmar-contrato/firmar-contrato.component').then(m => m.FirmarContratoComponent)
+    loadComponent: () => import('./pages/firmar-contrato/firmar-contrato.component').then(m => m.FirmarContratoComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'enviar-firma/:id',
+    loadComponent: () => import('./pages/enviar-firma/enviar-firma.component').then(m => m.EnviarFirmaComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'firmar-cliente/:idContrato/:token',
+    loadComponent: () => import('./pages/firmar-contrato-cliente/firmar-contrato-cliente.component').then(m => m.FirmarContratoClienteComponent)
   }
 ];

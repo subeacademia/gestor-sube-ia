@@ -1,1 +1,181 @@
-<p>firmar-contrato works!</p>
+<!-- Loading -->
+<div *ngIf="loading" class="loading-firma">
+  <div>Cargando contrato...</div>
+</div>
+
+<!-- Error -->
+<div *ngIf="error" class="error-firma">
+  {{ errorMessage }}
+</div>
+
+<!-- Contenido principal -->
+<div *ngIf="!loading && !error && contrato" class="firma-container">
+  <!-- Resumen del contrato -->
+  <div class="contrato-resumen">
+    <h2>📋 Resumen del Contrato</h2>
+    
+    <div class="detalle-seccion">
+      <h4>📋 Información General</h4>
+      <p><strong>Título:</strong> {{ contrato.tituloContrato || contrato.titulo || 'Sin título' }}</p>
+      <p><strong>Código:</strong> {{ contrato.codigoCotizacion || contrato.codigo || 'Sin código' }}</p>
+      <p><strong>Estado:</strong> 
+        <span class="estado-badge" [ngClass]="'estado-' + (contrato.estadoContrato || 'pendiente-de-firma').toLowerCase().replace(/\s+/g, '-')">
+          {{ contrato.estadoContrato || 'Pendiente de Firma' }}
+        </span>
+      </p>
+      <p><strong>Fecha de Creación:</strong> {{ formatearFecha(contrato.fechaCreacionContrato) }}</p>
+    </div>
+    
+    <div class="detalle-seccion">
+      <h4>👤 Información del Cliente</h4>
+      <p><strong>Nombre:</strong> {{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</p>
+      <p><strong>Email:</strong> {{ contrato.cliente?.email || contrato.emailCliente || 'No especificado' }}</p>
+      <p><strong>RUT:</strong> {{ contrato.cliente?.rut || contrato.rutCliente || 'No especificado' }}</p>
+      <p><strong>Empresa:</strong> {{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</p>
+    </div>
+    
+    <div class="detalle-seccion">
+      <h4>💰 Información Financiera</h4>
+      <p><strong>Valor Total:</strong> ${{ (contrato.totalConDescuento || contrato.valorTotal || contrato.total || 0).toLocaleString() }}</p>
+      <p *ngIf="contrato.descuento > 0"><strong>Descuento:</strong> {{ contrato.descuento }}%</p>
+      <p><strong>Atendido por:</strong> {{ contrato.atendido || 'No especificado' }}</p>
+    </div>
+    
+    <div class="detalle-seccion" *ngIf="contrato.partesInvolucradas">
+      <h4>🤝 Partes Involucradas</h4>
+      <p>{{ contrato.partesInvolucradas }}</p>
+    </div>
+    
+    <div class="detalle-seccion" *ngIf="contrato.objetoContrato">
+      <h4>📄 Objeto del Contrato</h4>
+      <p>{{ contrato.objetoContrato }}</p>
+    </div>
+    
+    <div class="detalle-seccion" *ngIf="contrato.clausulas">
+      <h4>📜 Cláusulas y Términos</h4>
+      <p>{{ contrato.clausulas }}</p>
+    </div>
+    
+    <div class="detalle-seccion" *ngIf="contrato.fechaInicio || contrato.fechaFin">
+      <h4>📅 Fechas del Contrato</h4>
+      <p *ngIf="contrato.fechaInicio"><strong>Fecha de Inicio:</strong> {{ formatearFecha(contrato.fechaInicio) }}</p>
+      <p *ngIf="contrato.fechaFin"><strong>Fecha de Fin:</strong> {{ formatearFecha(contrato.fechaFin) }}</p>
+    </div>
+  </div>
+  
+  <!-- Área de firma -->
+  <div class="firma-pad-container">
+    <h3>✍️ Firma Digital - Doble Firma</h3>
+    <div class="firma-info">
+      Este contrato requiere la firma del representante legal y del cliente para ser válido
+    </div>
+    
+    <!-- Firma del Representante Legal -->
+    <div class="firma-seccion">
+      <h4>👤 Firma del Representante Legal</h4>
+      
+      <!-- Selección de representante legal -->
+      <div class="representante-seleccion">
+        <label for="representante-legal">Representante Legal:</label>
+        <select id="representante-legal" [(ngModel)]="representanteSeleccionado" class="estado-select">
+          <option value="">Selecciona un representante legal</option>
+          <option *ngFor="let rep of representantes" [value]="rep.value">{{ rep.label }}</option>
+        </select>
+      </div>
+      
+      <!-- Área de firma del representante -->
+      <div class="firma-area">
+        <label>Firma del Representante:</label>
+        <div class="canvas-container">
+          <canvas #firmaRepresentanteCanvas width="600" height="200"></canvas>
+        </div>
+        <div class="firma-acciones-seccion">
+          <button (click)="limpiarFirmaRepresentante()" class="btn btn-secondary btn-limpiar-firma">🧹 Limpiar Firma</button>
+          <button (click)="guardarFirmaRepresentante()" class="btn btn-primary">Guardar Firma Representante</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Firma del Cliente -->
+    <div class="firma-seccion" id="seccion-firma-cliente">
+      <h4>👤 Firma del Cliente</h4>
+      
+      <!-- Información del cliente -->
+      <div class="cliente-info-firma">
+        <p><strong>Cliente:</strong> <span>{{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</span></p>
+        <p><strong>Empresa:</strong> <span>{{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</span></p>
+      </div>
+      
+      <!-- Área de firma del cliente -->
+      <div class="firma-area">
+        <label>Firma del Cliente:</label>
+        <div class="canvas-container">
+          <canvas #firmaClienteCanvas width="600" height="200"></canvas>
+        </div>
+        <div class="firma-acciones-seccion">
+          <button (click)="limpiarFirmaCliente()" class="btn btn-secondary btn-limpiar-firma">🧹 Limpiar Firma</button>
+          <button (click)="guardarFirmaCliente()" class="btn btn-primary">Guardar Firma Cliente</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Estado de las firmas -->
+    <div class="estado-firmas">
+      <h4>📋 Estado de las Firmas</h4>
+      <div class="firma-status">
+        <div class="status-item">
+          <span class="status-icon" [ngClass]="firmaRepresentanteGuardada ? 'completado' : 'pendiente'">
+            {{ firmaRepresentanteGuardada ? '✅' : '⏳' }}
+          </span>
+          <span>Representante Legal: <span>{{ firmaRepresentanteGuardada ? 'Completada' : 'Pendiente' }}</span></span>
+        </div>
+        <div class="status-item">
+          <span class="status-icon" [ngClass]="firmaClienteGuardada ? 'completado' : 'pendiente'">
+            {{ firmaClienteGuardada ? '✅' : '⏳' }}
+          </span>
+          <span>Cliente: <span>{{ firmaClienteGuardada ? 'Completada' : 'Pendiente' }}</span></span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Opciones de finalización cuando la firma del representante está completa -->
+    <div *ngIf="firmaRepresentanteGuardada && !firmaClienteGuardada" class="firma-representante-completada">
+      <div class="mensaje-confirmacion">
+        <h3>✅ Firma del Representante Completada</h3>
+        <p>La firma del representante legal ha sido guardada exitosamente.</p>
+        <div class="opciones-finalizacion">
+          <button (click)="generarLinkCliente()" class="btn btn-primary">
+            🔗 Generar Link para Cliente
+          </button>
+          <button (click)="enviarEmailCliente()" class="btn btn-success">
+            📧 Enviar Email al Cliente
+          </button>
+          <button (click)="volverContratos()" class="btn btn-secondary">
+            📋 Volver a Contratos
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Mensaje cuando el contrato está completamente firmado -->
+    <div *ngIf="firmaRepresentanteGuardada && firmaClienteGuardada" class="contrato-completamente-firmado">
+      <div class="mensaje-confirmacion">
+        <h3>🎉 ¡Contrato Completamente Firmado!</h3>
+        <p>Ambas firmas han sido completadas. El contrato está listo para ser finalizado.</p>
+        <button (click)="finalizarContrato()" class="btn btn-success">
+          ✅ Finalizar Contrato
+        </button>
+      </div>
+    </div>
+    
+    <!-- Botón final -->
+    <div class="firma-acciones-final">
+      <button 
+        (click)="guardarFirmaRepresentante()" 
+        class="btn btn-success" 
+        [disabled]="!representanteSeleccionado || firmaRepresentanteGuardada">
+        {{ firmaRepresentanteGuardada ? 'Firma Completada ✅' : 'Guardar Firma Representante' }}
+      </button>
+    </div>
+  </div>
+</div>

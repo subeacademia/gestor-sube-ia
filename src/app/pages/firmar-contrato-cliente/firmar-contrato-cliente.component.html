@@ -1,0 +1,130 @@
+<!-- Loading -->
+<div *ngIf="loading" class="loading">
+  <div>Cargando contrato...</div>
+</div>
+
+<!-- Error -->
+<div *ngIf="error" class="error">
+  {{ errorMessage }}
+</div>
+
+<!-- Mensaje de éxito -->
+<div *ngIf="mostrandoExito" class="success-message">
+  <h3>✅ Contrato Firmado Exitosamente</h3>
+  <p>Su firma ha sido registrada correctamente. Recibirá una copia del contrato firmado en su email.</p>
+  
+  <div class="success-actions">
+    <h4>¿Qué sigue?</h4>
+    <p>Gracias por confiar en SUBE IA. Le invitamos a conocer más sobre nuestros servicios:</p>
+    
+    <div class="success-buttons">
+      <a href="https://www.subeia.tech" target="_blank" class="btn btn-primary">
+        🌐 Visitar Nuestra Web
+      </a>
+      <a href="https://blog.subeia.tech" target="_blank" class="btn btn-secondary">
+        📝 Ver Nuestro Blog
+      </a>
+    </div>
+    
+    <p class="success-note">
+      <small>Recibirá una copia del contrato firmado en su email en los próximos minutos.</small>
+    </p>
+  </div>
+</div>
+
+<!-- Contenido principal -->
+<div *ngIf="!loading && !error && !mostrandoExito && contrato" class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🤝</div>
+      <div class="logo-text">SUBE IA TECH</div>
+    </div>
+    <h1 class="subtitle">Firma Digital de Contrato</h1>
+    <p>Complete su firma de manera segura y digital</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <div class="main-content">
+    <!-- Resumen del contrato -->
+    <div class="contrato-resumen">
+      <h2>📋 Resumen del Contrato</h2>
+      
+      <div class="detalle-seccion">
+        <h4>📋 Información General</h4>
+        <p><strong>Título:</strong> {{ contrato.tituloContrato || contrato.titulo || 'Sin título' }}</p>
+        <p><strong>Código:</strong> {{ contrato.codigoCotizacion || contrato.codigo || 'Sin código' }}</p>
+        <p><strong>Estado:</strong> 
+          <span class="estado-badge" [ngClass]="'estado-' + (contrato.estadoContrato || 'pendiente-de-firma').toLowerCase().replace(/\s+/g, '-')">
+            {{ contrato.estadoContrato || 'Pendiente de Firma' }}
+          </span>
+        </p>
+        <p><strong>Fecha de Creación:</strong> {{ formatearFecha(contrato.fechaCreacionContrato) }}</p>
+      </div>
+      
+      <div class="detalle-seccion">
+        <h4>👤 Información del Cliente</h4>
+        <p><strong>Nombre:</strong> {{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</p>
+        <p><strong>Email:</strong> {{ contrato.cliente?.email || contrato.emailCliente || 'No especificado' }}</p>
+        <p><strong>RUT:</strong> {{ contrato.cliente?.rut || contrato.rutCliente || 'No especificado' }}</p>
+        <p><strong>Empresa:</strong> {{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</p>
+      </div>
+      
+      <div class="detalle-seccion">
+        <h4>💰 Información Financiera</h4>
+        <p><strong>Valor Total:</strong> ${{ (contrato.totalConDescuento || contrato.valorTotal || contrato.total || 0).toLocaleString() }}</p>
+        <p *ngIf="contrato.descuento > 0"><strong>Descuento:</strong> {{ contrato.descuento }}%</p>
+        <p><strong>Atendido por:</strong> {{ contrato.atendido || 'No especificado' }}</p>
+      </div>
+      
+      <div class="detalle-seccion" *ngIf="contrato.partesInvolucradas">
+        <h4>🤝 Partes Involucradas</h4>
+        <p>{{ contrato.partesInvolucradas }}</p>
+      </div>
+      
+      <div class="detalle-seccion" *ngIf="contrato.objetoContrato">
+        <h4>📄 Objeto del Contrato</h4>
+        <p>{{ contrato.objetoContrato }}</p>
+      </div>
+      
+      <div class="detalle-seccion" *ngIf="contrato.clausulas">
+        <h4>📜 Cláusulas y Términos</h4>
+        <p>{{ contrato.clausulas }}</p>
+      </div>
+      
+      <div class="detalle-seccion" *ngIf="contrato.fechaInicio || contrato.fechaFin">
+        <h4>📅 Fechas del Contrato</h4>
+        <p *ngIf="contrato.fechaInicio"><strong>Fecha de Inicio:</strong> {{ formatearFecha(contrato.fechaInicio) }}</p>
+        <p *ngIf="contrato.fechaFin"><strong>Fecha de Fin:</strong> {{ formatearFecha(contrato.fechaFin) }}</p>
+      </div>
+    </div>
+    
+    <!-- Área de firma -->
+    <div class="firma-section">
+      <h3>✍️ Firma Digital</h3>
+      <div class="firma-info">
+        Por favor, firme en el área de abajo para completar el proceso de firma digital
+      </div>
+      
+      <div class="cliente-info">
+        <p><strong>Cliente:</strong> {{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</p>
+        <p><strong>Empresa:</strong> {{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</p>
+      </div>
+      
+      <div class="canvas-container">
+        <canvas #firmaClienteCanvas width="600" height="200"></canvas>
+      </div>
+      
+      <div class="firma-actions">
+        <button (click)="limpiarFirma()" class="btn btn-secondary">🧹 Limpiar Firma</button>
+        <button (click)="firmarContrato()" class="btn btn-primary">✍️ Firmar Contrato</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>© 2024 SUBE IA TECH. Todos los derechos reservados.</p>
+    <p>Sistema de firma digital seguro y confiable</p>
+  </div>
+</div> 

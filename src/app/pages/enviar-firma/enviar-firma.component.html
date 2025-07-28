@@ -1,0 +1,124 @@
+<!-- Loading -->
+<div *ngIf="loading" class="loading-enviar">
+  <div>Cargando contrato...</div>
+</div>
+
+<!-- Error -->
+<div *ngIf="error" class="error-enviar">
+  {{ errorMessage }}
+</div>
+
+<!-- Contenido principal -->
+<div *ngIf="!loading && !error && contrato" class="enviar-firma-container">
+  <!-- Resumen del contrato -->
+  <div class="contrato-resumen">
+    <h2>📋 Resumen del Contrato</h2>
+    
+    <div class="detalle-seccion">
+      <h4>📋 Información General</h4>
+      <p><strong>Título:</strong> {{ contrato.tituloContrato || contrato.titulo || 'Sin título' }}</p>
+      <p><strong>Código:</strong> {{ contrato.codigoCotizacion || contrato.codigo || 'Sin código' }}</p>
+      <p><strong>Estado:</strong> 
+        <span class="estado-badge" [ngClass]="'estado-' + (contrato.estadoContrato || 'pendiente-de-firma').toLowerCase().replace(/\s+/g, '-')">
+          {{ contrato.estadoContrato || 'Pendiente de Firma' }}
+        </span>
+      </p>
+      <p><strong>Fecha de Creación:</strong> {{ formatearFecha(contrato.fechaCreacionContrato) }}</p>
+    </div>
+    
+    <div class="detalle-seccion">
+      <h4>👤 Información del Cliente</h4>
+      <p><strong>Nombre:</strong> {{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</p>
+      <p><strong>Email:</strong> {{ contrato.cliente?.email || contrato.emailCliente || 'No especificado' }}</p>
+      <p><strong>RUT:</strong> {{ contrato.cliente?.rut || contrato.rutCliente || 'No especificado' }}</p>
+      <p><strong>Empresa:</strong> {{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</p>
+    </div>
+    
+    <div class="detalle-seccion">
+      <h4>💰 Información Financiera</h4>
+      <p><strong>Valor Total:</strong> ${{ (contrato.totalConDescuento || contrato.valorTotal || contrato.total || 0).toLocaleString() }}</p>
+      <p *ngIf="contrato.descuento > 0"><strong>Descuento:</strong> {{ contrato.descuento }}%</p>
+      <p><strong>Atendido por:</strong> {{ contrato.atendido || 'No especificado' }}</p>
+    </div>
+    
+    <div class="detalle-seccion" *ngIf="contrato.partesInvolucradas">
+      <h4>🤝 Partes Involucradas</h4>
+      <p>{{ contrato.partesInvolucradas }}</p>
+    </div>
+    
+    <div class="detalle-seccion" *ngIf="contrato.objetoContrato">
+      <h4>📄 Objeto del Contrato</h4>
+      <p>{{ contrato.objetoContrato }}</p>
+    </div>
+    
+    <div class="detalle-seccion" *ngIf="contrato.clausulas">
+      <h4>📜 Cláusulas y Términos</h4>
+      <p>{{ contrato.clausulas }}</p>
+    </div>
+    
+    <div class="detalle-seccion" *ngIf="contrato.fechaInicio || contrato.fechaFin">
+      <h4>📅 Fechas del Contrato</h4>
+      <p *ngIf="contrato.fechaInicio"><strong>Fecha de Inicio:</strong> {{ formatearFecha(contrato.fechaInicio) }}</p>
+      <p *ngIf="contrato.fechaFin"><strong>Fecha de Fin:</strong> {{ formatearFecha(contrato.fechaFin) }}</p>
+    </div>
+  </div>
+  
+  <!-- Formulario de envío -->
+  <div class="enviar-firma-form">
+    <h3>📤 Enviar Link de Firma al Cliente</h3>
+    
+    <div class="form-group">
+      <label for="email-cliente">Email del Cliente:</label>
+      <input type="email" id="email-cliente" [(ngModel)]="emailCliente" placeholder="email@ejemplo.com" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="asunto-email">Asunto del Email:</label>
+      <input type="text" id="asunto-email" [(ngModel)]="asuntoEmail" placeholder="Firma de Contrato - SUBE IA">
+    </div>
+    
+    <div class="form-group">
+      <label for="mensaje-email">Mensaje Personalizado:</label>
+      <textarea id="mensaje-email" [(ngModel)]="mensajeEmail" placeholder="Estimado cliente, adjunto encontrará el link para firmar su contrato..." rows="8"></textarea>
+    </div>
+    
+    <!-- Link generado -->
+    <div class="link-generado" *ngIf="linkGenerado">
+      <h4>🔗 Link de Firma Generado</h4>
+      <div class="link-input">
+        <input type="text" [value]="linkFirmaGenerado" readonly>
+        <button class="btn-copy" (click)="copiarLink()">📋 Copiar</button>
+      </div>
+      <p class="link-info">
+        Este link es único y seguro para este contrato específico.
+      </p>
+    </div>
+    
+    <!-- Acciones -->
+    <div class="enviar-acciones">
+      <button (click)="generarLinkFirma()" class="btn btn-primary" [disabled]="linkGenerado">
+        🔗 Generar Link de Firma
+      </button>
+      
+      <button 
+        (click)="enviarEmailFirma()" 
+        class="btn btn-success" 
+        [disabled]="!linkGenerado || emailEnviado || enviandoEmail">
+        <span *ngIf="enviandoEmail">📧 Enviando...</span>
+        <span *ngIf="!enviandoEmail && emailEnviado">✅ Email Enviado</span>
+        <span *ngIf="!enviandoEmail && !emailEnviado">📧 Enviar Email</span>
+      </button>
+      
+      <button 
+        (click)="enviarEmailFallback(emailCliente, asuntoEmail, mensajeEmail)" 
+        class="btn btn-warning" 
+        [disabled]="!linkGenerado || emailEnviado">
+        📮 Enviar Manual
+      </button>
+      
+      <button (click)="volverContratos()" class="btn btn-secondary">
+        ↩️ Volver a Contratos
+      </button>
+    </div>
+  </div>
+</div> 
