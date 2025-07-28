@@ -59,14 +59,24 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
       const contratoId = this.route.snapshot.paramMap.get('idContrato');
       const token = this.route.snapshot.paramMap.get('token');
       
-      if (!contratoId || !token) {
-        throw new Error('Enlace inválido. Faltan parámetros requeridos.');
+      if (!contratoId) {
+        throw new Error('Enlace inválido. Falta el ID del contrato.');
       }
 
       console.log('📋 Cargando contrato para firma del cliente:', contratoId);
 
-      // Validar token y cargar contrato
-      await this.validarTokenYCargarContrato(contratoId, token);
+      // Si hay token, validarlo
+      if (token) {
+        await this.validarTokenYCargarContrato(contratoId, token);
+      } else {
+        // Cargar contrato directamente (para desarrollo/testing)
+        this.contrato = await this.firebaseService.getContratoById(contratoId);
+        if (!this.contrato) {
+          throw new Error('Contrato no encontrado');
+        }
+      }
+
+      console.log('✅ Contrato cargado para firma del cliente:', this.contrato);
 
     } catch (error: any) {
       console.error('❌ Error al cargar contrato:', error);
@@ -155,14 +165,37 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
       // Obtener la firma como imagen Base64
       const firmaBase64 = this.signaturePadCliente.toDataURL('image/png');
 
+      // Verificar si ya tiene firma del representante
+      const tieneFirmaRepresentante = this.contrato.firmaRepresentanteBase64;
+
+      // Determinar el estado final
+      let estadoFinal = 'Firmado';
+      if (tieneFirmaRepresentante) {
+        estadoFinal = 'Finalizado'; // Ambas firmas completadas
+      }
+
       // Actualizar firma del cliente
       await this.firebaseService.actualizarFirmaCliente(this.contrato.id, firmaBase64);
+
+      // Actualizar estado del contrato
+      await this.firebaseService.updateContrato(this.contrato.id, {
+        estado: estadoFinal,
+        fechaFirmaCliente: new Date(),
+        fechaFirmaFinal: new Date(),
+        contratoValido: true,
+        esPreContrato: false,
+        fechaCompletado: new Date(),
+        ambasFirmasCompletadas: tieneFirmaRepresentante ? true : false
+      });
 
       // Actualizar estado local
       this.firmaClienteGuardada = true;
       this.contrato.firmaClienteBase64 = firmaBase64;
+      this.contrato.fechaFirmaCliente = new Date();
+      this.contrato.estado = estadoFinal;
 
       console.log('✅ Firma del cliente guardada exitosamente');
+      console.log(`📋 Estado actualizado a: ${estadoFinal}`);
       this.mostrarNotificacion('Firma del cliente guardada exitosamente', 'success');
 
       // Mostrar mensaje de éxito
@@ -192,16 +225,16 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
       console.log('📧 Enviando email de confirmación...');
 
       // Generar contenido del email de confirmación
-      const asunto = `✅ Contrato Firmado - ${this.contrato.tituloContrato || this.contrato.codigoCotizacion}`;
+      const asunto = `✅ Contrato Firmado - ${this.contrato.titulo || this.contrato.codigo}`;
       const mensaje = `
-Estimado ${this.contrato.cliente?.nombre || this.contrato.nombreCliente || 'Cliente'},
+Estimado ${this.contrato.nombreCliente || 'Cliente'},
 
 Su contrato ha sido firmado exitosamente.
 
 Detalles del contrato:
-- Título: ${this.contrato.tituloContrato || this.contrato.titulo || 'Sin título'}
-- Código: ${this.contrato.codigoCotizacion || this.contrato.codigo || 'Sin código'}
-- Valor: $${(this.contrato.totalConDescuento || this.contrato.valorTotal || this.contrato.total || 0).toLocaleString()}
+- Título: ${this.contrato.titulo || 'Sin título'}
+- Código: ${this.contrato.codigo || 'Sin código'}
+- Valor: ${this.formatearMoneda(this.contrato.valorTotal || 0)}
 - Fecha de firma: ${this.formatearFecha(new Date())}
 
 Adjunto encontrará una copia del contrato firmado.
@@ -212,25 +245,25 @@ www.subeia.tech
       `;
 
       // Enviar email al cliente
-      await this.enviarEmail(this.contrato.cliente?.email || this.contrato.emailCliente, asunto, mensaje);
+      await this.enviarEmail(this.contrato.emailCliente, asunto, mensaje);
 
       // Enviar copia al administrador
-      const asuntoAdmin = `📋 Contrato Firmado - ${this.contrato.cliente?.nombre || this.contrato.nombreCliente} - ${this.contrato.codigoCotizacion || this.contrato.codigo}`;
+      const asuntoAdmin = `📋 Contrato Firmado - ${this.contrato.nombreCliente} - ${this.contrato.codigo}`;
       const mensajeAdmin = `
 Se ha firmado un nuevo contrato:
 
-Cliente: ${this.contrato.cliente?.nombre || this.contrato.nombreCliente}
-Empresa: ${this.contrato.cliente?.empresa || this.contrato.empresa}
-Email: ${this.contrato.cliente?.email || this.contrato.emailCliente}
-Contrato: ${this.contrato.tituloContrato || this.contrato.titulo}
-Código: ${this.contrato.codigoCotizacion || this.contrato.codigo}
-Valor: $${(this.contrato.totalConDescuento || this.contrato.valorTotal || this.contrato.total || 0).toLocaleString()}
+Cliente: ${this.contrato.nombreCliente}
+Empresa: ${this.contrato.empresa}
+Email: ${this.contrato.emailCliente}
+Contrato: ${this.contrato.titulo}
+Código: ${this.contrato.codigo}
+Valor: ${this.formatearMoneda(this.contrato.valorTotal || 0)}
 Fecha: ${this.formatearFecha(new Date())}
 
 El contrato está listo para ser marcado como finalizado.
       `;
 
-      // Enviar al email del administrador (configurar en variables de entorno)
+      // Enviar al email del administrador
       await this.enviarEmail('admin@subeia.tech', asuntoAdmin, mensajeAdmin);
 
       console.log('✅ Emails de confirmación enviados');
@@ -344,5 +377,19 @@ El contrato está listo para ser marcado como finalizado.
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  // Función para obtener la clase CSS del estado
+  getEstadoClass(estado: string): string {
+    const estadoNormalizado = (estado || 'pendiente-de-firma').toLowerCase().replace(/\s+/g, '-');
+    return `estado-${estadoNormalizado}`;
+  }
+
+  // Función para formatear moneda
+  formatearMoneda(valor: number): string {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP'
+    }).format(valor);
   }
 } 

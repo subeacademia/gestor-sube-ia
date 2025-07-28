@@ -1,41 +1,54 @@
 <div class="cotizacion-card">
   <div class="cotizacion-header">
-    <h3>{{ cotizacion.codigo || 'Sin código' }}</h3>
-    <span class="fecha">{{ cotizacion.fecha | date:'dd/MM/yyyy' }}</span>
+    <h3>{{ cotizacion.codigo || cotizacion.id }}</h3>
+    <span class="fecha">{{ formatDate(cotizacion.fecha) }}</span>
   </div>
   
   <div class="cotizacion-body">
-    <p><strong>Cliente:</strong> {{ cotizacion.nombreCliente || 'Sin nombre' }}</p>
-    <p><strong>Empresa:</strong> {{ cotizacion.empresa || 'Sin empresa' }}</p>
-    <p><strong>Email:</strong> {{ cotizacion.email || 'Sin email' }}</p>
-    <p><strong>Atendido:</strong> {{ cotizacion.atendido || 'Sin atender' }}</p>
+    <p><strong>Cliente:</strong> {{ cotizacion.nombre || cotizacion['nombreCliente'] }}</p>
+    <p><strong>Empresa:</strong> {{ cotizacion.empresa }}</p>
+    <p><strong>Email:</strong> {{ cotizacion.email || cotizacion['emailCliente'] }}</p>
+    <p><strong>Atendido:</strong> {{ cotizacion.atendido }}</p>
     
     <div class="cliente-info">
-      <p><strong>Servicios:</strong> {{ cotizacion.servicios || 'Sin servicios' }}</p>
+      <p><strong>RUT:</strong> {{ cotizacion['rut'] || cotizacion['rutCliente'] }}</p>
     </div>
     
     <div class="total-info">
-      <strong>Total: ${{ cotizacion.total || '0' }}</strong>
+      <strong>Total: {{ formatCurrency(cotizacion['total'] || cotizacion['valorTotal'] || cotizacion.valor) }}</strong>
     </div>
     
     <div class="monto-info">
-      <strong>Monto: ${{ cotizacion.monto || '0' }}</strong>
+      <strong>Estado: {{ cotizacion.estado }}</strong>
     </div>
   </div>
   
   <div class="cotizacion-actions">
-    <button class="btn-action" (click)="verDetalles()" title="Ver detalles">
-      👁️
-    </button>
-    <button class="btn-action" (click)="editarCotizacion()" title="Editar">
-      ✏️
-    </button>
-    <button class="btn-action" (click)="cambiarEstado()" title="Cambiar estado">
-      🔄
-    </button>
-    <button class="btn-action" (click)="generarContrato()" title="Generar contrato">
+    <!-- Selector de estado -->
+    <select 
+      class="estado-select" 
+      [value]="cotizacion.estado"
+      (change)="onEstadoChange($event)">
+      <option value="Emitida">Emitida</option>
+      <option value="Contestada">Contestada</option>
+      <option value="En Negociación">En Negociación</option>
+      <option value="Aceptada">Aceptada</option>
+      <option value="Rechazada">Rechazada</option>
+    </select>
+    
+    <!-- Botones de acción -->
+    <button class="btn-action btn-info" (click)="verPDF()" title="Ver PDF">
       📄
     </button>
+    
+    <button class="btn-action btn-success" (click)="generarContrato()" title="Generar Contrato">
+      📋
+    </button>
+    
+    <button class="btn-action btn-warning" (click)="editarCotizacion()" title="Editar">
+      ✏️
+    </button>
+    
     <button class="btn-action btn-danger" (click)="eliminarCotizacion()" title="Eliminar">
       🗑️
     </button>

@@ -1,6 +1,8 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+import { User } from '@angular/fire/auth';
 
 @Component({
   selector: 'app-header',
@@ -9,14 +11,23 @@ import { RouterModule } from '@angular/router';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss']
 })
-export class HeaderComponent {
-  @Output() logoutEvent = new EventEmitter<void>();
-  
-  userInfo: any = {
-    email: 'admin@subeia.com'
-  };
+export class HeaderComponent implements OnInit {
+  userInfo: User | null = null;
 
-  cerrarSesion() {
-    this.logoutEvent.emit();
+  constructor(private authService: AuthService) {}
+
+  ngOnInit() {
+    this.authService.currentUser$.subscribe((user: User | null) => {
+      this.userInfo = user;
+    });
+  }
+
+  async cerrarSesion() {
+    try {
+      await this.authService.logout();
+      console.log('Sesión cerrada exitosamente');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
   }
 }

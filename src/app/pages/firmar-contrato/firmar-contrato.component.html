@@ -19,7 +19,7 @@
       <p><strong>Título:</strong> {{ contrato.tituloContrato || contrato.titulo || 'Sin título' }}</p>
       <p><strong>Código:</strong> {{ contrato.codigoCotizacion || contrato.codigo || 'Sin código' }}</p>
       <p><strong>Estado:</strong> 
-        <span class="estado-badge" [ngClass]="'estado-' + (contrato.estadoContrato || 'pendiente-de-firma').toLowerCase().replace(/\s+/g, '-')">
+        <span class="estado-badge" [ngClass]="getEstadoClass(contrato.estadoContrato)">
           {{ contrato.estadoContrato || 'Pendiente de Firma' }}
         </span>
       </p>

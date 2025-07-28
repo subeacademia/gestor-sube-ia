@@ -366,8 +366,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
 
       // Guardar contratos
       for (const contrato of contratosPrueba) {
-        const contratosCollection = collection(this.firebaseService['firestore'], 'contratos');
-        await addDoc(contratosCollection, contrato);
+        await this.firebaseService.createContratoFromCotizacion(contrato);
       }
 
       console.log('✅ Dashboard: Datos de prueba creados exitosamente');

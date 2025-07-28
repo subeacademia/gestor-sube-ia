@@ -239,6 +239,12 @@ export class CotizacionesComponent implements OnInit {
     return this.cotizacionesFiltradas?.filter((c: any) => c.estado === 'Contratada').length || 0;
   }
 
+  // Método para obtener cotizaciones por estado (para el tablero Kanban)
+  getCotizacionesPorEstado(estado: string): any[] {
+    if (!this.cotizacionesFiltradas) return [];
+    return this.cotizacionesFiltradas.filter(cotizacion => cotizacion.estado === estado);
+  }
+
   async probarConexionDirecta(): Promise<void> {
     try {
       console.log('🧪 CotizacionesComponent: Probando conexión directa...');

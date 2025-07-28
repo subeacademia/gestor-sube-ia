@@ -1,1 +1,376 @@
-<p>crear-cotizacion works!</p>
+<app-header></app-header>
+
+<div class="container">
+  <div class="header-section">
+    <h1>Crear Nueva Cotización</h1>
+    <p>Complete el formulario para crear una nueva cotización</p>
+  </div>
+
+  <!-- Mensajes de error y éxito -->
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <span class="alert-icon">❌</span>
+    <span class="alert-message">{{ errorMessage }}</span>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    <span class="alert-icon">✅</span>
+    <span class="alert-message">{{ successMessage }}</span>
+  </div>
+
+  <form [formGroup]="cotizacionForm" (ngSubmit)="onSubmit()" class="cotizacion-form">
+    
+    <!-- Información del Cliente -->
+    <div class="form-section">
+      <h2>Información del Cliente</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="codigo">Código de Cotización *</label>
+          <input 
+            type="text" 
+            id="codigo" 
+            formControlName="codigo" 
+            placeholder="Ej: COT-2024-001"
+            [class.invalid]="cotizacionForm.get('codigo')?.invalid && cotizacionForm.get('codigo')?.touched"
+          >
+          <div *ngIf="cotizacionForm.get('codigo')?.invalid && cotizacionForm.get('codigo')?.touched" class="error-message">
+            El código es obligatorio
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="nombre">Nombre del Cliente *</label>
+          <input 
+            type="text" 
+            id="nombre" 
+            formControlName="nombre" 
+            placeholder="Nombre completo del cliente"
+            [class.invalid]="cotizacionForm.get('nombre')?.invalid && cotizacionForm.get('nombre')?.touched"
+          >
+          <div *ngIf="cotizacionForm.get('nombre')?.invalid && cotizacionForm.get('nombre')?.touched" class="error-message">
+            El nombre es obligatorio
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input 
+            type="email" 
+            id="email" 
+            formControlName="email" 
+            placeholder="email@ejemplo.com"
+            [class.invalid]="cotizacionForm.get('email')?.invalid && cotizacionForm.get('email')?.touched"
+          >
+          <div *ngIf="cotizacionForm.get('email')?.invalid && cotizacionForm.get('email')?.touched" class="error-message">
+            Ingrese un email válido
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="rut">RUT *</label>
+          <input 
+            type="text" 
+            id="rut" 
+            formControlName="rut" 
+            placeholder="12345678-9"
+            [class.invalid]="cotizacionForm.get('rut')?.invalid && cotizacionForm.get('rut')?.touched"
+          >
+          <div *ngIf="cotizacionForm.get('rut')?.invalid && cotizacionForm.get('rut')?.touched" class="error-message">
+            El RUT es obligatorio
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="empresa">Empresa *</label>
+          <input 
+            type="text" 
+            id="empresa" 
+            formControlName="empresa" 
+            placeholder="Nombre de la empresa"
+            [class.invalid]="cotizacionForm.get('empresa')?.invalid && cotizacionForm.get('empresa')?.touched"
+          >
+          <div *ngIf="cotizacionForm.get('empresa')?.invalid && cotizacionForm.get('empresa')?.touched" class="error-message">
+            La empresa es obligatoria
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="moneda">Moneda *</label>
+          <select 
+            id="moneda" 
+            formControlName="moneda"
+            [class.invalid]="cotizacionForm.get('moneda')?.invalid && cotizacionForm.get('moneda')?.touched"
+          >
+            <option *ngFor="let moneda of monedas" [value]="moneda">{{ moneda }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="atendido">Atendido por *</label>
+        <input 
+          type="text" 
+          id="atendido" 
+          formControlName="atendido" 
+          placeholder="Nombre del ejecutivo"
+          [class.invalid]="cotizacionForm.get('atendido')?.invalid && cotizacionForm.get('atendido')?.touched"
+        >
+        <div *ngIf="cotizacionForm.get('atendido')?.invalid && cotizacionForm.get('atendido')?.touched" class="error-message">
+          El campo atendido es obligatorio
+        </div>
+      </div>
+    </div>
+
+    <!-- Servicios -->
+    <div class="form-section">
+      <div class="section-header">
+        <h2>Servicios</h2>
+        <button type="button" class="btn btn-secondary" (click)="agregarServicio()">
+          <span class="btn-icon">+</span>
+          Agregar Servicio
+        </button>
+      </div>
+
+      <div formArrayName="servicios" class="servicios-container">
+        <div *ngFor="let servicio of servicios.controls; let i = index" [formGroupName]="i" class="servicio-item">
+          <div class="servicio-header">
+            <h3>Servicio {{ i + 1 }}</h3>
+            <button 
+              type="button" 
+              class="btn btn-danger btn-small" 
+              (click)="eliminarServicio(i)"
+              [disabled]="servicios.length === 1"
+            >
+              <span class="btn-icon">×</span>
+              Eliminar
+            </button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label [for]="'nombre' + i">Nombre del Servicio *</label>
+              <input 
+                type="text" 
+                [id]="'nombre' + i" 
+                formControlName="nombre" 
+                placeholder="Ej: Desarrollo Web"
+                [class.invalid]="servicio.get('nombre')?.invalid && servicio.get('nombre')?.touched"
+              >
+              <div *ngIf="servicio.get('nombre')?.invalid && servicio.get('nombre')?.touched" class="error-message">
+                El nombre del servicio es obligatorio
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label [for]="'modalidad' + i">Modalidad *</label>
+              <select 
+                [id]="'modalidad' + i" 
+                formControlName="modalidad"
+                [class.invalid]="servicio.get('modalidad')?.invalid && servicio.get('modalidad')?.touched"
+              >
+                <option *ngFor="let modalidad of modalidades" [value]="modalidad">{{ modalidad }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label [for]="'detalle' + i">Detalle del Servicio *</label>
+            <textarea 
+              [id]="'detalle' + i" 
+              formControlName="detalle" 
+              placeholder="Descripción detallada del servicio"
+              rows="3"
+              [class.invalid]="servicio.get('detalle')?.invalid && servicio.get('detalle')?.touched"
+            ></textarea>
+            <div *ngIf="servicio.get('detalle')?.invalid && servicio.get('detalle')?.touched" class="error-message">
+              El detalle del servicio es obligatorio
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label [for]="'alumnos' + i">Número de Alumnos *</label>
+              <input 
+                type="number" 
+                [id]="'alumnos' + i" 
+                formControlName="alumnos" 
+                min="1"
+                [class.invalid]="servicio.get('alumnos')?.invalid && servicio.get('alumnos')?.touched"
+              >
+              <div *ngIf="servicio.get('alumnos')?.invalid && servicio.get('alumnos')?.touched" class="error-message">
+                Debe ser al menos 1
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label [for]="'tipoCobro' + i">Tipo de Cobro *</label>
+              <select 
+                [id]="'tipoCobro' + i" 
+                formControlName="tipoCobro"
+                [class.invalid]="servicio.get('tipoCobro')?.invalid && servicio.get('tipoCobro')?.touched"
+              >
+                <option *ngFor="let tipo of tiposCobro" [value]="tipo">{{ tipo | titlecase }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Detalles de cobro según tipo -->
+          <div formGroupName="detallesCobro" class="detalles-cobro">
+            <div *ngIf="servicio.get('tipoCobro')?.value === 'sesion'" class="form-row">
+              <div class="form-group">
+                <label [for]="'sesiones' + i">Número de Sesiones</label>
+                <input 
+                  type="number" 
+                  [id]="'sesiones' + i" 
+                  formControlName="sesiones" 
+                  min="1"
+                  (input)="calcularSubtotalServicio(i)"
+                >
+              </div>
+              <div class="form-group">
+                <label [for]="'valorSesion' + i">Valor por Sesión</label>
+                <input 
+                  type="number" 
+                  [id]="'valorSesion' + i" 
+                  formControlName="valorSesion" 
+                  min="0"
+                  (input)="calcularSubtotalServicio(i)"
+                >
+              </div>
+            </div>
+
+            <div *ngIf="servicio.get('tipoCobro')?.value === 'mes'" class="form-row">
+              <div class="form-group">
+                <label [for]="'meses' + i">Número de Meses</label>
+                <input 
+                  type="number" 
+                  [id]="'meses' + i" 
+                  formControlName="meses" 
+                  min="1"
+                  (input)="calcularSubtotalServicio(i)"
+                >
+              </div>
+              <div class="form-group">
+                <label [for]="'valorMes' + i">Valor por Mes</label>
+                <input 
+                  type="number" 
+                  [id]="'valorMes' + i" 
+                  formControlName="valorMes" 
+                  min="0"
+                  (input)="calcularSubtotalServicio(i)"
+                >
+              </div>
+            </div>
+
+            <div *ngIf="servicio.get('tipoCobro')?.value === 'proyecto'" class="form-group">
+              <label [for]="'valorProyecto' + i">Valor del Proyecto</label>
+              <input 
+                type="number" 
+                [id]="'valorProyecto' + i" 
+                formControlName="valorProyecto" 
+                min="0"
+                (input)="calcularSubtotalServicio(i)"
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label [for]="'subtotal' + i">Subtotal del Servicio</label>
+            <input 
+              type="number" 
+              [id]="'subtotal' + i" 
+              formControlName="subtotal" 
+              readonly
+              [class.invalid]="servicio.get('subtotal')?.invalid && servicio.get('subtotal')?.touched"
+            >
+            <div *ngIf="servicio.get('subtotal')?.invalid && servicio.get('subtotal')?.touched" class="error-message">
+              El subtotal debe ser mayor a 0
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen y Totales -->
+    <div class="form-section">
+      <h2>Resumen y Totales</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="subtotal">Subtotal</label>
+          <input 
+            type="number" 
+            id="subtotal" 
+            formControlName="subtotal" 
+            readonly
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="descuento">Descuento (%)</label>
+          <input 
+            type="number" 
+            id="descuento" 
+            formControlName="descuento" 
+            min="0"
+            max="100"
+            step="0.01"
+          >
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="descuentoValor">Valor del Descuento</label>
+          <input 
+            type="number" 
+            id="descuentoValor" 
+            formControlName="descuentoValor" 
+            readonly
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="total">Total *</label>
+          <input 
+            type="number" 
+            id="total" 
+            formControlName="total" 
+            readonly
+            [class.invalid]="cotizacionForm.get('total')?.invalid && cotizacionForm.get('total')?.touched"
+          >
+          <div *ngIf="cotizacionForm.get('total')?.invalid && cotizacionForm.get('total')?.touched" class="error-message">
+            El total debe ser mayor a 0
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="notas">Notas Adicionales</label>
+        <textarea 
+          id="notas" 
+          formControlName="notas" 
+          placeholder="Observaciones o notas adicionales"
+          rows="3"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        <span class="btn-icon">←</span>
+        Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading || cotizacionForm.invalid">
+        <span *ngIf="isLoading" class="btn-icon">⏳</span>
+        <span *ngIf="!isLoading" class="btn-icon">💾</span>
+        {{ isLoading ? 'Creando...' : 'Crear Cotización' }}
+      </button>
+    </div>
+  </form>
+</div>

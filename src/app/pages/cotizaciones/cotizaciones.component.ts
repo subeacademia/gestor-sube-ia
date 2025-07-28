@@ -1,174 +1,180 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { FirebaseService } from '../../core/services/firebase.service';
 import { HeaderComponent } from '../../shared/components/header/header.component';
-import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { QuoteCardComponent } from '../../shared/components/quote-card/quote-card.component';
+import { FirebaseService } from '../../core/services/firebase.service';
+import { Router } from '@angular/router';
+
+interface Cotizacion {
+  id: string;
+  codigo: string;
+  nombre: string;
+  empresa: string;
+  email: string;
+  atendido: string;
+  estado: string;
+  valor: number;
+  fecha: any;
+  servicios: any[];
+  [key: string]: any;
+}
 
 @Component({
   selector: 'app-cotizaciones',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    HeaderComponent,
-    StatCardComponent,
-    QuoteCardComponent
-  ],
+  imports: [CommonModule, FormsModule, HeaderComponent, QuoteCardComponent],
   templateUrl: './cotizaciones.component.html',
   styleUrls: ['./cotizaciones.component.scss']
 })
 export class CotizacionesComponent implements OnInit {
-  cotizaciones$!: Observable<any[]>;
+  cotizaciones: Cotizacion[] = [];
+  cotizacionesFiltradas: Cotizacion[] = [];
   
   // Estadísticas
-  stats = [
-    { title: 'Total Cotizaciones', value: '0' },
-    { title: 'Este Mes', value: '0' },
-    { title: 'Valor Total', value: '$0' },
-    { title: 'Total Aceptado', value: '$0' }
-  ];
-
+  totalCotizaciones: number = 0;
+  cotizacionesMes: number = 0;
+  valorTotal: number = 0;
+  totalAceptadas: number = 0;
+  
   // Filtros
-  searchTerm = '';
-  filtroFecha = 'todos';
-  filtroAtendedor = 'todos';
-  filtroEstado = 'todos';
-  filtroMes = 'todos';
-  filtroAno = 'todos';
+  searchTerm: string = '';
+  filtroFecha: string = 'todos';
+  filtroAtendedor: string = 'todos';
+  filtroEstado: string = 'todos';
+  
+  // Estados disponibles
+  estados = ['Emitida', 'Contestada', 'En Negociación', 'Aceptada', 'Rechazada'];
 
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(
+    private firebaseService: FirebaseService,
+    private router: Router
+  ) {}
 
-  ngOnInit(): void {
-    // Datos de prueba para mostrar el diseño
-    const datosPrueba = [
-      {
-        id: '1',
-        codigo: 'COT-001',
-        fecha: new Date('2024-01-15'),
-        nombreCliente: 'Juan Pérez',
-        empresa: 'Tech Solutions',
-        email: 'juan@techsolutions.com',
-        atendido: 'Rodrigo Carrillo',
-        servicios: 'Desarrollo Web, SEO',
-        total: '5000',
-        monto: '5000',
-        estado: 'emitida'
-      },
-      {
-        id: '2',
-        codigo: 'COT-002',
-        fecha: new Date('2024-01-20'),
-        nombreCliente: 'María García',
-        empresa: 'Digital Marketing',
-        email: 'maria@digitalmarketing.com',
-        atendido: 'Bruno Villalobos',
-        servicios: 'Marketing Digital, Redes Sociales',
-        total: '3500',
-        monto: '3500',
-        estado: 'aceptada'
-      },
-      {
-        id: '3',
-        codigo: 'COT-003',
-        fecha: new Date('2024-01-25'),
-        nombreCliente: 'Carlos López',
-        empresa: 'E-commerce Store',
-        email: 'carlos@ecommerce.com',
-        atendido: 'Mario Muñoz',
-        servicios: 'Tienda Online, Pago Electrónico',
-        total: '8000',
-        monto: '8000',
-        estado: 'en-negociacion'
-      }
-    ];
-
-    // Usar datos de prueba en lugar de Firebase por ahora
-    this.cotizaciones$ = new Observable(observer => {
-      observer.next(datosPrueba);
-      observer.complete();
-    });
-
-    // Actualizar estadísticas
-    this.stats = [
-      { title: 'Total Cotizaciones', value: datosPrueba.length.toString() },
-      { title: 'Este Mes', value: '3' },
-      { title: 'Valor Total', value: '$16,500' },
-      { title: 'Total Aceptado', value: '$3,500' }
-    ];
+  ngOnInit() {
+    this.cargarCotizaciones();
   }
 
-  // Métodos para manejar eventos de las tarjetas
-  onVerDetalles(cotizacion: any) {
-    console.log('Ver detalles:', cotizacion);
-  }
-
-  onEditar(cotizacion: any) {
-    console.log('Editar:', cotizacion);
-  }
-
-  async onCambiarEstado(cotizacion: any) {
-    console.log('Cambiar estado:', cotizacion);
-    
-    // Si el nuevo estado es "aceptada", crear contrato automáticamente
-    if (cotizacion.estado === 'aceptada' || cotizacion.estado === 'Aceptada') {
-      try {
-        console.log('✅ Cotización aceptada, creando contrato...');
-        await this.firebaseService.createContratoFromCotizacion(cotizacion);
-        console.log('✅ Contrato creado exitosamente desde cotización');
-        alert('✅ Contrato creado exitosamente desde la cotización!');
-      } catch (error) {
-        console.error('❌ Error al crear contrato desde cotización:', error);
-        alert('❌ Error al crear contrato: ' + error);
-      }
+  async cargarCotizaciones() {
+    try {
+      this.cotizaciones = await this.firebaseService.getCotizacionesAsync();
+      this.cotizacionesFiltradas = [...this.cotizaciones];
+      this.calcularEstadisticas();
+    } catch (error) {
+      console.error('Error al cargar cotizaciones:', error);
     }
   }
 
-  onGenerarContrato(cotizacion: any) {
-    console.log('Generar contrato:', cotizacion);
+  calcularEstadisticas() {
+    this.totalCotizaciones = this.cotizaciones.length;
     
-    // Si el estado es "aceptada", crear el contrato automáticamente
-    if (cotizacion.estado === 'aceptada') {
-      this.crearContratoDesdeCotizacion(cotizacion);
-    } else {
-      // Si no está aceptada, cambiar el estado a aceptada y luego crear el contrato
-      this.firebaseService.updateCotizacion(cotizacion.id, { estado: 'aceptada' })
-        .then(() => {
-          this.crearContratoDesdeCotizacion(cotizacion);
-        })
-        .catch(error => {
-          console.error('Error al actualizar cotización:', error);
-        });
-    }
+    const ahora = new Date();
+    const mesActual = ahora.getMonth();
+    const añoActual = ahora.getFullYear();
+    
+    this.cotizacionesMes = this.cotizaciones.filter(cot => {
+      const fecha = cot.fecha?.toDate ? cot.fecha.toDate() : new Date(cot.fecha);
+      return fecha.getMonth() === mesActual && fecha.getFullYear() === añoActual;
+    }).length;
+    
+    this.valorTotal = this.cotizaciones.reduce((sum, cot) => sum + (cot.valor || 0), 0);
+    
+    this.totalAceptadas = this.cotizaciones
+      .filter(cot => cot.estado === 'Aceptada')
+      .reduce((sum, cot) => sum + (cot.valor || 0), 0);
   }
 
-  private crearContratoDesdeCotizacion(cotizacion: any) {
-    this.firebaseService.createContratoFromCotizacion(cotizacion)
-      .then((contrato) => {
-        console.log('Contrato creado exitosamente:', contrato);
-        // Aquí podrías mostrar una notificación de éxito
-        alert(`Contrato ${contrato.codigo} creado exitosamente desde la cotización ${cotizacion.codigo}`);
-      })
-      .catch(error => {
-        console.error('Error al crear contrato:', error);
-        // Aquí podrías mostrar una notificación de error
-        alert('Error al crear el contrato. Por favor, inténtalo de nuevo.');
-      });
-  }
-
-  onEliminar(cotizacion: any) {
-    console.log('Eliminar:', cotizacion);
-  }
-
-  onLogout() {
-    console.log('Cerrar sesión');
+  onSearchChange() {
+    this.aplicarFiltros();
   }
 
   aplicarFiltros() {
-    console.log('Aplicando filtros...');
+    let filtradas = [...this.cotizaciones];
+
+    // Filtro de búsqueda
+    if (this.searchTerm) {
+      const termino = this.searchTerm.toLowerCase();
+      filtradas = filtradas.filter(cot => 
+        cot.codigo?.toLowerCase().includes(termino) ||
+        cot.nombre?.toLowerCase().includes(termino) ||
+        cot.empresa?.toLowerCase().includes(termino) ||
+        cot.email?.toLowerCase().includes(termino) ||
+        cot.atendido?.toLowerCase().includes(termino)
+      );
+    }
+
+    // Filtro de fecha
+    if (this.filtroFecha !== 'todos') {
+      const ahora = new Date();
+      const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+      const semana = new Date(hoy.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const mes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+
+      filtradas = filtradas.filter(cot => {
+        const fecha = cot.fecha?.toDate ? cot.fecha.toDate() : new Date(cot.fecha);
+        
+        switch (this.filtroFecha) {
+          case 'hoy':
+            return fecha >= hoy;
+          case 'semana':
+            return fecha >= semana;
+          case 'mes':
+            return fecha >= mes;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Filtro de atendido
+    if (this.filtroAtendedor !== 'todos') {
+      filtradas = filtradas.filter(cot => cot.atendido === this.filtroAtendedor);
+    }
+
+    // Filtro de estado
+    if (this.filtroEstado !== 'todos') {
+      filtradas = filtradas.filter(cot => cot.estado === this.filtroEstado);
+    }
+
+    this.cotizacionesFiltradas = filtradas;
+  }
+
+  getCotizacionesPorEstado(estado: string): Cotizacion[] {
+    return this.cotizacionesFiltradas.filter(cot => cot.estado === estado);
+  }
+
+  async onEstadoChanged(event: { cotizacionId: string, nuevoEstado: string }) {
+    try {
+      await this.firebaseService.updateCotizacion(event.cotizacionId, { estado: event.nuevoEstado });
+      
+      // Si el estado es "Aceptada", crear contrato
+      if (event.nuevoEstado === 'Aceptada') {
+        const cotizacion = this.cotizaciones.find(c => c.id === event.cotizacionId);
+        if (cotizacion) {
+          await this.firebaseService.createContratoFromCotizacion(cotizacion);
+        }
+      }
+      
+      // Recargar cotizaciones
+      await this.cargarCotizaciones();
+    } catch (error) {
+      console.error('Error al cambiar estado:', error);
+    }
+  }
+
+  async onCotizacionDeleted(cotizacionId: string) {
+    try {
+      // Usar el método deleteDoc directamente
+      const { deleteDoc, doc } = await import('@angular/fire/firestore');
+      const cotizacionRef = doc(this.firebaseService['firestore'], 'cotizaciones', cotizacionId);
+      await deleteDoc(cotizacionRef);
+      await this.cargarCotizaciones();
+    } catch (error) {
+      console.error('Error al eliminar cotización:', error);
+    }
+  }
+
+  onLogout() {
+    // El logout se maneja en el header component
   }
 }

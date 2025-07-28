@@ -60,68 +60,173 @@
 
       <!-- Sección de Cotizaciones -->
       <section class="cotizaciones-section">
-        <h2>📋 Gestión de Cotizaciones</h2>
-        
-        <!-- Botón de prueba temporal -->
-        <div style="margin-bottom: 20px; text-align: center;">
-          <button class="btn btn-primary" (click)="crearCotizacionPrueba()">
-            🧪 Crear Cotización de Prueba
-          </button>
-          <button class="btn btn-secondary" (click)="crearDatosCompletos()" style="margin-left: 10px;">
-            🧪 Crear Datos Completos (Cotización + Contrato)
-          </button>
-          <button class="btn btn-warning" (click)="probarConexionDirecta()" style="margin-left: 10px;">
-            🔧 Probar Conexión Directa
-          </button>
-          <button class="btn btn-info" (click)="verificarReglasEspecificas()" style="margin-left: 10px;">
-            🔒 Verificar Reglas
-          </button>
+        <div class="section-header">
+          <h2>📋 Tablero de Cotizaciones</h2>
+          <div class="header-buttons">
+            <button class="btn btn-primary" (click)="crearCotizacionPrueba()">
+              🧪 Crear Cotización de Prueba
+            </button>
+            <button class="btn btn-secondary" (click)="crearDatosCompletos()">
+              🧪 Crear Datos Completos
+            </button>
+            <button class="btn btn-warning" (click)="probarConexionDirecta()">
+              🔧 Probar Conexión
+            </button>
+            <button class="btn btn-info" (click)="verificarReglasEspecificas()">
+              🔒 Verificar Reglas
+            </button>
+          </div>
         </div>
-        
-        <!-- Lista de Cotizaciones -->
-        <div class="cotizaciones-list">
-          <div *ngIf="cargando" class="loading-container">
-            <div class="loading-spinner">⏳</div>
-            <p>Cargando cotizaciones...</p>
-          </div>
-          
-          <div *ngIf="!cargando && cotizacionesFiltradas.length === 0" class="empty-state">
-            <div class="empty-icon">📄</div>
-            <p>No se encontraron cotizaciones</p>
-            <p class="empty-subtitle">Las cotizaciones aparecerán aquí una vez que se creen</p>
-          </div>
-          
-          <div *ngIf="!cargando && cotizacionesFiltradas.length > 0" class="cotizaciones-grid">
-            <div *ngFor="let cotizacion of cotizacionesFiltradas" class="cotizacion-card">
-              <div class="card-header">
-                <h4>{{ cotizacion.codigo }}</h4>
-                <span class="estado-badge" [class]="getEstadoClass(cotizacion.estado)">
-                  {{ cotizacion.estado }}
-                </span>
-              </div>
-              <div class="card-body">
-                <p><strong>Cliente:</strong> {{ cotizacion.nombre }}</p>
-                <p><strong>Empresa:</strong> {{ cotizacion.empresa }}</p>
-                <p><strong>Total:</strong> {{ formatearMoneda(cotizacion.total, cotizacion.moneda) }}</p>
-                <p><strong>Atendido por:</strong> {{ cotizacion.atendido }}</p>
-              </div>
-              <div class="card-actions">
-                <button class="btn btn-primary" (click)="verDetalle(cotizacion)">Ver Detalle</button>
-                <button class="btn btn-secondary" (click)="editarCotizacion(cotizacion)">Editar</button>
-                <button class="btn btn-success" (click)="crearContrato(cotizacion)">Crear Contrato</button>
+
+        <!-- Estado de carga -->
+        <div *ngIf="cargando" class="loading-container">
+          <div class="loading-spinner">⏳</div>
+          <p>Cargando cotizaciones...</p>
+        </div>
+
+        <!-- Estado vacío -->
+        <div *ngIf="!cargando && cotizacionesFiltradas.length === 0" class="empty-state">
+          <div class="empty-icon">📄</div>
+          <p>No se encontraron cotizaciones con los filtros aplicados</p>
+          <p class="empty-subtitle">Las cotizaciones aparecerán aquí una vez que se creen</p>
+        </div>
+
+        <!-- Tablero Kanban -->
+        <div class="kanban-board" *ngIf="!cargando && cotizacionesFiltradas.length > 0">
+          <!-- Columna: Nuevas -->
+          <div class="kanban-column">
+            <div class="kanban-column-header">
+              <h3>🆕 Nuevas</h3>
+              <span class="column-count">{{ getCotizacionesPorEstado('Nueva').length }}</span>
+            </div>
+            <div class="kanban-column-content">
+              <div *ngFor="let cotizacion of getCotizacionesPorEstado('Nueva')" class="cotizacion-card">
+                <div class="card-header">
+                  <h4>{{ cotizacion.codigo }}</h4>
+                  <span class="estado-badge estado-nueva">{{ cotizacion.estado }}</span>
+                </div>
+                <div class="card-body">
+                  <p><strong>Cliente:</strong> {{ cotizacion.nombre }}</p>
+                  <p><strong>Empresa:</strong> {{ cotizacion.empresa }}</p>
+                  <p><strong>Total:</strong> {{ formatearMoneda(cotizacion.total, cotizacion.moneda) }}</p>
+                  <p><strong>Atendido por:</strong> {{ cotizacion.atendido }}</p>
+                </div>
+                <div class="card-actions">
+                  <button class="btn btn-primary" (click)="verDetalle(cotizacion)">Ver Detalle</button>
+                  <button class="btn btn-secondary" (click)="editarCotizacion(cotizacion)">Editar</button>
+                  <button class="btn btn-success" (click)="crearContrato(cotizacion)">Crear Contrato</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        
-        <ng-template #loading>
-          <div class="loading">
-            Cargando cotizaciones...
+
+          <!-- Columna: En Revisión -->
+          <div class="kanban-column">
+            <div class="kanban-column-header">
+              <h3>👀 En Revisión</h3>
+              <span class="column-count">{{ getCotizacionesPorEstado('En Revisión').length }}</span>
+            </div>
+            <div class="kanban-column-content">
+              <div *ngFor="let cotizacion of getCotizacionesPorEstado('En Revisión')" class="cotizacion-card">
+                <div class="card-header">
+                  <h4>{{ cotizacion.codigo }}</h4>
+                  <span class="estado-badge estado-revision">{{ cotizacion.estado }}</span>
+                </div>
+                <div class="card-body">
+                  <p><strong>Cliente:</strong> {{ cotizacion.nombre }}</p>
+                  <p><strong>Empresa:</strong> {{ cotizacion.empresa }}</p>
+                  <p><strong>Total:</strong> {{ formatearMoneda(cotizacion.total, cotizacion.moneda) }}</p>
+                  <p><strong>Atendido por:</strong> {{ cotizacion.atendido }}</p>
+                </div>
+                <div class="card-actions">
+                  <button class="btn btn-primary" (click)="verDetalle(cotizacion)">Ver Detalle</button>
+                  <button class="btn btn-secondary" (click)="editarCotizacion(cotizacion)">Editar</button>
+                  <button class="btn btn-success" (click)="crearContrato(cotizacion)">Crear Contrato</button>
+                </div>
+              </div>
+            </div>
           </div>
-        </ng-template>
-        
-        <div class="no-data" *ngIf="(cotizaciones$ | async)?.length === 0">
-          No hay cotizaciones disponibles
+
+          <!-- Columna: Enviadas -->
+          <div class="kanban-column">
+            <div class="kanban-column-header">
+              <h3>📤 Enviadas</h3>
+              <span class="column-count">{{ getCotizacionesPorEstado('Enviada').length }}</span>
+            </div>
+            <div class="kanban-column-content">
+              <div *ngFor="let cotizacion of getCotizacionesPorEstado('Enviada')" class="cotizacion-card">
+                <div class="card-header">
+                  <h4>{{ cotizacion.codigo }}</h4>
+                  <span class="estado-badge estado-enviada">{{ cotizacion.estado }}</span>
+                </div>
+                <div class="card-body">
+                  <p><strong>Cliente:</strong> {{ cotizacion.nombre }}</p>
+                  <p><strong>Empresa:</strong> {{ cotizacion.empresa }}</p>
+                  <p><strong>Total:</strong> {{ formatearMoneda(cotizacion.total, cotizacion.moneda) }}</p>
+                  <p><strong>Atendido por:</strong> {{ cotizacion.atendido }}</p>
+                </div>
+                <div class="card-actions">
+                  <button class="btn btn-primary" (click)="verDetalle(cotizacion)">Ver Detalle</button>
+                  <button class="btn btn-secondary" (click)="editarCotizacion(cotizacion)">Editar</button>
+                  <button class="btn btn-success" (click)="crearContrato(cotizacion)">Crear Contrato</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna: Aceptadas -->
+          <div class="kanban-column">
+            <div class="kanban-column-header">
+              <h3>✅ Aceptadas</h3>
+              <span class="column-count">{{ getCotizacionesPorEstado('Aceptada').length }}</span>
+            </div>
+            <div class="kanban-column-content">
+              <div *ngFor="let cotizacion of getCotizacionesPorEstado('Aceptada')" class="cotizacion-card">
+                <div class="card-header">
+                  <h4>{{ cotizacion.codigo }}</h4>
+                  <span class="estado-badge estado-aceptada">{{ cotizacion.estado }}</span>
+                </div>
+                <div class="card-body">
+                  <p><strong>Cliente:</strong> {{ cotizacion.nombre }}</p>
+                  <p><strong>Empresa:</strong> {{ cotizacion.empresa }}</p>
+                  <p><strong>Total:</strong> {{ formatearMoneda(cotizacion.total, cotizacion.moneda) }}</p>
+                  <p><strong>Atendido por:</strong> {{ cotizacion.atendido }}</p>
+                </div>
+                <div class="card-actions">
+                  <button class="btn btn-primary" (click)="verDetalle(cotizacion)">Ver Detalle</button>
+                  <button class="btn btn-secondary" (click)="editarCotizacion(cotizacion)">Editar</button>
+                  <button class="btn btn-success" (click)="crearContrato(cotizacion)">Crear Contrato</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna: Rechazadas -->
+          <div class="kanban-column">
+            <div class="kanban-column-header">
+              <h3>❌ Rechazadas</h3>
+              <span class="column-count">{{ getCotizacionesPorEstado('Rechazada').length }}</span>
+            </div>
+            <div class="kanban-column-content">
+              <div *ngFor="let cotizacion of getCotizacionesPorEstado('Rechazada')" class="cotizacion-card">
+                <div class="card-header">
+                  <h4>{{ cotizacion.codigo }}</h4>
+                  <span class="estado-badge estado-rechazada">{{ cotizacion.estado }}</span>
+                </div>
+                <div class="card-body">
+                  <p><strong>Cliente:</strong> {{ cotizacion.nombre }}</p>
+                  <p><strong>Empresa:</strong> {{ cotizacion.empresa }}</p>
+                  <p><strong>Total:</strong> {{ formatearMoneda(cotizacion.total, cotizacion.moneda) }}</p>
+                  <p><strong>Atendido por:</strong> {{ cotizacion.atendido }}</p>
+                </div>
+                <div class="card-actions">
+                  <button class="btn btn-primary" (click)="verDetalle(cotizacion)">Ver Detalle</button>
+                  <button class="btn btn-secondary" (click)="editarCotizacion(cotizacion)">Editar</button>
+                  <button class="btn btn-success" (click)="crearContrato(cotizacion)">Crear Contrato</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>

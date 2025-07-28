@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-firmar-contrato',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './firmar-contrato.component.html',
   styleUrl: './firmar-contrato.component.scss'
 })

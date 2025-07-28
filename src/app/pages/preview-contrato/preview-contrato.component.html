@@ -1,0 +1,211 @@
+<div class="preview-container">
+  <!-- Header -->
+  <div class="preview-header">
+    <div class="header-content">
+      <h1>📄 Previsualización del Contrato</h1>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="volverContratos()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+          Volver a Contratos
+        </button>
+        <button 
+          class="btn btn-primary" 
+          (click)="generarPDF()"
+          [disabled]="generandoPDF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+          </svg>
+          {{ generandoPDF ? 'Generando PDF...' : 'Descargar PDF' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner">⏳</div>
+    <p>Cargando contrato...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error-container">
+    <div class="error-icon">❌</div>
+    <h2>Error al cargar el contrato</h2>
+    <p>{{ errorMessage }}</p>
+    <button class="btn btn-primary" (click)="cargarContrato()">Reintentar</button>
+  </div>
+
+  <!-- Contrato Preview -->
+  <div *ngIf="!loading && !error && contrato" class="contract-preview">
+    <!-- Encabezado del contrato -->
+    <div class="contract-header">
+      <div class="logo-section">
+        <h1 class="company-name">SUBE IA</h1>
+        <p class="company-tagline">Tecnología e Innovación</p>
+      </div>
+      <div class="contract-info">
+        <h2 class="contract-title">{{ contrato.titulo || 'Contrato de Servicios' }}</h2>
+        <div class="contract-meta">
+          <span class="contract-code">{{ contrato.codigo }}</span>
+          <span class="contract-date">{{ formatearFecha(contrato.fechaCreacionContrato) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información del cliente -->
+    <div class="contract-section">
+      <h3 class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+        Información del Cliente
+      </h3>
+      <div class="client-info">
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Nombre:</label>
+            <span>{{ contrato.nombreCliente }}</span>
+          </div>
+          <div class="info-item">
+            <label>Email:</label>
+            <span>{{ contrato.emailCliente }}</span>
+          </div>
+          <div class="info-item">
+            <label>Empresa:</label>
+            <span>{{ contrato.empresa || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>RUT:</label>
+            <span>{{ contrato.rutCliente || 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Servicios -->
+    <div class="contract-section">
+      <h3 class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+        </svg>
+        Servicios
+      </h3>
+      <div class="services-info">
+        <p class="services-text">{{ contrato.servicios || 'Servicios generales' }}</p>
+        <div *ngIf="contrato.descripcionServicios" class="services-description">
+          <h4>Descripción:</h4>
+          <p>{{ contrato.descripcionServicios }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información financiera -->
+    <div class="contract-section">
+      <h3 class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+        </svg>
+        Información Financiera
+      </h3>
+      <div class="financial-info">
+        <div class="total-amount">
+          <span class="amount-label">Valor Total:</span>
+          <span class="amount-value">{{ formatearMoneda(contrato.valorTotal) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Términos y condiciones -->
+    <div *ngIf="contrato.terminosCondiciones" class="contract-section">
+      <h3 class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+        </svg>
+        Términos y Condiciones
+      </h3>
+      <div class="terms-info">
+        <p>{{ contrato.terminosCondiciones }}</p>
+      </div>
+    </div>
+
+    <!-- Firmas -->
+    <div class="contract-section">
+      <h3 class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+        Firmas
+      </h3>
+      <div class="signatures-section">
+        <div class="signature-box">
+          <h4>Representante Legal</h4>
+          <div class="signature-area">
+            <img 
+              *ngIf="contrato.firmaRepresentanteBase64" 
+              [src]="contrato.firmaRepresentanteBase64" 
+              alt="Firma del representante"
+              class="signature-image">
+            <div *ngIf="!contrato.firmaRepresentanteBase64" class="no-signature">
+              Sin firma
+            </div>
+          </div>
+          <p class="signature-name">{{ contrato.representanteLegal || 'Representante Legal' }}</p>
+          <p class="signature-date">
+            {{ contrato.fechaFirmaRepresentante ? formatearFecha(contrato.fechaFirmaRepresentante) : 'Fecha: ________' }}
+          </p>
+        </div>
+
+        <div class="signature-box">
+          <h4>Cliente</h4>
+          <div class="signature-area">
+            <img 
+              *ngIf="contrato.firmaClienteBase64" 
+              [src]="contrato.firmaClienteBase64" 
+              alt="Firma del cliente"
+              class="signature-image">
+            <div *ngIf="!contrato.firmaClienteBase64" class="no-signature">
+              Sin firma
+            </div>
+          </div>
+          <p class="signature-name">{{ contrato.nombreCliente }}</p>
+          <p class="signature-date">
+            {{ contrato.fechaFirmaCliente ? formatearFecha(contrato.fechaFirmaCliente) : 'Fecha: ________' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado del contrato -->
+    <div class="contract-section">
+      <h3 class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        Estado del Contrato
+      </h3>
+      <div class="status-info">
+        <div class="status-item">
+          <label>Estado:</label>
+          <span class="status-badge" [class]="getEstadoClass(contrato.estado)">
+            {{ contrato.estado }}
+          </span>
+        </div>
+        <div *ngIf="contrato.fechaFirmaFinal" class="status-item">
+          <label>Fecha de Finalización:</label>
+          <span>{{ formatearFecha(contrato.fechaFirmaFinal) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="contract-footer">
+      <div class="footer-content">
+        <p class="company-info">SUBE IA - Tecnología e Innovación</p>
+                 <p class="contact-info">www.subeia.tech | admin&#64;subeia.tech</p>
+         <p class="generation-date">Documento generado el {{ formatearFecha(fechaActual) }}</p>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -469,4 +469,10 @@ Equipo SUBE IA`;
       minute: '2-digit'
     });
   }
+
+  // Función para obtener la clase CSS del estado
+  getEstadoClass(estado: string): string {
+    const estadoNormalizado = (estado || 'pendiente-de-firma').toLowerCase().replace(/\s+/g, '-');
+    return `estado-${estadoNormalizado}`;
+  }
 } 

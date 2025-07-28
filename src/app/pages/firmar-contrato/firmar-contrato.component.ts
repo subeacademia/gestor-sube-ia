@@ -32,7 +32,8 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
   // Variables de representante
   representantes = [
     { value: 'Bruno Villalobos - CEO', label: 'Bruno Villalobos - CEO' },
-    { value: 'Mario Muñoz - CAO', label: 'Mario Muñoz - CAO' }
+    { value: 'Mario Muñoz - CAO', label: 'Mario Muñoz - CAO' },
+    { value: 'Rodrigo Carrillo - CTO', label: 'Rodrigo Carrillo - CTO' }
   ];
   representanteSeleccionado = '';
   
@@ -74,9 +75,8 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
 
       console.log('📋 Cargando contrato:', contratoId);
 
-      // Obtener contratos y buscar el específico
-      const contratos = await this.firebaseService.getContratosAsync();
-      this.contrato = contratos.find(c => c.id === contratoId);
+      // Obtener contrato específico
+      this.contrato = await this.firebaseService.getContratoById(contratoId);
 
       if (!this.contrato) {
         throw new Error('Contrato no encontrado');
@@ -226,7 +226,8 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
       await this.firebaseService.updateContrato(this.contrato.id, {
         firmaRepresentanteBase64: firmaBase64,
         representanteLegal: this.representanteSeleccionado,
-        fechaFirmaRepresentante: new Date()
+        fechaFirmaRepresentante: new Date(),
+        estado: 'Pendiente de Firma Cliente'
       });
 
       // Actualizar estado local
@@ -234,14 +235,13 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
       this.contrato.firmaRepresentanteBase64 = firmaBase64;
       this.contrato.representanteLegal = this.representanteSeleccionado;
       this.contrato.fechaFirmaRepresentante = new Date();
+      this.contrato.estado = 'Pendiente de Firma Cliente';
 
       console.log('✅ Firma del representante guardada exitosamente');
-      this.mostrarNotificacion('Firma del representante guardada exitosamente', 'success');
+      this.mostrarNotificacion('Firma del representante guardada exitosamente. El contrato está listo para ser enviado al cliente.', 'success');
 
-      // Redirigir al listado de contratos después de 2 segundos
-      setTimeout(() => {
-        this.router.navigate(['/contratos']);
-      }, 2000);
+      // Mostrar opciones para enviar al cliente
+      this.mostrarOpcionesEnvioCliente();
 
     } catch (error: any) {
       console.error('❌ Error al guardar firma del representante:', error);
@@ -280,42 +280,21 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
       // Obtener la firma como imagen Base64
       const firmaBase64 = this.signaturePadCliente.toDataURL('image/png');
 
-      // Verificar si ya tiene firma del representante
-      const tieneFirmaRepresentante = this.contrato.firmaRepresentanteBase64;
-
-      // Determinar el estado final
-      let estadoFinal = 'Firmado';
-      if (tieneFirmaRepresentante) {
-        estadoFinal = 'Finalizado'; // Ambas firmas completadas
-      }
-
       // Actualizar el contrato en Firestore
       await this.firebaseService.updateContrato(this.contrato.id, {
         firmaClienteBase64: firmaBase64,
         fechaFirmaCliente: new Date(),
-        estadoContrato: estadoFinal,
-        fechaFirmaFinal: new Date(),
-        contratoValido: true,
-        esPreContrato: false,
-        fechaCompletado: new Date(),
-        ambasFirmasCompletadas: tieneFirmaRepresentante ? true : false
+        estado: 'Completamente Firmado'
       });
 
       // Actualizar estado local
       this.firmaClienteGuardada = true;
       this.contrato.firmaClienteBase64 = firmaBase64;
       this.contrato.fechaFirmaCliente = new Date();
-      this.contrato.estadoContrato = estadoFinal;
+      this.contrato.estado = 'Completamente Firmado';
 
       console.log('✅ Firma del cliente guardada exitosamente');
-      console.log(`📋 Estado actualizado a: ${estadoFinal}`);
-      this.mostrarNotificacion('Firma del cliente guardada exitosamente', 'success');
-
-      // Verificar si ahora el contrato está completamente firmado
-      if (this.firmaRepresentanteGuardada && this.firmaClienteGuardada) {
-        console.log('🎯 Contrato completamente firmado después de agregar firma del cliente');
-        this.mostrarContratoCompletamenteFirmado();
-      }
+      this.mostrarNotificacion('Firma del cliente guardada exitosamente. El contrato está completamente firmado.', 'success');
 
     } catch (error: any) {
       console.error('❌ Error al guardar firma del cliente:', error);
@@ -323,8 +302,8 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Funciones para admin (generar link y enviar email)
-  generarLinkCliente(): void {
+  // Función para enviar email al cliente
+  enviarEmailCliente(): void {
     if (!this.contrato) {
       this.mostrarNotificacion('Error: No hay contrato cargado', 'error');
       return;
@@ -334,24 +313,6 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/enviar-firma', this.contrato.id]);
   }
 
-  async enviarEmailCliente(): Promise<void> {
-    if (!this.contrato) {
-      this.mostrarNotificacion('Error: No hay contrato cargado', 'error');
-      return;
-    }
-
-    try {
-      console.log('📧 Enviando email al cliente...');
-
-      // Redirigir a la página de enviar firma con EmailJS
-      this.router.navigate(['/enviar-firma', this.contrato.id]);
-
-    } catch (error: any) {
-      console.error('❌ Error al enviar email:', error);
-      this.mostrarNotificacion('Error al enviar email: ' + error.message, 'error');
-    }
-  }
-
   // Función para finalizar contrato
   async finalizarContrato(): Promise<void> {
     if (!this.contrato) {
@@ -359,42 +320,28 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    if (this.esPanelAdmin) {
-      // En admin, solo verificar firma del representante
-      if (!this.firmaRepresentanteGuardada) {
-        this.mostrarNotificacion('Error: Se requiere la firma del representante para continuar', 'error');
-        return;
-      }
-    } else {
-      // En cliente, verificar ambas firmas
-      if (!this.firmaRepresentanteGuardada || !this.firmaClienteGuardada) {
-        this.mostrarNotificacion('Error: Se requieren ambas firmas para finalizar el contrato', 'error');
-        return;
-      }
+    if (!this.firmaRepresentanteGuardada || !this.firmaClienteGuardada) {
+      this.mostrarNotificacion('Error: Ambas firmas deben estar completadas para finalizar el contrato', 'error');
+      return;
     }
 
     try {
-      console.log('🎯 Finalizando contrato...');
+      console.log('✅ Finalizando contrato...');
 
       // Actualizar el contrato en Firestore
-      const datosFinales = {
-        estadoContrato: 'Firmado',
-        fechaFirmaFinal: new Date(),
-        contratoValido: true,
-        esPreContrato: false,
-        fechaCompletado: new Date()
-      };
+      await this.firebaseService.updateContrato(this.contrato.id, {
+        estado: 'Finalizado',
+        fechaFinalizacion: new Date()
+      });
 
-      await this.firebaseService.updateContrato(this.contrato.id, datosFinales);
+      // Actualizar estado local
+      this.contrato.estado = 'Finalizado';
+      this.contrato.fechaFinalizacion = new Date();
 
       console.log('✅ Contrato finalizado exitosamente');
-      console.log('📋 Estado actualizado a: Firmado');
-      console.log('💰 Contrato válido - valor sumado al dashboard');
+      this.mostrarNotificacion('Contrato finalizado exitosamente. El contrato está completamente procesado.', 'success');
 
-      // Mostrar notificación de éxito
-      this.mostrarNotificacion('¡Contrato finalizado exitosamente!', 'success');
-
-      // Redirigir de vuelta al panel de contratos después de 2 segundos
+      // Redirigir al listado de contratos
       setTimeout(() => {
         this.router.navigate(['/contratos']);
       }, 2000);
@@ -405,16 +352,39 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Función para mostrar contrato completamente firmado
-  mostrarContratoCompletamenteFirmado(): void {
-    console.log('🎉 Mostrando mensaje de contrato completamente firmado');
-    // Esta función se implementará en el template
+  mostrarOpcionesEnvioCliente(): void {
+    const opciones = confirm(`
+      ✅ Firma del representante guardada exitosamente!
+      
+      ¿Qué deseas hacer ahora?
+      
+      - Aceptar: Ir a la página de envío de firma al cliente
+      - Cancelar: Volver al listado de contratos
+    `);
+
+    if (opciones) {
+      // Navegar a la página de enviar firma
+      this.router.navigate(['/enviar-firma', this.contrato.id]);
+    } else {
+      // Volver al listado de contratos
+      this.router.navigate(['/contratos']);
+    }
   }
 
-  // Función para mostrar opciones de finalización
-  mostrarOpcionesFinalizacion(): void {
-    console.log('🎯 Mostrando opciones de finalización');
-    // Esta función se implementará en el template
+  // Función para generar link de firma del cliente
+  generarLinkCliente(): void {
+    if (!this.contrato) {
+      this.mostrarNotificacion('Error: No hay contrato cargado', 'error');
+      return;
+    }
+
+    // Redirigir a la página de enviar firma
+    this.router.navigate(['/enviar-firma', this.contrato.id]);
+  }
+
+  // Función para volver a contratos
+  volverContratos(): void {
+    this.router.navigate(['/contratos']);
   }
 
   // Función para mostrar notificaciones
@@ -499,8 +469,17 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // Función para volver a contratos
-  volverContratos(): void {
-    this.router.navigate(['/contratos']);
+  // Función para obtener la clase CSS del estado
+  getEstadoClass(estado: string): string {
+    const estadoNormalizado = (estado || 'pendiente-de-firma').toLowerCase().replace(/\s+/g, '-');
+    return `estado-${estadoNormalizado}`;
+  }
+
+  // Función para formatear moneda
+  formatearMoneda(valor: number): string {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP'
+    }).format(valor);
   }
 }
