@@ -22,6 +22,19 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'admin',
+    loadComponent: () => import('./pages/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'test-admin',
+    loadComponent: () => import('./pages/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent)
+  },
+  {
+    path: 'admin-test',
+    loadComponent: () => import('./pages/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent)
+  },
+  {
     path: 'cotizaciones/crear',
     loadComponent: () => import('./pages/crear-cotizacion/crear-cotizacion.component').then(m => m.CrearCotizacionComponent),
     canActivate: [authGuard]

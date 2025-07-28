@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { auth } from './firebase.config';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword } from 'firebase/auth';
+import { Auth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword } from '@angular/fire/auth';
 import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
@@ -11,10 +10,10 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private auth: Auth) {
     console.log('AuthService initialized');
-    onAuthStateChanged(auth, (user) => {
-      console.log('Auth state changed:', user ? 'User logged in' : 'No user');
+    onAuthStateChanged(this.auth, (user) => {
+      console.log('Auth state changed:', user ? `User logged in: ${user.email}` : 'No user');
       this.currentUserSubject.next(user);
     });
   }
@@ -22,7 +21,7 @@ export class AuthService {
   async login(email: string, password: string): Promise<User> {
     console.log('Attempting login with Firebase...');
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
       console.log('Firebase login successful:', userCredential.user.email);
       return userCredential.user;
     } catch (error) {
@@ -34,7 +33,7 @@ export class AuthService {
   async createUser(email: string, password: string): Promise<User> {
     console.log('Creating user with Firebase...');
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
       console.log('Firebase user created:', userCredential.user.email);
       return userCredential.user;
     } catch (error) {
@@ -45,7 +44,7 @@ export class AuthService {
 
   async logout() {
     console.log('Logging out...');
-    await signOut(auth);
+    await signOut(this.auth);
     this.router.navigate(['/login']);
   }
 } 

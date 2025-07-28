@@ -1,1 +1,99 @@
-<p>dashboard works!</p>
+<div class="dashboard-container">
+  <app-header (logoutEvent)="onLogout()"></app-header>
+
+  <main class="dashboard-main">
+    <div class="dashboard-content">
+      <!-- Título del Dashboard -->
+      <div class="dashboard-header">
+        <h1>🏠 Dashboard Principal</h1>
+        <p>Bienvenido al sistema de gestión SUBE IA</p>
+      </div>
+
+      <!-- Tarjetas de Navegación -->
+      <div class="navigation-cards">
+        <!-- Panel de Administración -->
+        <div class="nav-card" routerLink="/admin">
+          <div class="nav-card-icon">📊</div>
+          <div class="nav-card-content">
+            <h3>Panel de Administración</h3>
+            <p>Gestiona cotizaciones, estadísticas y filtros avanzados</p>
+            <div class="nav-card-features">
+              <span class="feature">📋 Cotizaciones</span>
+              <span class="feature">📈 Estadísticas</span>
+              <span class="feature">🔍 Filtros</span>
+            </div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+
+        <!-- Gestión de Contratos -->
+        <div class="nav-card" routerLink="/contratos">
+          <div class="nav-card-icon">📄</div>
+          <div class="nav-card-content">
+            <h3>Gestión de Contratos</h3>
+            <p>Administra contratos, firmas digitales y seguimiento</p>
+            <div class="nav-card-features">
+              <span class="feature">📝 Contratos</span>
+              <span class="feature">✍️ Firmas</span>
+              <span class="feature">📊 Seguimiento</span>
+            </div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+
+        <!-- Crear Cotización -->
+        <div class="nav-card" routerLink="/cotizaciones/crear">
+          <div class="nav-card-icon">➕</div>
+          <div class="nav-card-content">
+            <h3>Crear Nueva Cotización</h3>
+            <p>Genera cotizaciones personalizadas para clientes</p>
+            <div class="nav-card-features">
+              <span class="feature">🎯 Personalizada</span>
+              <span class="feature">💰 Precios</span>
+              <span class="feature">📧 Envío</span>
+            </div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+
+        <!-- Configuración -->
+        <div class="nav-card">
+          <div class="nav-card-icon">⚙️</div>
+          <div class="nav-card-content">
+            <h3>Configuración</h3>
+            <p>Configura el sistema y gestiona usuarios</p>
+            <div class="nav-card-features">
+              <span class="feature">👥 Usuarios</span>
+              <span class="feature">🔧 Sistema</span>
+              <span class="feature">📊 Reportes</span>
+            </div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+      </div>
+
+      <!-- Estadísticas Rápidas -->
+      <div class="quick-stats">
+        <h2>📈 Estadísticas Rápidas</h2>
+        <div class="stats-grid">
+          <div class="quick-stat-card">
+            <div class="stat-number">15</div>
+            <div class="stat-label">Cotizaciones Activas</div>
+          </div>
+          <div class="quick-stat-card">
+            <div class="stat-number">8</div>
+            <div class="stat-label">Contratos Pendientes</div>
+          </div>
+          <div class="quick-stat-card">
+            <div class="stat-number">$45,200</div>
+            <div class="stat-label">Valor Total</div>
+          </div>
+          <div class="quick-stat-card">
+            <div class="stat-number">92%</div>
+            <div class="stat-label">Tasa de Éxito</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

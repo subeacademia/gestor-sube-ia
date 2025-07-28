@@ -1,1 +1,15 @@
-<p>header works!</p>
+<header class="admin-header">
+  <div class="header-content">
+    <h1>📊 Panel de Administración</h1>
+    <div class="header-actions">
+      <h2>SUBE IA TECH</h2>
+              <a routerLink="/crear-cotizacion" class="btn btn-primary">Crear Nueva Cotización</a>
+        <a routerLink="/contratos" class="btn btn-success">📋 Gestión de Contratos</a>
+        <a routerLink="/admin-test" class="btn btn-secondary">🔧 Panel Admin</a>
+        <button (click)="cerrarSesion()" class="btn btn-logout">Cerrar Sesión</button>
+    </div>
+  </div>
+  <div class="user-info" *ngIf="userInfo">
+    <span>{{ userInfo.email }}</span>
+  </div>
+</header>

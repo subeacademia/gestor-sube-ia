@@ -10,9 +10,12 @@ export const authGuard = () => {
   return authService.currentUser$.pipe(
     take(1),
     map(user => {
+      console.log('AuthGuard - User state:', user);
       if (user) {
+        console.log('AuthGuard - User authenticated, allowing access');
         return true;
       } else {
+        console.log('AuthGuard - No user, redirecting to login');
         router.navigate(['/login']);
         return false;
       }

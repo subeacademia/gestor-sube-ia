@@ -1,1 +1,43 @@
-<p>quote-card works!</p>
+<div class="cotizacion-card">
+  <div class="cotizacion-header">
+    <h3>{{ cotizacion.codigo || 'Sin código' }}</h3>
+    <span class="fecha">{{ cotizacion.fecha | date:'dd/MM/yyyy' }}</span>
+  </div>
+  
+  <div class="cotizacion-body">
+    <p><strong>Cliente:</strong> {{ cotizacion.nombreCliente || 'Sin nombre' }}</p>
+    <p><strong>Empresa:</strong> {{ cotizacion.empresa || 'Sin empresa' }}</p>
+    <p><strong>Email:</strong> {{ cotizacion.email || 'Sin email' }}</p>
+    <p><strong>Atendido:</strong> {{ cotizacion.atendido || 'Sin atender' }}</p>
+    
+    <div class="cliente-info">
+      <p><strong>Servicios:</strong> {{ cotizacion.servicios || 'Sin servicios' }}</p>
+    </div>
+    
+    <div class="total-info">
+      <strong>Total: ${{ cotizacion.total || '0' }}</strong>
+    </div>
+    
+    <div class="monto-info">
+      <strong>Monto: ${{ cotizacion.monto || '0' }}</strong>
+    </div>
+  </div>
+  
+  <div class="cotizacion-actions">
+    <button class="btn-action" (click)="verDetalles()" title="Ver detalles">
+      👁️
+    </button>
+    <button class="btn-action" (click)="editarCotizacion()" title="Editar">
+      ✏️
+    </button>
+    <button class="btn-action" (click)="cambiarEstado()" title="Cambiar estado">
+      🔄
+    </button>
+    <button class="btn-action" (click)="generarContrato()" title="Generar contrato">
+      📄
+    </button>
+    <button class="btn-action btn-danger" (click)="eliminarCotizacion()" title="Eliminar">
+      🗑️
+    </button>
+  </div>
+</div>
