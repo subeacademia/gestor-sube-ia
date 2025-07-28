@@ -2,11 +2,10 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } fr
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../../shared/components/header/header.component';
-import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { FirebaseService } from '../../core/services/firebase.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
-import { ChartDataLabels } from 'chartjs-plugin-datalabels';
+import { Chart, registerables } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { Subscription } from 'rxjs';
 
 // Registrar todos los elementos de Chart.js y el plugin de datalabels
@@ -15,7 +14,7 @@ Chart.register(...registerables, ChartDataLabels);
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, HeaderComponent, StatCardComponent],
+  imports: [CommonModule, RouterModule, HeaderComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
@@ -307,7 +306,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
             color: '#ffffff',
             font: {
               size: 18,
-              weight: 'bold',
+              weight: 'bold' as const,
               family: 'Poppins, sans-serif'
             }
           },
@@ -325,7 +324,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           },
           datalabels: {
             display: function(context) {
-              return context.dataset.data[context.dataIndex] > 0;
+              const value = context.dataset.data[context.dataIndex];
+              return typeof value === 'number' && value > 0;
             },
             color: '#ffffff',
             font: {
@@ -333,7 +333,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               size: 11
             },
             formatter: function(value) {
-              return value > 0 ? value : '';
+              return typeof value === 'number' && value > 0 ? value : '';
             }
           }
         },
@@ -346,7 +346,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               color: '#ffffff',
               font: {
                 size: 14,
-                weight: '600'
+                weight: 'bold' as const
               }
             },
             ticks: {
@@ -367,7 +367,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               color: '#ffffff',
               font: {
                 size: 14,
-                weight: '600'
+                weight: 'bold' as const
               }
             },
             ticks: {
@@ -375,7 +375,9 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               font: {
                 size: 11
               },
-              beginAtZero: true
+              callback: function(value) {
+                return value;
+              }
             },
             grid: {
               color: 'rgba(255, 255, 255, 0.1)'
@@ -403,7 +405,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
             color: '#ffffff',
             font: {
               size: 18,
-              weight: 'bold',
+              weight: 'bold' as const,
               family: 'Poppins, sans-serif'
             }
           },
@@ -412,7 +414,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           },
           datalabels: {
             display: function(context) {
-              return context.dataset.data[context.dataIndex] > 0;
+              const value = context.dataset.data[context.dataIndex];
+              return typeof value === 'number' && value > 0;
             },
             color: '#ffffff',
             font: {
@@ -423,7 +426,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
             align: 'right',
             offset: 4,
             formatter: function(value) {
-              return value > 0 ? value : '';
+              return typeof value === 'number' && value > 0 ? value : '';
             }
           }
         },
@@ -436,7 +439,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               color: '#ffffff',
               font: {
                 size: 14,
-                weight: '600'
+                weight: 'bold' as const
               }
             },
             ticks: {
@@ -444,7 +447,9 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               font: {
                 size: 11
               },
-              beginAtZero: true
+              callback: function(value) {
+                return value;
+              }
             },
             grid: {
               color: 'rgba(255, 255, 255, 0.1)'
@@ -458,7 +463,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               color: '#ffffff',
               font: {
                 size: 14,
-                weight: '600'
+                weight: 'bold' as const
               }
             },
             ticks: {
@@ -492,7 +497,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
             color: '#ffffff',
             font: {
               size: 18,
-              weight: 'bold',
+              weight: 'bold' as const,
               family: 'Poppins, sans-serif'
             }
           },
@@ -510,7 +515,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           },
           datalabels: {
             display: function(context) {
-              return context.dataset.data[context.dataIndex] > 0;
+              const value = context.dataset.data[context.dataIndex];
+              return typeof value === 'number' && value > 0;
             },
             color: '#ffffff',
             font: {
@@ -518,7 +524,9 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               size: 14
             },
             formatter: function(value, context) {
-              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+              if (typeof value !== 'number') return '';
+              const data = context.dataset.data as number[];
+              const total = data.reduce((sum, val) => sum + (typeof val === 'number' ? val : 0), 0);
               const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
               return `${value}\n(${percentage}%)`;
             }
