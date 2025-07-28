@@ -17,6 +17,11 @@ interface Contrato {
   estado: string;
   valorTotal: number;
   fechaCreacionContrato: any;
+  firmas?: {
+    cliente: boolean;
+    representante: boolean;
+  };
+  historialEstados?: any[];
   [key: string]: any;
 }
 
@@ -55,6 +60,12 @@ export class ContratosComponent implements OnInit {
     descripcionServicios: '',
     terminosCondiciones: ''
   };
+
+  // Modo de vista
+  viewMode: 'kanban' | 'list' = 'kanban';
+  
+  // Drag & Drop
+  draggedContrato: Contrato | null = null;
 
   constructor(
     private firebaseService: FirebaseService,
@@ -121,12 +132,84 @@ export class ContratosComponent implements OnInit {
     return this.contratosFiltrados.filter(cont => cont.estado === estado);
   }
 
+  // Métodos para cambio de vista
+  setViewMode(mode: 'kanban' | 'list') {
+    this.viewMode = mode;
+  }
+
+  // Métodos para drag & drop
+  onDragStart(event: DragEvent, contrato: Contrato) {
+    this.draggedContrato = contrato;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', contrato.id);
+    }
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  async onDrop(event: DragEvent, nuevoEstado: string) {
+    event.preventDefault();
+    
+    if (this.draggedContrato && this.draggedContrato.estado !== nuevoEstado) {
+      try {
+        await this.firebaseService.updateContrato(this.draggedContrato.id, { estado: nuevoEstado });
+        
+        // Agregar al historial de estados
+        const historialEstados = this.draggedContrato.historialEstados || [];
+        historialEstados.push({
+          estado: nuevoEstado,
+          fecha: new Date(),
+          comentario: `Contrato movido a ${nuevoEstado}`
+        });
+        
+        await this.firebaseService.updateContrato(this.draggedContrato.id, { 
+          historialEstados: historialEstados 
+        });
+        
+        // Recargar contratos
+        await this.cargarContratos();
+        
+        // Mostrar notificación de éxito
+        this.mostrarNotificacion(`Contrato movido a ${nuevoEstado}`, 'success');
+      } catch (error) {
+        console.error('Error al cambiar estado:', error);
+        this.mostrarNotificacion('Error al cambiar estado', 'error');
+      }
+    }
+    
+    this.draggedContrato = null;
+  }
+
   async onEstadoChanged(event: { contratoId: string, nuevoEstado: string }) {
     try {
       await this.firebaseService.updateContrato(event.contratoId, { estado: event.nuevoEstado });
+      
+      // Agregar al historial de estados
+      const contrato = this.contratos.find(c => c.id === event.contratoId);
+      if (contrato) {
+        const historialEstados = contrato.historialEstados || [];
+        historialEstados.push({
+          estado: event.nuevoEstado,
+          fecha: new Date(),
+          comentario: `Estado cambiado manualmente`
+        });
+        
+        await this.firebaseService.updateContrato(event.contratoId, { 
+          historialEstados: historialEstados 
+        });
+      }
+      
       await this.cargarContratos();
+      this.mostrarNotificacion(`Estado cambiado a ${event.nuevoEstado}`, 'success');
     } catch (error) {
       console.error('Error al cambiar estado:', error);
+      this.mostrarNotificacion('Error al cambiar estado', 'error');
     }
   }
 
@@ -134,8 +217,134 @@ export class ContratosComponent implements OnInit {
     try {
       await this.firebaseService.deleteContrato(contratoId);
       await this.cargarContratos();
+      this.mostrarNotificacion('Contrato eliminado', 'success');
     } catch (error) {
       console.error('Error al eliminar contrato:', error);
+      this.mostrarNotificacion('Error al eliminar contrato', 'error');
+    }
+  }
+
+  // Métodos para firma de representante legal
+  async onFirmaRepresentante(event: { contratoId: string }) {
+    try {
+      const contrato = this.contratos.find(c => c.id === event.contratoId);
+      if (contrato) {
+        const firmas = contrato.firmas || { cliente: false, representante: false };
+        firmas.representante = true;
+        
+        // Si ambas firmas están completas, cambiar estado a Firmado
+        let nuevoEstado = contrato.estado;
+        if (firmas.cliente && firmas.representante) {
+          nuevoEstado = 'Firmado';
+        }
+        
+        await this.firebaseService.updateContrato(event.contratoId, { 
+          firmas: firmas,
+          estado: nuevoEstado
+        });
+        
+        // Agregar al historial
+        const historialEstados = contrato.historialEstados || [];
+        historialEstados.push({
+          estado: nuevoEstado,
+          fecha: new Date(),
+          comentario: 'Firmado por representante legal'
+        });
+        
+        await this.firebaseService.updateContrato(event.contratoId, { 
+          historialEstados: historialEstados 
+        });
+        
+        await this.cargarContratos();
+        this.mostrarNotificacion('Firmado por representante legal', 'success');
+      }
+    } catch (error) {
+      console.error('Error al firmar como representante:', error);
+      this.mostrarNotificacion('Error al firmar contrato', 'error');
+    }
+  }
+
+  // Métodos para enviar a cliente
+  async onEnviarCliente(event: { contratoId: string }) {
+    try {
+      const contrato = this.contratos.find(c => c.id === event.contratoId);
+      if (contrato) {
+        await this.firebaseService.updateContrato(event.contratoId, { 
+          estado: 'Enviado'
+        });
+        
+        // Agregar al historial
+        const historialEstados = contrato.historialEstados || [];
+        historialEstados.push({
+          estado: 'Enviado',
+          fecha: new Date(),
+          comentario: 'Enviado al cliente para firma'
+        });
+        
+        await this.firebaseService.updateContrato(event.contratoId, { 
+          historialEstados: historialEstados 
+        });
+        
+        await this.cargarContratos();
+        this.mostrarNotificacion('Contrato enviado al cliente', 'success');
+      }
+    } catch (error) {
+      console.error('Error al enviar contrato:', error);
+      this.mostrarNotificacion('Error al enviar contrato', 'error');
+    }
+  }
+
+  // Métodos para vista lista
+  formatDate(fecha: any): string {
+    if (!fecha) return 'Sin fecha';
+    
+    try {
+      if (fecha.toDate) {
+        return fecha.toDate().toLocaleDateString('es-CL');
+      } else if (fecha instanceof Date) {
+        return fecha.toLocaleDateString('es-CL');
+      } else if (typeof fecha === 'string') {
+        return new Date(fecha).toLocaleDateString('es-CL');
+      } else {
+        return 'Fecha inválida';
+      }
+    } catch (error) {
+      return 'Fecha inválida';
+    }
+  }
+
+  formatCurrency(valor: number | string): string {
+    if (!valor) return '$0';
+    
+    const numValor = typeof valor === 'string' ? parseFloat(valor) : valor;
+    if (isNaN(numValor)) return '$0';
+    
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(numValor);
+  }
+
+  // Métodos de acciones para vista lista
+  verPDF(contrato: Contrato) {
+    // Implementar generación de PDF
+    console.log('Generando PDF para:', contrato.codigo);
+  }
+
+  enviarCliente(contrato: Contrato) {
+    this.onEnviarCliente({ contratoId: contrato.id });
+  }
+
+  editarContrato(contrato: Contrato) {
+    // Implementar navegación a edición
+    console.log('Editando contrato:', contrato.id);
+  }
+
+  eliminarContrato(contrato: Contrato) {
+    if (confirm('¿Estás seguro de que quieres eliminar este contrato?')) {
+      this.onContratoDeleted(contrato.id);
     }
   }
 
@@ -200,10 +409,41 @@ export class ContratosComponent implements OnInit {
       
       this.cerrarModal();
       await this.cargarContratos();
+      this.mostrarNotificacion('Contrato creado exitosamente', 'success');
       
       console.log('Contrato creado exitosamente');
     } catch (error) {
       console.error('Error al crear contrato:', error);
+      this.mostrarNotificacion('Error al crear contrato', 'error');
     }
+  }
+
+  // Método para mostrar notificaciones
+  mostrarNotificacion(mensaje: string, tipo: 'success' | 'error' | 'info' = 'info') {
+    // Crear elemento de notificación
+    const notificacion = document.createElement('div');
+    notificacion.className = `notificacion notificacion-${tipo}`;
+    notificacion.innerHTML = `
+      <div class="notificacion-contenido">
+        <span class="notificacion-icono">${tipo === 'success' ? '✅' : tipo === 'error' ? '❌' : 'ℹ️'}</span>
+        <span class="notificacion-mensaje">${mensaje}</span>
+      </div>
+    `;
+    
+    // Agregar al DOM
+    document.body.appendChild(notificacion);
+    
+    // Mostrar con animación
+    setTimeout(() => notificacion.classList.add('mostrar'), 100);
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+      notificacion.classList.remove('mostrar');
+      setTimeout(() => {
+        if (document.body.contains(notificacion)) {
+          document.body.removeChild(notificacion);
+        }
+      }, 300);
+    }, 3000);
   }
 }

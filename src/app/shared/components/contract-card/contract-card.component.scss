@@ -1,419 +1,583 @@
-.contract-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  transition: all 0.3s ease;
+/* ===== VARIABLES CSS ===== */
+:root {
+  --color-bg-primary: #0D0F19;
+  --color-bg-secondary: #1a1b26;
+  --color-bg-glass: rgba(255, 255, 255, 0.05);
+  --color-bg-overlay: rgba(10, 10, 15, 0.95);
+  
+  --color-primary: #00d4ff;
+  --color-secondary: #ff0080;
+  --color-accent: #7c3aed;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+  
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+  
+  --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #ff0080 100%);
+  --gradient-secondary: linear-gradient(135deg, #7c3aed 0%, #00d4ff 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px rgba(0, 212, 255, 0.3);
+  
+  --border-radius-sm: 0.375rem;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 0.75rem;
+  --border-radius-xl: 1rem;
+  
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+/* ===== CARD PRINCIPAL ===== */
+.contrato-card {
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
+  cursor: grab;
+  min-height: 450px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
 
-.contract-card:hover {
+.contrato-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.contrato-card:active {
+  cursor: grabbing;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  border-color: #667eea;
 }
 
-// Encabezado
-.contract-header {
+/* Estados de la card */
+.card-estado-pendiente {
+  border-left: 4px solid var(--color-warning);
+}
+
+.card-estado-enviado {
+  border-left: 4px solid var(--color-info);
+}
+
+.card-estado-firmado {
+  border-left: 4px solid var(--color-success);
+}
+
+.card-estado-finalizado {
+  border-left: 4px solid var(--color-accent);
+}
+
+/* ===== HEADER ===== */
+.contrato-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #f3f4f6;
+  gap: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.header-main {
+.codigo-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
   flex: 1;
 }
 
-.contract-title h3 {
-  margin: 0 0 8px 0;
-  color: #1f2937;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.contract-code {
-  display: inline-block;
-  background: #667eea;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.contract-date {
+.codigo-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #6b7280;
-  font-size: 13px;
-  margin-top: 8px;
+  justify-content: center;
+  background: var(--gradient-primary);
+  border-radius: var(--border-radius-md);
+  flex-shrink: 0;
 }
 
-// Badge de estado
-.status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+.codigo-info h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+  line-height: 1.2;
+}
+
+.codigo-info .fecha {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  display: inline-block;
+}
+
+.estado-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
 }
 
-.estado-pendiente-de-firma {
-  background: #fef3c7;
-  color: #92400e;
+.estado-pendiente {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .estado-enviado {
-  background: #dbeafe;
-  color: #1e40af;
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--color-info);
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .estado-firmado {
-  background: #d1fae5;
-  color: #065f46;
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .estado-finalizado {
-  background: #e0e7ff;
-  color: #3730a3;
+  background: rgba(124, 58, 237, 0.2);
+  color: var(--color-accent);
+  border: 1px solid rgba(124, 58, 237, 0.3);
 }
 
-.estado-default {
-  background: #f3f4f6;
-  color: #374151;
+.estado-icon {
+  font-size: 0.875rem;
 }
 
-// Secciones
-.contract-section {
-  margin-bottom: 20px;
+.estado-text {
+  font-size: 0.625rem;
 }
 
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #374151;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-// Información del cliente
-.client-info {
+/* ===== BODY ===== */
+.contrato-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-md);
 }
 
-.info-row {
+.titulo-section,
+.cliente-section,
+.financiero-section,
+.firmas-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+}
+
+.titulo-header,
+.cliente-header,
+.firmas-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.info-row .label {
-  color: #6b7280;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.info-row .value {
-  color: #1f2937;
-  font-size: 13px;
-  font-weight: 600;
-  text-align: right;
-  max-width: 60%;
-  word-break: break-word;
-}
-
-// Información de servicios
-.services-info p {
-  margin: 0;
-  color: #374151;
-  font-size: 14px;
-  line-height: 1.4;
-  background: #f9fafb;
-  padding: 12px;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-}
-
-// Información financiera
-.financial-info {
+.titulo-icon,
+.cliente-icon,
+.firmas-icon {
+  font-size: 1rem;
+  width: 24px;
+  height: 24px;
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-sm);
 }
 
-.total-amount .amount {
-  font-size: 20px;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+.titulo-label,
+.cliente-label,
+.firmas-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-// Estado de firmas
-.signatures-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.titulo-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  line-height: 1.4;
 }
 
-.signature-status {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: #f9fafb;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+.cliente-info p {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  line-height: 1.4;
 }
 
-.signature-label {
-  color: #374151;
-  font-size: 13px;
+.cliente-nombre {
+  font-weight: 600;
+  color: var(--color-primary) !important;
+}
+
+.cliente-empresa {
   font-weight: 500;
 }
 
-.signature-indicator {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 12px;
-  background: #f3f4f6;
-  color: #6b7280;
+.cliente-email {
+  color: var(--color-text-secondary) !important;
+  font-size: 0.75rem !important;
 }
 
-.signature-indicator.signed {
-  background: #d1fae5;
-  color: #065f46;
+.cliente-rut {
+  color: var(--color-text-muted) !important;
+  font-size: 0.75rem !important;
+  font-family: monospace;
 }
 
-// Acciones
-.contract-actions {
+.total-info {
   display: flex;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 2px solid #f3f4f6;
+  align-items: center;
+  gap: var(--spacing-md);
+  background: var(--gradient-glass);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
 }
 
-.actions-grid {
+.total-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-primary);
+  border-radius: var(--border-radius-md);
+  flex-shrink: 0;
+}
+
+.total-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.total-label {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.total-valor {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ===== SECCIÓN DE FIRMAS ===== */
+.firmas-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.firma-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--border-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all var(--transition-normal);
+}
+
+.firma-item.firmado {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.firma-icon {
+  font-size: 1rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-sm);
+}
+
+.firma-item.firmado .firma-icon {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.firma-text {
+  font-size: 0.75rem;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.firma-item.firmado .firma-text {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+/* ===== ACCIONES ===== */
+.contrato-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.estado-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.estado-selector label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.estado-select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid rgba(0, 212, 255, 0.2);
+  border-radius: var(--border-radius-md);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(10px);
+}
+
+.estado-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.action-buttons {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  flex: 1;
+  gap: var(--spacing-sm);
 }
 
 .btn-action {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 12px;
-  border: none;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  white-space: nowrap;
+  transition: all var(--transition-fast);
+  font-size: 0.75rem;
+  font-weight: 500;
+  backdrop-filter: blur(5px);
 }
 
 .btn-action:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--color-text-primary);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn-primary {
-  background: #667eea;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #5a67d8;
-}
-
-.btn-secondary {
-  background: #6b7280;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #4b5563;
-}
-
-.btn-success {
-  background: #10b981;
-  color: white;
-}
-
-.btn-success:hover {
-  background: #059669;
-}
-
-.btn-info {
-  background: #06b6d4;
-  color: white;
-}
-
-.btn-info:hover {
-  background: #0891b2;
-}
-
-.btn-dropdown {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-}
-
-.btn-dropdown:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
-}
-
-// Dropdown
-.dropdown {
-  position: relative;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  min-width: 200px;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
-  transition: all 0.3s ease;
-}
-
-.dropdown-menu.show {
-  opacity: 1;
-  visibility: visible;
+.btn-action:active {
   transform: translateY(0);
 }
 
-.dropdown-section {
-  padding: 12px 0;
+.btn-action.btn-info {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: var(--color-info);
 }
 
-.dropdown-title {
-  padding: 8px 16px;
-  font-size: 12px;
+.btn-action.btn-info:hover {
+  background: rgba(59, 130, 246, 0.3);
+  color: var(--color-text-primary);
+}
+
+.btn-action.btn-success {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: var(--color-success);
+}
+
+.btn-action.btn-success:hover {
+  background: rgba(16, 185, 129, 0.3);
+  color: var(--color-text-primary);
+}
+
+.btn-action.btn-primary {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: rgba(0, 212, 255, 0.3);
+  color: var(--color-primary);
+}
+
+.btn-action.btn-primary:hover {
+  background: rgba(0, 212, 255, 0.3);
+  color: var(--color-text-primary);
+}
+
+.btn-action.btn-warning {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--color-warning);
+}
+
+.btn-action.btn-warning:hover {
+  background: rgba(245, 158, 11, 0.3);
+  color: var(--color-text-primary);
+}
+
+.btn-action.btn-danger {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--color-danger);
+}
+
+.btn-action.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: var(--color-text-primary);
+}
+
+.btn-icon {
+  font-size: 0.875rem;
+}
+
+.btn-text {
+  font-size: 0.625rem;
   font-weight: 600;
-  color: #6b7280;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid #f3f4f6;
-  margin-bottom: 8px;
+  letter-spacing: 0.05em;
 }
 
-.dropdown-item {
+/* ===== INDICADOR DE DRAG ===== */
+.drag-indicator {
+  position: absolute;
+  bottom: var(--spacing-sm);
+  right: var(--spacing-sm);
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 16px;
-  border: none;
-  background: none;
-  color: #374151;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-sm);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  pointer-events: none;
 }
 
-.dropdown-item:hover {
-  background: #f9fafb;
+.contrato-card:hover .drag-indicator {
+  opacity: 1;
 }
 
-.dropdown-item-danger {
-  color: #dc2626;
+.drag-icon {
+  font-size: 0.75rem;
 }
 
-.dropdown-item-danger:hover {
-  background: #fef2f2;
+.drag-text {
+  font-size: 0.625rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
 
-.dropdown-divider {
-  height: 1px;
-  background: #e5e7eb;
-  margin: 8px 0;
-}
-
-// Responsive
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .contract-card {
-    padding: 16px;
+  .contrato-card {
+    padding: var(--spacing-md);
+    min-height: 400px;
   }
   
-  .contract-header {
+  .contrato-header {
     flex-direction: column;
-    gap: 12px;
     align-items: flex-start;
+    gap: var(--spacing-sm);
   }
   
-  .status-badge {
+  .estado-badge {
     align-self: flex-start;
   }
   
-  .actions-grid {
+  .action-buttons {
     grid-template-columns: 1fr;
   }
   
-  .contract-actions {
-    flex-direction: column;
+  .btn-action {
+    justify-content: flex-start;
   }
   
-  .dropdown-menu {
-    right: auto;
-    left: 0;
-    min-width: 180px;
+  .drag-indicator {
+    display: none;
   }
 }
 
 @media (max-width: 480px) {
-  .contract-title h3 {
-    font-size: 16px;
-  }
-  
-  .info-row {
+  .codigo-section {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: var(--spacing-xs);
   }
   
-  .info-row .value {
-    text-align: left;
-    max-width: 100%;
+  .total-info {
+    flex-direction: column;
+    text-align: center;
   }
   
-  .total-amount .amount {
-    font-size: 18px;
+  .cliente-info p {
+    font-size: 0.75rem;
+  }
+  
+  .firmas-status {
+    gap: var(--spacing-xs);
   }
 }

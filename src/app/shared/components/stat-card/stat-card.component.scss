@@ -50,12 +50,12 @@
 
 /* ===== ESTILOS BASE ===== */
 .stat-card {
-  background: #ffffff;
+  background: var(--bg-secundario);
   border-radius: var(--border-radius-xl);
   padding: var(--spacing-xl);
   box-shadow: var(--shadow-lg);
   transition: all var(--transition-normal);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--borde-color);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -78,6 +78,7 @@
 .stat-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-xl);
+  border-color: rgba(88, 166, 255, 0.3);
 }
 
 .stat-card:hover::before {
@@ -95,7 +96,7 @@
   background: var(--gradient-primary);
   border-radius: var(--border-radius-lg);
   flex-shrink: 0;
-  color: var(--color-text-white);
+  color: var(--texto-principal);
 }
 
 /* ===== CONTENIDO ===== */
@@ -107,7 +108,7 @@
   font-family: var(--font-family-display);
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--color-text-secondary);
+  color: var(--texto-secundario);
   margin-bottom: var(--spacing-sm);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -117,7 +118,7 @@
   font-family: var(--font-family-mono);
   font-size: var(--text-2xl);
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--texto-principal);
   margin: 0;
   line-height: 1.2;
 }
@@ -154,60 +155,60 @@
 }
 
 .stat-card-success .stat-card-icon {
-  background: var(--gradient-success);
+  background: linear-gradient(135deg, var(--acento-verde), #059669);
 }
 
 .stat-card-success::before {
-  background: var(--gradient-success);
+  background: linear-gradient(135deg, var(--acento-verde), #059669);
 }
 
 .stat-card-success .stat-value {
-  background: var(--gradient-success);
+  background: linear-gradient(135deg, var(--acento-verde), #059669);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .stat-card-warning .stat-card-icon {
-  background: var(--gradient-warning);
+  background: linear-gradient(135deg, var(--acento-naranja), #d97706);
 }
 
 .stat-card-warning::before {
-  background: var(--gradient-warning);
+  background: linear-gradient(135deg, var(--acento-naranja), #d97706);
 }
 
 .stat-card-warning .stat-value {
-  background: var(--gradient-warning);
+  background: linear-gradient(135deg, var(--acento-naranja), #d97706);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .stat-card-danger .stat-card-icon {
-  background: var(--gradient-danger);
+  background: linear-gradient(135deg, var(--acento-rojo), #dc2626);
 }
 
 .stat-card-danger::before {
-  background: var(--gradient-danger);
+  background: linear-gradient(135deg, var(--acento-rojo), #dc2626);
 }
 
 .stat-card-danger .stat-value {
-  background: var(--gradient-danger);
+  background: linear-gradient(135deg, var(--acento-rojo), #dc2626);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .stat-card-info .stat-card-icon {
-  background: var(--gradient-info);
+  background: linear-gradient(135deg, var(--acento-cian), #3b82f6);
 }
 
 .stat-card-info::before {
-  background: var(--gradient-info);
+  background: linear-gradient(135deg, var(--acento-cian), #3b82f6);
 }
 
 .stat-card-info .stat-value {
-  background: var(--gradient-info);
+  background: linear-gradient(135deg, var(--acento-cian), #3b82f6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

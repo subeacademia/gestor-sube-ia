@@ -690,4 +690,51 @@ export class FirebaseService {
     const random = Math.random().toString(36).substring(2, 15);
     return `${timestamp}-${random}`;
   }
+
+  // Método para generar código de cotización automático y correlativo
+  async generarCodigoCotizacion(): Promise<string> {
+    try {
+      console.log('🔧 FirebaseService: Generando código de cotización...');
+      
+      const cotizacionesCollection = collection(this.firestore, 'cotizaciones');
+      const q = query(cotizacionesCollection, orderBy('codigo', 'desc'));
+      const snapshot = await getDocs(q);
+      
+      let ultimoCodigo = 'COT-202400000';
+      let numeroSecuencial = 1;
+      
+      if (!snapshot.empty) {
+        const ultimaCotizacion = snapshot.docs[0];
+        const codigoAnterior = ultimaCotizacion.data()['codigo'];
+        
+        if (codigoAnterior && codigoAnterior.startsWith('COT-')) {
+          // Extraer el número secuencial del código anterior
+          const match = codigoAnterior.match(/COT-(\d{4})(\d{6})/);
+          if (match) {
+            const añoAnterior = match[1];
+            const numeroAnterior = parseInt(match[2]);
+            const añoActual = new Date().getFullYear().toString();
+            
+            if (añoAnterior === añoActual) {
+              numeroSecuencial = numeroAnterior + 1;
+            } else {
+              numeroSecuencial = 1; // Nuevo año, empezar desde 1
+            }
+          }
+        }
+      }
+      
+      const añoActual = new Date().getFullYear();
+      const codigoNuevo = `COT-${añoActual}${String(numeroSecuencial).padStart(6, '0')}`;
+      
+      console.log('✅ FirebaseService: Código generado:', codigoNuevo);
+      return codigoNuevo;
+      
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al generar código:', error);
+      // Fallback: generar código con timestamp
+      const timestamp = Date.now();
+      return `COT-${new Date().getFullYear()}${String(timestamp % 1000000).padStart(6, '0')}`;
+    }
+  }
 }

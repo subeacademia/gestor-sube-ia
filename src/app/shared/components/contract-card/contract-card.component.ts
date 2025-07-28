@@ -12,6 +12,10 @@ interface Contrato {
   estado: string;
   valorTotal: number;
   fechaCreacionContrato: any;
+  firmas?: {
+    cliente: boolean;
+    representante: boolean;
+  };
   [key: string]: any;
 }
 
@@ -24,8 +28,11 @@ interface Contrato {
 })
 export class ContractCardComponent {
   @Input() contrato!: Contrato;
+  @Input() draggable: boolean = false;
   @Output() estadoChanged = new EventEmitter<{ contratoId: string, nuevoEstado: string }>();
   @Output() contratoDeleted = new EventEmitter<string>();
+  @Output() firmaRepresentante = new EventEmitter<{ contratoId: string }>();
+  @Output() enviarCliente = new EventEmitter<{ contratoId: string }>();
 
   formatDate(fecha: any): string {
     if (!fecha) return 'Sin fecha';
@@ -62,6 +69,47 @@ export class ContractCardComponent {
     }).format(numValor);
   }
 
+  // Métodos para estados visuales
+  getEstadoClass(): string {
+    const estado = this.contrato.estado?.toLowerCase() || '';
+    switch (estado) {
+      case 'pendiente de firma':
+        return 'pendiente';
+      case 'enviado':
+        return 'enviado';
+      case 'firmado':
+        return 'firmado';
+      case 'finalizado':
+        return 'finalizado';
+      default:
+        return 'pendiente';
+    }
+  }
+
+  getEstadoIcon(): string {
+    const estado = this.contrato.estado?.toLowerCase() || '';
+    switch (estado) {
+      case 'pendiente de firma':
+        return '⏳';
+      case 'enviado':
+        return '📤';
+      case 'firmado':
+        return '✅';
+      case 'finalizado':
+        return '🎉';
+      default:
+        return '⏳';
+    }
+  }
+
+  // Método para drag & drop
+  onDragStart(event: DragEvent) {
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', this.contrato.id);
+    }
+  }
+
   onEstadoChange(event: Event) {
     const select = event.target as HTMLSelectElement;
     const nuevoEstado = select.value;
@@ -72,6 +120,19 @@ export class ContractCardComponent {
         nuevoEstado: nuevoEstado
       });
     }
+  }
+
+  // Métodos para firma
+  firmarRepresentante() {
+    this.firmaRepresentante.emit({
+      contratoId: this.contrato.id
+    });
+  }
+
+  enviarFirma() {
+    this.enviarCliente.emit({
+      contratoId: this.contrato.id
+    });
   }
 
   verPDF() {
@@ -148,11 +209,6 @@ export class ContractCardComponent {
     setTimeout(() => {
       document.body.removeChild(pdfContainer);
     }, 1000);
-  }
-
-  enviarFirma() {
-    // Implementar envío para firma
-    console.log('Enviando contrato para firma:', this.contrato.id);
   }
 
   editarContrato() {

@@ -24,6 +24,7 @@ interface Cotizacion {
 })
 export class QuoteCardComponent {
   @Input() cotizacion!: Cotizacion;
+  @Input() draggable: boolean = false;
   @Output() estadoChanged = new EventEmitter<{ cotizacionId: string, nuevoEstado: string }>();
   @Output() cotizacionDeleted = new EventEmitter<string>();
 
@@ -60,6 +61,51 @@ export class QuoteCardComponent {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(numValor);
+  }
+
+  // Métodos para estados visuales
+  getEstadoClass(): string {
+    const estado = this.cotizacion.estado?.toLowerCase() || '';
+    switch (estado) {
+      case 'emitida':
+        return 'emitida';
+      case 'contestada':
+        return 'contestada';
+      case 'en negociación':
+        return 'negociacion';
+      case 'aceptada':
+        return 'aceptada';
+      case 'rechazada':
+        return 'rechazada';
+      default:
+        return 'emitida';
+    }
+  }
+
+  getEstadoIcon(): string {
+    const estado = this.cotizacion.estado?.toLowerCase() || '';
+    switch (estado) {
+      case 'emitida':
+        return '📄';
+      case 'contestada':
+        return '💬';
+      case 'en negociación':
+        return '🤝';
+      case 'aceptada':
+        return '✅';
+      case 'rechazada':
+        return '❌';
+      default:
+        return '📄';
+    }
+  }
+
+  // Método para drag & drop
+  onDragStart(event: DragEvent) {
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', this.cotizacion.id);
+    }
   }
 
   onEstadoChange(event: Event) {

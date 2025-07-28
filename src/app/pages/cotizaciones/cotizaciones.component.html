@@ -4,20 +4,32 @@
   <main class="admin-main">
     <div class="stats-section">
       <div class="stat-card">
-        <h3>Total Cotizaciones</h3>
-        <p>{{ totalCotizaciones }}</p>
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+          <h3>Total Cotizaciones</h3>
+          <p>{{ totalCotizaciones }}</p>
+        </div>
       </div>
       <div class="stat-card">
-        <h3>Este Mes</h3>
-        <p>{{ cotizacionesMes }}</p>
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <h3>Este Mes</h3>
+          <p>{{ cotizacionesMes }}</p>
+        </div>
       </div>
       <div class="stat-card">
-        <h3>Valor Total</h3>
-        <p>{{ valorTotal | currency:'CLP':'symbol':'1.0-0' }}</p>
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <h3>Valor Total</h3>
+          <p>{{ valorTotal | currency:'CLP':'symbol':'1.0-0' }}</p>
+        </div>
       </div>
       <div class="stat-card">
-        <h3>Total Aceptado</h3>
-        <p>{{ totalAceptadas | currency:'CLP':'symbol':'1.0-0' }}</p>
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <h3>Total Aceptado</h3>
+          <p>{{ totalAceptadas | currency:'CLP':'symbol':'1.0-0' }}</p>
+        </div>
       </div>
     </div>
 
@@ -33,7 +45,7 @@
           class="search-input">
       </div>
       <div class="filter-group">
-        <label for="filtro-fecha">Filtrar por fecha:</label>
+        <label for="filtro-fecha">📅 Filtrar por fecha:</label>
         <select id="filtro-fecha" [(ngModel)]="filtroFecha" (change)="aplicarFiltros()">
           <option value="todos">Todos</option>
           <option value="hoy">Hoy</option>
@@ -42,7 +54,7 @@
         </select>
       </div>
       <div class="filter-group">
-        <label for="filtro-atendedor">Filtrar por atendido:</label>
+        <label for="filtro-atendedor">👤 Filtrar por atendido:</label>
         <select id="filtro-atendedor" [(ngModel)]="filtroAtendedor" (change)="aplicarFiltros()">
           <option value="todos">Todos</option>
           <option value="Rodrigo Carrillo">Rodrigo Carrillo</option>
@@ -53,7 +65,7 @@
         </select>
       </div>
       <div class="filter-group">
-        <label for="filtro-estado">Filtrar por estado:</label>
+        <label for="filtro-estado">🏷️ Filtrar por estado:</label>
         <select id="filtro-estado" [(ngModel)]="filtroEstado" (change)="aplicarFiltros()">
           <option value="todos">Todos los estados</option>
           <option value="Emitida">Emitida</option>
@@ -63,91 +75,203 @@
           <option value="Rechazada">Rechazada</option>
         </select>
       </div>
-      <button (click)="aplicarFiltros()" class="btn btn-filter">Aplicar Filtros</button>
+      <button (click)="aplicarFiltros()" class="btn btn-filter">
+        <span class="btn-icon">🔍</span>
+        Aplicar Filtros
+      </button>
     </div>
 
     <div class="cotizaciones-section">
-      <h2>📋 Tablero de Cotizaciones</h2>
+      <div class="section-header">
+        <h2>📋 Tablero de Cotizaciones</h2>
+        <div class="view-toggle">
+          <button 
+            class="view-btn active" 
+            (click)="setViewMode('kanban')"
+            [class.active]="viewMode === 'kanban'">
+            📊 Kanban
+          </button>
+          <button 
+            class="view-btn" 
+            (click)="setViewMode('list')"
+            [class.active]="viewMode === 'list'">
+            📝 Lista
+          </button>
+        </div>
+      </div>
       
-      <!-- Tablero Kanban -->
-      <div class="kanban-board">
+      <!-- Vista Kanban -->
+      <div class="kanban-board" *ngIf="viewMode === 'kanban'">
         <!-- Columna: Emitida -->
-        <div class="kanban-column">
+        <div class="kanban-column" 
+             [class.column-emitida]="true"
+             (dragover)="onDragOver($event)"
+             (drop)="onDrop($event, 'Emitida')">
           <div class="kanban-column-header">
-            <h3>📄 Emitida</h3>
-            <span class="column-count">{{ getCotizacionesPorEstado('Emitida').length }}</span>
+            <div class="column-icon">📄</div>
+            <div class="column-info">
+              <h3>Emitida</h3>
+              <span class="column-count">{{ getCotizacionesPorEstado('Emitida').length }}</span>
+            </div>
           </div>
           <div class="kanban-column-content">
             <app-quote-card 
               *ngFor="let cotizacion of getCotizacionesPorEstado('Emitida')"
               [cotizacion]="cotizacion"
+              [draggable]="true"
+              (dragstart)="onDragStart($event, cotizacion)"
               (estadoChanged)="onEstadoChanged($event)"
               (cotizacionDeleted)="onCotizacionDeleted($event)">
             </app-quote-card>
+            <div class="empty-state" *ngIf="getCotizacionesPorEstado('Emitida').length === 0">
+              <div class="empty-icon">📄</div>
+              <p>Sin cotizaciones emitidas</p>
+            </div>
           </div>
         </div>
         
         <!-- Columna: Contestada -->
-        <div class="kanban-column">
+        <div class="kanban-column" 
+             [class.column-contestada]="true"
+             (dragover)="onDragOver($event)"
+             (drop)="onDrop($event, 'Contestada')">
           <div class="kanban-column-header">
-            <h3>💬 Contestada</h3>
-            <span class="column-count">{{ getCotizacionesPorEstado('Contestada').length }}</span>
+            <div class="column-icon">💬</div>
+            <div class="column-info">
+              <h3>Contestada</h3>
+              <span class="column-count">{{ getCotizacionesPorEstado('Contestada').length }}</span>
+            </div>
           </div>
           <div class="kanban-column-content">
             <app-quote-card 
               *ngFor="let cotizacion of getCotizacionesPorEstado('Contestada')"
               [cotizacion]="cotizacion"
+              [draggable]="true"
+              (dragstart)="onDragStart($event, cotizacion)"
               (estadoChanged)="onEstadoChanged($event)"
               (cotizacionDeleted)="onCotizacionDeleted($event)">
             </app-quote-card>
+            <div class="empty-state" *ngIf="getCotizacionesPorEstado('Contestada').length === 0">
+              <div class="empty-icon">💬</div>
+              <p>Sin cotizaciones contestadas</p>
+            </div>
           </div>
         </div>
         
         <!-- Columna: En Negociación -->
-        <div class="kanban-column">
+        <div class="kanban-column" 
+             [class.column-negociacion]="true"
+             (dragover)="onDragOver($event)"
+             (drop)="onDrop($event, 'En Negociación')">
           <div class="kanban-column-header">
-            <h3>🤝 En Negociación</h3>
-            <span class="column-count">{{ getCotizacionesPorEstado('En Negociación').length }}</span>
+            <div class="column-icon">🤝</div>
+            <div class="column-info">
+              <h3>En Negociación</h3>
+              <span class="column-count">{{ getCotizacionesPorEstado('En Negociación').length }}</span>
+            </div>
           </div>
           <div class="kanban-column-content">
             <app-quote-card 
               *ngFor="let cotizacion of getCotizacionesPorEstado('En Negociación')"
               [cotizacion]="cotizacion"
+              [draggable]="true"
+              (dragstart)="onDragStart($event, cotizacion)"
               (estadoChanged)="onEstadoChanged($event)"
               (cotizacionDeleted)="onCotizacionDeleted($event)">
             </app-quote-card>
+            <div class="empty-state" *ngIf="getCotizacionesPorEstado('En Negociación').length === 0">
+              <div class="empty-icon">🤝</div>
+              <p>Sin cotizaciones en negociación</p>
+            </div>
           </div>
         </div>
         
         <!-- Columna: Aceptada -->
-        <div class="kanban-column">
+        <div class="kanban-column" 
+             [class.column-aceptada]="true"
+             (dragover)="onDragOver($event)"
+             (drop)="onDrop($event, 'Aceptada')">
           <div class="kanban-column-header">
-            <h3>✅ Aceptada</h3>
-            <span class="column-count">{{ getCotizacionesPorEstado('Aceptada').length }}</span>
+            <div class="column-icon">✅</div>
+            <div class="column-info">
+              <h3>Aceptada</h3>
+              <span class="column-count">{{ getCotizacionesPorEstado('Aceptada').length }}</span>
+            </div>
           </div>
           <div class="kanban-column-content">
             <app-quote-card 
               *ngFor="let cotizacion of getCotizacionesPorEstado('Aceptada')"
               [cotizacion]="cotizacion"
+              [draggable]="true"
+              (dragstart)="onDragStart($event, cotizacion)"
               (estadoChanged)="onEstadoChanged($event)"
               (cotizacionDeleted)="onCotizacionDeleted($event)">
             </app-quote-card>
+            <div class="empty-state" *ngIf="getCotizacionesPorEstado('Aceptada').length === 0">
+              <div class="empty-icon">✅</div>
+              <p>Sin cotizaciones aceptadas</p>
+            </div>
           </div>
         </div>
         
         <!-- Columna: Rechazada -->
-        <div class="kanban-column">
+        <div class="kanban-column" 
+             [class.column-rechazada]="true"
+             (dragover)="onDragOver($event)"
+             (drop)="onDrop($event, 'Rechazada')">
           <div class="kanban-column-header">
-            <h3>❌ Rechazada</h3>
-            <span class="column-count">{{ getCotizacionesPorEstado('Rechazada').length }}</span>
+            <div class="column-icon">❌</div>
+            <div class="column-info">
+              <h3>Rechazada</h3>
+              <span class="column-count">{{ getCotizacionesPorEstado('Rechazada').length }}</span>
+            </div>
           </div>
           <div class="kanban-column-content">
             <app-quote-card 
               *ngFor="let cotizacion of getCotizacionesPorEstado('Rechazada')"
               [cotizacion]="cotizacion"
+              [draggable]="true"
+              (dragstart)="onDragStart($event, cotizacion)"
               (estadoChanged)="onEstadoChanged($event)"
               (cotizacionDeleted)="onCotizacionDeleted($event)">
             </app-quote-card>
+            <div class="empty-state" *ngIf="getCotizacionesPorEstado('Rechazada').length === 0">
+              <div class="empty-icon">❌</div>
+              <p>Sin cotizaciones rechazadas</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista Lista -->
+      <div class="list-view" *ngIf="viewMode === 'list'">
+        <div class="list-header">
+          <div class="list-column">Código</div>
+          <div class="list-column">Cliente</div>
+          <div class="list-column">Empresa</div>
+          <div class="list-column">Total</div>
+          <div class="list-column">Estado</div>
+          <div class="list-column">Fecha</div>
+          <div class="list-column">Acciones</div>
+        </div>
+        <div class="list-item" *ngFor="let cotizacion of cotizacionesFiltradas">
+          <div class="list-column">{{ cotizacion.codigo }}</div>
+          <div class="list-column">{{ cotizacion.nombre }}</div>
+          <div class="list-column">{{ cotizacion.empresa }}</div>
+          <div class="list-column">{{ formatCurrency(cotizacion.valor) }}</div>
+          <div class="list-column">
+            <span class="status-badge" [class]="'status-' + cotizacion.estado.toLowerCase().replace(' ', '-')">
+              {{ cotizacion.estado }}
+            </span>
+          </div>
+          <div class="list-column">{{ formatDate(cotizacion.fecha) }}</div>
+          <div class="list-column">
+            <div class="list-actions">
+              <button class="btn-action btn-info" (click)="verPDF(cotizacion)" title="Ver PDF">📄</button>
+              <button class="btn-action btn-success" (click)="generarContrato(cotizacion)" title="Generar Contrato">📋</button>
+              <button class="btn-action btn-warning" (click)="editarCotizacion(cotizacion)" title="Editar">✏️</button>
+              <button class="btn-action btn-danger" (click)="eliminarCotizacion(cotizacion)" title="Eliminar">🗑️</button>
+            </div>
           </div>
         </div>
       </div>

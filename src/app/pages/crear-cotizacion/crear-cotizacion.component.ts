@@ -17,6 +17,7 @@ export class CrearCotizacionComponent implements OnInit {
   isLoading = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
+  isGeneratingCode = false;
 
   // Opciones para los selects
   modalidades = ['Online', 'Presencial', 'Híbrido'];
@@ -46,7 +47,10 @@ export class CrearCotizacionComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
+    // Generar código automáticamente al cargar el componente
+    await this.generarCodigoAutomatico();
+    
     // Agregar primer servicio por defecto
     this.agregarServicio();
     
@@ -54,6 +58,26 @@ export class CrearCotizacionComponent implements OnInit {
     this.cotizacionForm.valueChanges.subscribe(() => {
       this.calcularTotales();
     });
+  }
+
+  // Método para generar código automáticamente
+  async generarCodigoAutomatico() {
+    this.isGeneratingCode = true;
+    try {
+      const codigo = await this.firebaseService.generarCodigoCotizacion();
+      this.cotizacionForm.patchValue({ codigo });
+      console.log('✅ Código generado automáticamente:', codigo);
+    } catch (error) {
+      console.error('❌ Error al generar código:', error);
+      this.errorMessage = 'Error al generar el código de cotización';
+    } finally {
+      this.isGeneratingCode = false;
+    }
+  }
+
+  // Método para regenerar código manualmente
+  async regenerarCodigo() {
+    await this.generarCodigoAutomatico();
   }
 
   get servicios() {

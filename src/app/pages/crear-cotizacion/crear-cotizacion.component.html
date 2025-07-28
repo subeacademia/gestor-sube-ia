@@ -2,8 +2,8 @@
 
 <div class="container">
   <div class="header-section">
-    <h1>Crear Nueva Cotización</h1>
-    <p>Complete el formulario para crear una nueva cotización</p>
+    <h1>📄 Crear Nueva Cotización</h1>
+    <p>Complete el formulario para crear una nueva cotización profesional</p>
   </div>
 
   <!-- Mensajes de error y éxito -->
@@ -21,25 +21,47 @@
     
     <!-- Información del Cliente -->
     <div class="form-section">
-      <h2>Información del Cliente</h2>
+      <div class="section-header">
+        <h2>👤 Información del Cliente</h2>
+        <div class="section-badge">Obligatorio</div>
+      </div>
       
       <div class="form-row">
         <div class="form-group">
-          <label for="codigo">Código de Cotización *</label>
-          <input 
-            type="text" 
-            id="codigo" 
-            formControlName="codigo" 
-            placeholder="Ej: COT-2024-001"
-            [class.invalid]="cotizacionForm.get('codigo')?.invalid && cotizacionForm.get('codigo')?.touched"
-          >
+          <label for="codigo">
+            <span class="label-icon">🔢</span>
+            Código de Cotización *
+          </label>
+          <div class="input-with-button">
+            <input 
+              type="text" 
+              id="codigo" 
+              formControlName="codigo" 
+              placeholder="Se generará automáticamente"
+              [class.invalid]="cotizacionForm.get('codigo')?.invalid && cotizacionForm.get('codigo')?.touched"
+              [readonly]="isGeneratingCode"
+            >
+            <button 
+              type="button" 
+              class="btn btn-secondary btn-small" 
+              (click)="regenerarCodigo()"
+              [disabled]="isGeneratingCode"
+            >
+              <span *ngIf="isGeneratingCode" class="btn-icon">⏳</span>
+              <span *ngIf="!isGeneratingCode" class="btn-icon">🔄</span>
+              {{ isGeneratingCode ? 'Generando...' : 'Regenerar' }}
+            </button>
+          </div>
           <div *ngIf="cotizacionForm.get('codigo')?.invalid && cotizacionForm.get('codigo')?.touched" class="error-message">
             El código es obligatorio
           </div>
         </div>
 
         <div class="form-group">
-          <label for="nombre">Nombre del Cliente *</label>
+          <label for="nombre">
+            <span class="label-icon">👤</span>
+            Nombre del Cliente *
+          </label>
           <input 
             type="text" 
             id="nombre" 
@@ -55,7 +77,10 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label for="email">Email *</label>
+          <label for="email">
+            <span class="label-icon">📧</span>
+            Email *
+          </label>
           <input 
             type="email" 
             id="email" 
@@ -69,7 +94,10 @@
         </div>
 
         <div class="form-group">
-          <label for="rut">RUT *</label>
+          <label for="rut">
+            <span class="label-icon">🆔</span>
+            RUT *
+          </label>
           <input 
             type="text" 
             id="rut" 
@@ -85,7 +113,10 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label for="empresa">Empresa *</label>
+          <label for="empresa">
+            <span class="label-icon">🏢</span>
+            Empresa *
+          </label>
           <input 
             type="text" 
             id="empresa" 
@@ -99,7 +130,10 @@
         </div>
 
         <div class="form-group">
-          <label for="moneda">Moneda *</label>
+          <label for="moneda">
+            <span class="label-icon">💰</span>
+            Moneda *
+          </label>
           <select 
             id="moneda" 
             formControlName="moneda"
@@ -111,7 +145,10 @@
       </div>
 
       <div class="form-group">
-        <label for="atendido">Atendido por *</label>
+        <label for="atendido">
+          <span class="label-icon">👨‍💼</span>
+          Atendido por *
+        </label>
         <input 
           type="text" 
           id="atendido" 
@@ -128,7 +165,8 @@
     <!-- Servicios -->
     <div class="form-section">
       <div class="section-header">
-        <h2>Servicios</h2>
+        <h2>🛠️ Servicios</h2>
+        <div class="section-badge">Configuración</div>
         <button type="button" class="btn btn-secondary" (click)="agregarServicio()">
           <span class="btn-icon">+</span>
           Agregar Servicio
@@ -138,7 +176,10 @@
       <div formArrayName="servicios" class="servicios-container">
         <div *ngFor="let servicio of servicios.controls; let i = index" [formGroupName]="i" class="servicio-item">
           <div class="servicio-header">
-            <h3>Servicio {{ i + 1 }}</h3>
+            <h3>
+              <span class="service-number">{{ i + 1 }}</span>
+              Servicio {{ i + 1 }}
+            </h3>
             <button 
               type="button" 
               class="btn btn-danger btn-small" 
@@ -152,12 +193,15 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label [for]="'nombre' + i">Nombre del Servicio *</label>
+              <label [for]="'nombre' + i">
+                <span class="label-icon">📝</span>
+                Nombre del Servicio *
+              </label>
               <input 
                 type="text" 
                 [id]="'nombre' + i" 
                 formControlName="nombre" 
-                placeholder="Ej: Desarrollo Web"
+                placeholder="Ej: Desarrollo Web, Capacitación, Consultoría"
                 [class.invalid]="servicio.get('nombre')?.invalid && servicio.get('nombre')?.touched"
               >
               <div *ngIf="servicio.get('nombre')?.invalid && servicio.get('nombre')?.touched" class="error-message">
@@ -166,7 +210,10 @@
             </div>
 
             <div class="form-group">
-              <label [for]="'modalidad' + i">Modalidad *</label>
+              <label [for]="'modalidad' + i">
+                <span class="label-icon">🌐</span>
+                Modalidad *
+              </label>
               <select 
                 [id]="'modalidad' + i" 
                 formControlName="modalidad"
@@ -178,11 +225,14 @@
           </div>
 
           <div class="form-group">
-            <label [for]="'detalle' + i">Detalle del Servicio *</label>
+            <label [for]="'detalle' + i">
+              <span class="label-icon">📋</span>
+              Detalle del Servicio *
+            </label>
             <textarea 
               [id]="'detalle' + i" 
               formControlName="detalle" 
-              placeholder="Descripción detallada del servicio"
+              placeholder="Descripción detallada del servicio, alcance, entregables, etc."
               rows="3"
               [class.invalid]="servicio.get('detalle')?.invalid && servicio.get('detalle')?.touched"
             ></textarea>
@@ -193,7 +243,10 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label [for]="'alumnos' + i">Número de Alumnos *</label>
+              <label [for]="'alumnos' + i">
+                <span class="label-icon">👥</span>
+                Número de Alumnos *
+              </label>
               <input 
                 type="number" 
                 [id]="'alumnos' + i" 
@@ -207,7 +260,10 @@
             </div>
 
             <div class="form-group">
-              <label [for]="'tipoCobro' + i">Tipo de Cobro *</label>
+              <label [for]="'tipoCobro' + i">
+                <span class="label-icon">💳</span>
+                Tipo de Cobro *
+              </label>
               <select 
                 [id]="'tipoCobro' + i" 
                 formControlName="tipoCobro"
@@ -222,7 +278,10 @@
           <div formGroupName="detallesCobro" class="detalles-cobro">
             <div *ngIf="servicio.get('tipoCobro')?.value === 'sesion'" class="form-row">
               <div class="form-group">
-                <label [for]="'sesiones' + i">Número de Sesiones</label>
+                <label [for]="'sesiones' + i">
+                  <span class="label-icon">📅</span>
+                  Número de Sesiones
+                </label>
                 <input 
                   type="number" 
                   [id]="'sesiones' + i" 
@@ -232,7 +291,10 @@
                 >
               </div>
               <div class="form-group">
-                <label [for]="'valorSesion' + i">Valor por Sesión</label>
+                <label [for]="'valorSesion' + i">
+                  <span class="label-icon">💵</span>
+                  Valor por Sesión
+                </label>
                 <input 
                   type="number" 
                   [id]="'valorSesion' + i" 
@@ -245,7 +307,10 @@
 
             <div *ngIf="servicio.get('tipoCobro')?.value === 'mes'" class="form-row">
               <div class="form-group">
-                <label [for]="'meses' + i">Número de Meses</label>
+                <label [for]="'meses' + i">
+                  <span class="label-icon">📅</span>
+                  Número de Meses
+                </label>
                 <input 
                   type="number" 
                   [id]="'meses' + i" 
@@ -255,7 +320,10 @@
                 >
               </div>
               <div class="form-group">
-                <label [for]="'valorMes' + i">Valor por Mes</label>
+                <label [for]="'valorMes' + i">
+                  <span class="label-icon">💵</span>
+                  Valor por Mes
+                </label>
                 <input 
                   type="number" 
                   [id]="'valorMes' + i" 
@@ -267,7 +335,10 @@
             </div>
 
             <div *ngIf="servicio.get('tipoCobro')?.value === 'proyecto'" class="form-group">
-              <label [for]="'valorProyecto' + i">Valor del Proyecto</label>
+              <label [for]="'valorProyecto' + i">
+                <span class="label-icon">💵</span>
+                Valor del Proyecto
+              </label>
               <input 
                 type="number" 
                 [id]="'valorProyecto' + i" 
@@ -278,8 +349,11 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label [for]="'subtotal' + i">Subtotal del Servicio</label>
+          <div class="form-group subtotal-service">
+            <label [for]="'subtotal' + i">
+              <span class="label-icon">🧮</span>
+              Subtotal del Servicio
+            </label>
             <input 
               type="number" 
               [id]="'subtotal' + i" 
@@ -297,11 +371,17 @@
 
     <!-- Resumen y Totales -->
     <div class="form-section">
-      <h2>Resumen y Totales</h2>
+      <div class="section-header">
+        <h2>💰 Resumen y Totales</h2>
+        <div class="section-badge">Final</div>
+      </div>
       
-      <div class="form-row">
-        <div class="form-group">
-          <label for="subtotal">Subtotal</label>
+      <div class="totals-grid">
+        <div class="total-item">
+          <label for="subtotal">
+            <span class="label-icon">📊</span>
+            Subtotal
+          </label>
           <input 
             type="number" 
             id="subtotal" 
@@ -310,8 +390,11 @@
           >
         </div>
 
-        <div class="form-group">
-          <label for="descuento">Descuento (%)</label>
+        <div class="total-item">
+          <label for="descuento">
+            <span class="label-icon">🎯</span>
+            Descuento (%)
+          </label>
           <input 
             type="number" 
             id="descuento" 
@@ -321,11 +404,12 @@
             step="0.01"
           >
         </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="descuentoValor">Valor del Descuento</label>
+        <div class="total-item">
+          <label for="descuentoValor">
+            <span class="label-icon">💸</span>
+            Valor del Descuento
+          </label>
           <input 
             type="number" 
             id="descuentoValor" 
@@ -334,8 +418,11 @@
           >
         </div>
 
-        <div class="form-group">
-          <label for="total">Total *</label>
+        <div class="total-item total-final">
+          <label for="total">
+            <span class="label-icon">💎</span>
+            Total *
+          </label>
           <input 
             type="number" 
             id="total" 
@@ -350,11 +437,14 @@
       </div>
 
       <div class="form-group">
-        <label for="notas">Notas Adicionales</label>
+        <label for="notas">
+          <span class="label-icon">📝</span>
+          Notas Adicionales
+        </label>
         <textarea 
           id="notas" 
           formControlName="notas" 
-          placeholder="Observaciones o notas adicionales"
+          placeholder="Observaciones, condiciones especiales, términos de pago, etc."
           rows="3"
         ></textarea>
       </div>

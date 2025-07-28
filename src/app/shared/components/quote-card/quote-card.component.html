@@ -1,56 +1,104 @@
-<div class="cotizacion-card">
+<div class="cotizacion-card" 
+     [class]="'card-estado-' + getEstadoClass()"
+     [draggable]="draggable"
+     (dragstart)="onDragStart($event)">
+  
+  <!-- Header con código y fecha -->
   <div class="cotizacion-header">
-    <h3>{{ cotizacion.codigo || cotizacion.id }}</h3>
-    <span class="fecha">{{ formatDate(cotizacion.fecha) }}</span>
+    <div class="codigo-section">
+      <div class="codigo-icon">📋</div>
+      <div class="codigo-info">
+        <h3>{{ cotizacion.codigo || cotizacion.id }}</h3>
+        <span class="fecha">{{ formatDate(cotizacion.fecha) }}</span>
+      </div>
+    </div>
+    <div class="estado-badge" [class]="'estado-' + getEstadoClass()">
+      <span class="estado-icon">{{ getEstadoIcon() }}</span>
+      <span class="estado-text">{{ cotizacion.estado }}</span>
+    </div>
   </div>
   
+  <!-- Información del cliente -->
   <div class="cotizacion-body">
-    <p><strong>Cliente:</strong> {{ cotizacion.nombre || cotizacion['nombreCliente'] }}</p>
-    <p><strong>Empresa:</strong> {{ cotizacion.empresa }}</p>
-    <p><strong>Email:</strong> {{ cotizacion.email || cotizacion['emailCliente'] }}</p>
-    <p><strong>Atendido:</strong> {{ cotizacion.atendido }}</p>
-    
-    <div class="cliente-info">
-      <p><strong>RUT:</strong> {{ cotizacion['rut'] || cotizacion['rutCliente'] }}</p>
+    <div class="cliente-section">
+      <div class="cliente-header">
+        <span class="cliente-icon">👤</span>
+        <span class="cliente-label">Cliente</span>
+      </div>
+      <div class="cliente-info">
+        <p class="cliente-nombre">{{ cotizacion.nombre || cotizacion['nombreCliente'] }}</p>
+        <p class="cliente-empresa">{{ cotizacion.empresa }}</p>
+        <p class="cliente-email">{{ cotizacion.email || cotizacion['emailCliente'] }}</p>
+        <p class="cliente-rut">RUT: {{ cotizacion['rut'] || cotizacion['rutCliente'] }}</p>
+      </div>
     </div>
     
-    <div class="total-info">
-      <strong>Total: {{ formatCurrency(cotizacion['total'] || cotizacion['valorTotal'] || cotizacion.valor) }}</strong>
+    <!-- Información de contacto -->
+    <div class="contacto-section">
+      <div class="contacto-header">
+        <span class="contacto-icon">📞</span>
+        <span class="contacto-label">Atendido por</span>
+      </div>
+      <p class="contacto-nombre">{{ cotizacion.atendido }}</p>
     </div>
     
-    <div class="monto-info">
-      <strong>Estado: {{ cotizacion.estado }}</strong>
+    <!-- Información financiera -->
+    <div class="financiero-section">
+      <div class="total-info">
+        <div class="total-icon">💰</div>
+        <div class="total-content">
+          <span class="total-label">Total</span>
+          <span class="total-valor">{{ formatCurrency(cotizacion['total'] || cotizacion['valorTotal'] || cotizacion.valor) }}</span>
+        </div>
+      </div>
     </div>
   </div>
   
+  <!-- Acciones -->
   <div class="cotizacion-actions">
     <!-- Selector de estado -->
-    <select 
-      class="estado-select" 
-      [value]="cotizacion.estado"
-      (change)="onEstadoChange($event)">
-      <option value="Emitida">Emitida</option>
-      <option value="Contestada">Contestada</option>
-      <option value="En Negociación">En Negociación</option>
-      <option value="Aceptada">Aceptada</option>
-      <option value="Rechazada">Rechazada</option>
-    </select>
+    <div class="estado-selector">
+      <label for="estado-{{ cotizacion.id }}">Cambiar Estado:</label>
+      <select 
+        id="estado-{{ cotizacion.id }}"
+        class="estado-select" 
+        [value]="cotizacion.estado"
+        (change)="onEstadoChange($event)">
+        <option value="Emitida">📄 Emitida</option>
+        <option value="Contestada">💬 Contestada</option>
+        <option value="En Negociación">🤝 En Negociación</option>
+        <option value="Aceptada">✅ Aceptada</option>
+        <option value="Rechazada">❌ Rechazada</option>
+      </select>
+    </div>
     
     <!-- Botones de acción -->
-    <button class="btn-action btn-info" (click)="verPDF()" title="Ver PDF">
-      📄
-    </button>
-    
-    <button class="btn-action btn-success" (click)="generarContrato()" title="Generar Contrato">
-      📋
-    </button>
-    
-    <button class="btn-action btn-warning" (click)="editarCotizacion()" title="Editar">
-      ✏️
-    </button>
-    
-    <button class="btn-action btn-danger" (click)="eliminarCotizacion()" title="Eliminar">
-      🗑️
-    </button>
+    <div class="action-buttons">
+      <button class="btn-action btn-info" (click)="verPDF()" title="Ver PDF">
+        <span class="btn-icon">📄</span>
+        <span class="btn-text">PDF</span>
+      </button>
+      
+      <button class="btn-action btn-success" (click)="generarContrato()" title="Generar Contrato">
+        <span class="btn-icon">📋</span>
+        <span class="btn-text">Contrato</span>
+      </button>
+      
+      <button class="btn-action btn-warning" (click)="editarCotizacion()" title="Editar">
+        <span class="btn-icon">✏️</span>
+        <span class="btn-text">Editar</span>
+      </button>
+      
+      <button class="btn-action btn-danger" (click)="eliminarCotizacion()" title="Eliminar">
+        <span class="btn-icon">🗑️</span>
+        <span class="btn-text">Eliminar</span>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Indicador de drag -->
+  <div class="drag-indicator">
+    <span class="drag-icon">↕️</span>
+    <span class="drag-text">Arrastrar para cambiar estado</span>
   </div>
 </div>

@@ -45,6 +45,12 @@ export class CotizacionesComponent implements OnInit {
   
   // Estados disponibles
   estados = ['Emitida', 'Contestada', 'En Negociación', 'Aceptada', 'Rechazada'];
+  
+  // Modo de vista
+  viewMode: 'kanban' | 'list' = 'kanban';
+  
+  // Drag & Drop
+  draggedCotizacion: Cotizacion | null = null;
 
   constructor(
     private firebaseService: FirebaseService,
@@ -143,6 +149,53 @@ export class CotizacionesComponent implements OnInit {
     return this.cotizacionesFiltradas.filter(cot => cot.estado === estado);
   }
 
+  // Métodos para cambio de vista
+  setViewMode(mode: 'kanban' | 'list') {
+    this.viewMode = mode;
+  }
+
+  // Métodos para drag & drop
+  onDragStart(event: DragEvent, cotizacion: Cotizacion) {
+    this.draggedCotizacion = cotizacion;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', cotizacion.id);
+    }
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  async onDrop(event: DragEvent, nuevoEstado: string) {
+    event.preventDefault();
+    
+    if (this.draggedCotizacion && this.draggedCotizacion.estado !== nuevoEstado) {
+      try {
+        await this.firebaseService.updateCotizacion(this.draggedCotizacion.id, { estado: nuevoEstado });
+        
+        // Si el estado es "Aceptada", crear contrato
+        if (nuevoEstado === 'Aceptada') {
+          await this.firebaseService.createContratoFromCotizacion(this.draggedCotizacion);
+        }
+        
+        // Recargar cotizaciones
+        await this.cargarCotizaciones();
+        
+        // Mostrar notificación de éxito
+        this.mostrarNotificacion(`Cotización movida a ${nuevoEstado}`, 'success');
+      } catch (error) {
+        console.error('Error al cambiar estado:', error);
+        this.mostrarNotificacion('Error al cambiar estado', 'error');
+      }
+    }
+    
+    this.draggedCotizacion = null;
+  }
+
   async onEstadoChanged(event: { cotizacionId: string, nuevoEstado: string }) {
     try {
       await this.firebaseService.updateCotizacion(event.cotizacionId, { estado: event.nuevoEstado });
@@ -157,8 +210,12 @@ export class CotizacionesComponent implements OnInit {
       
       // Recargar cotizaciones
       await this.cargarCotizaciones();
+      
+      // Mostrar notificación
+      this.mostrarNotificacion(`Estado cambiado a ${event.nuevoEstado}`, 'success');
     } catch (error) {
       console.error('Error al cambiar estado:', error);
+      this.mostrarNotificacion('Error al cambiar estado', 'error');
     }
   }
 
@@ -169,9 +226,97 @@ export class CotizacionesComponent implements OnInit {
       const cotizacionRef = doc(this.firebaseService['firestore'], 'cotizaciones', cotizacionId);
       await deleteDoc(cotizacionRef);
       await this.cargarCotizaciones();
+      this.mostrarNotificacion('Cotización eliminada', 'success');
     } catch (error) {
       console.error('Error al eliminar cotización:', error);
+      this.mostrarNotificacion('Error al eliminar cotización', 'error');
     }
+  }
+
+  // Métodos para vista lista
+  formatDate(fecha: any): string {
+    if (!fecha) return 'Sin fecha';
+    
+    try {
+      if (fecha.toDate) {
+        return fecha.toDate().toLocaleDateString('es-CL');
+      } else if (fecha instanceof Date) {
+        return fecha.toLocaleDateString('es-CL');
+      } else if (typeof fecha === 'string') {
+        return new Date(fecha).toLocaleDateString('es-CL');
+      } else {
+        return 'Fecha inválida';
+      }
+    } catch (error) {
+      return 'Fecha inválida';
+    }
+  }
+
+  formatCurrency(valor: number | string): string {
+    if (!valor) return '$0';
+    
+    const numValor = typeof valor === 'string' ? parseFloat(valor) : valor;
+    if (isNaN(numValor)) return '$0';
+    
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(numValor);
+  }
+
+  // Métodos de acciones para vista lista
+  verPDF(cotizacion: Cotizacion) {
+    // Implementar generación de PDF
+    console.log('Generando PDF para:', cotizacion.codigo);
+  }
+
+  generarContrato(cotizacion: Cotizacion) {
+    this.onEstadoChanged({
+      cotizacionId: cotizacion.id,
+      nuevoEstado: 'Aceptada'
+    });
+  }
+
+  editarCotizacion(cotizacion: Cotizacion) {
+    // Implementar navegación a edición
+    console.log('Editando cotización:', cotizacion.id);
+  }
+
+  eliminarCotizacion(cotizacion: Cotizacion) {
+    if (confirm('¿Estás seguro de que quieres eliminar esta cotización?')) {
+      this.onCotizacionDeleted(cotizacion.id);
+    }
+  }
+
+  // Método para mostrar notificaciones
+  mostrarNotificacion(mensaje: string, tipo: 'success' | 'error' | 'info' = 'info') {
+    // Crear elemento de notificación
+    const notificacion = document.createElement('div');
+    notificacion.className = `notificacion notificacion-${tipo}`;
+    notificacion.innerHTML = `
+      <div class="notificacion-contenido">
+        <span class="notificacion-icono">${tipo === 'success' ? '✅' : tipo === 'error' ? '❌' : 'ℹ️'}</span>
+        <span class="notificacion-mensaje">${mensaje}</span>
+      </div>
+    `;
+    
+    // Agregar al DOM
+    document.body.appendChild(notificacion);
+    
+    // Mostrar con animación
+    setTimeout(() => notificacion.classList.add('mostrar'), 100);
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+      notificacion.classList.remove('mostrar');
+      setTimeout(() => {
+        if (document.body.contains(notificacion)) {
+          document.body.removeChild(notificacion);
+        }
+      }, 300);
+    }, 3000);
   }
 
   onLogout() {

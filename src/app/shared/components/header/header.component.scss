@@ -1,7 +1,7 @@
 .admin-header {
-  background: linear-gradient(135deg, #1a1b26 0%, #0D0F19 100%);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(22, 27, 34, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--borde-color);
   padding: 1.5rem 0;
   position: sticky;
   top: 0;
@@ -20,10 +20,10 @@
 }
 
 .admin-header h1 {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family-display);
   font-size: 1.875rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #00d4ff 0%, #ff0080 100%);
+  background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -39,10 +39,10 @@
 }
 
 .header-actions h2 {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family-display);
   font-size: 1.25rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--texto-principal);
   margin: 0;
   opacity: 0.9;
 }
@@ -55,7 +55,7 @@
   padding: 0.5rem 1.5rem;
   border: none;
   border-radius: 0.75rem;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-sans);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
@@ -82,42 +82,70 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #00d4ff 0%, #ff0080 100%);
-  color: #ffffff;
+  background: var(--gradient-primary);
+  color: var(--texto-principal);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .btn-primary:hover {
   filter: brightness(1.1);
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-success), #059669);
+  color: var(--texto-principal);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .btn-success:hover {
   filter: brightness(1.1);
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 20px rgba(63, 185, 80, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, var(--color-warning), #d97706);
+  color: var(--color-text-dark);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.btn-warning:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 20px rgba(240, 136, 62, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-info {
+  background: linear-gradient(135deg, var(--acento-cian), #3b82f6);
+  color: var(--texto-principal);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.btn-info:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 20px rgba(88, 166, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .btn-logout {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-danger), #dc2626);
+  color: var(--texto-principal);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(248, 81, 73, 0.3);
 }
 
 .btn-logout:hover {
   filter: brightness(1.1);
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 20px rgba(248, 81, 73, 0.4);
+  transform: translateY(-1px);
 }
 
 .user-info {
   text-align: center;
   padding: 0.5rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--texto-secundario);
   font-size: 0.875rem;
 }
 
