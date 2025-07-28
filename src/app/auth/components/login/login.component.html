@@ -11,8 +11,8 @@
         <input 
           type="email" 
           id="email" 
-          formControlName="email"
-          [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          formControlName="email" 
+          required>
       </div>
       
       <div class="form-group">
@@ -20,8 +20,8 @@
         <input 
           type="password" 
           id="password" 
-          formControlName="password"
-          [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          formControlName="password" 
+          required>
       </div>
       
       <div *ngIf="errorMessage" class="error-message">
@@ -36,18 +36,6 @@
         <span *ngIf="isLoading">Iniciando...</span>
       </button>
     </form>
-    
-    <!-- Botón temporal para crear usuario -->
-    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-      <button 
-        type="button" 
-        class="login-btn"
-        style="background: #28a745;"
-        (click)="createUser()"
-        [disabled]="loginForm.invalid || isLoading">
-        Crear Usuario de Prueba
-      </button>
-    </div>
     
     <div class="login-footer">
       <a href="/" class="back-link">← Volver al Cotizador</a>
