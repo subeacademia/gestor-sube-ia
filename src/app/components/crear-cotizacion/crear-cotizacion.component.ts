@@ -255,8 +255,6 @@ export class CrearCotizacionComponent implements OnInit {
           totalConDescuento,
           total: totalConDescuento,
           notas: formData.notas || '',
-          fecha: new Date().toLocaleDateString('es-CL'),
-          fechaTimestamp: new Date(),
           estado: 'Pendiente'
         };
 

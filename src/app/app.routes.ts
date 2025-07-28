@@ -18,21 +18,21 @@ export const routes: Routes = [
   },
   {
     path: 'cotizaciones',
-    loadComponent: () => import('./pages/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent),
+    loadComponent: () => import('./components/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent),
     canActivate: [authGuard]
   },
   {
     path: 'admin',
-    loadComponent: () => import('./pages/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent),
+    loadComponent: () => import('./components/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent),
     canActivate: [authGuard]
   },
   {
     path: 'test-admin',
-    loadComponent: () => import('./pages/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent)
+    loadComponent: () => import('./components/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent)
   },
   {
     path: 'admin-test',
-    loadComponent: () => import('./pages/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent)
+    loadComponent: () => import('./components/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent)
   },
   {
     path: 'cotizaciones/crear',

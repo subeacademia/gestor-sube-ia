@@ -1,1 +1,129 @@
-<p>cotizaciones works!</p>
+<div class="admin-container">
+  <app-header></app-header>
+  
+  <main class="admin-main">
+    <div class="admin-content">
+      <!-- Sección de Estadísticas -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>TOTAL COTIZACIONES</h3>
+            <p class="stat-number">{{ getTotalCotizaciones() }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>PENDIENTES</h3>
+            <p class="stat-number">{{ getCotizacionesPendientes() }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>ACEPTADAS</h3>
+            <p class="stat-number">{{ getCotizacionesAceptadas() }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>CONTRATADAS</h3>
+            <p class="stat-number">{{ getCotizacionesContratadas() }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sección de Filtros -->
+      <section class="filters-section">
+        <div class="search-group">
+          <label for="busqueda">Buscar Cotización</label>
+          <input 
+            type="text" 
+            id="busqueda" 
+            class="search-input" 
+            placeholder="Buscar por código, cliente o empresa..."
+            [(ngModel)]="filtroBusqueda">
+        </div>
+        
+        <div class="filter-group">
+          <label for="estado">Estado</label>
+          <select id="estado" [(ngModel)]="filtroEstado">
+            <option value="todos">Todos los Estados</option>
+            <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="atendedor">Atendedor</label>
+          <select id="atendedor" [(ngModel)]="filtroAtendedor">
+            <option value="todos">Todos los Atendedores</option>
+            <option *ngFor="let atendedor of atendedores" [value]="atendedor">{{ atendedor }}</option>
+          </select>
+        </div>
+        
+        <button class="btn-filter" (click)="aplicarFiltros()">
+          🔍 Aplicar Filtros
+        </button>
+      </section>
+
+      <!-- Sección de Cotizaciones -->
+      <section class="cotizaciones-section">
+        <h2>📋 Gestión de Cotizaciones</h2>
+        
+        <!-- Botón de prueba temporal -->
+        <div style="margin-bottom: 20px; text-align: center;">
+          <button class="btn btn-primary" (click)="crearCotizacionPrueba()">
+            🧪 Crear Cotización de Prueba
+          </button>
+          <button class="btn btn-secondary" (click)="crearDatosCompletos()" style="margin-left: 10px;">
+            🧪 Crear Datos Completos (Cotización + Contrato)
+          </button>
+          <button class="btn btn-warning" (click)="probarConexionDirecta()" style="margin-left: 10px;">
+            🔧 Probar Conexión Directa
+          </button>
+          <button class="btn btn-info" (click)="verificarReglasEspecificas()" style="margin-left: 10px;">
+            🔒 Verificar Reglas
+          </button>
+        </div>
+        
+        <!-- Lista de Cotizaciones -->
+        <div class="cotizaciones-list">
+          <div *ngIf="cargando" class="loading-container">
+            <div class="loading-spinner">⏳</div>
+            <p>Cargando cotizaciones...</p>
+          </div>
+          
+          <div *ngIf="!cargando && cotizacionesFiltradas.length === 0" class="empty-state">
+            <div class="empty-icon">📄</div>
+            <p>No se encontraron cotizaciones</p>
+            <p class="empty-subtitle">Las cotizaciones aparecerán aquí una vez que se creen</p>
+          </div>
+          
+          <div *ngIf="!cargando && cotizacionesFiltradas.length > 0" class="cotizaciones-grid">
+            <div *ngFor="let cotizacion of cotizacionesFiltradas" class="cotizacion-card">
+              <div class="card-header">
+                <h4>{{ cotizacion.codigo }}</h4>
+                <span class="estado-badge" [class]="getEstadoClass(cotizacion.estado)">
+                  {{ cotizacion.estado }}
+                </span>
+              </div>
+              <div class="card-body">
+                <p><strong>Cliente:</strong> {{ cotizacion.nombre }}</p>
+                <p><strong>Empresa:</strong> {{ cotizacion.empresa }}</p>
+                <p><strong>Total:</strong> {{ formatearMoneda(cotizacion.total, cotizacion.moneda) }}</p>
+                <p><strong>Atendido por:</strong> {{ cotizacion.atendido }}</p>
+              </div>
+              <div class="card-actions">
+                <button class="btn btn-primary" (click)="verDetalle(cotizacion)">Ver Detalle</button>
+                <button class="btn btn-secondary" (click)="editarCotizacion(cotizacion)">Editar</button>
+                <button class="btn btn-success" (click)="crearContrato(cotizacion)">Crear Contrato</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <ng-template #loading>
+          <div class="loading">
+            Cargando cotizaciones...
+          </div>
+        </ng-template>
+        
+        <div class="no-data" *ngIf="(cotizaciones$ | async)?.length === 0">
+          No hay cotizaciones disponibles
+        </div>
+      </section>
+    </div>
+  </main>
+</div>

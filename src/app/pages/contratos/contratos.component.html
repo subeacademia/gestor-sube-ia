@@ -83,30 +83,47 @@
     <div class="contratos-section">
       <div class="section-header">
         <h2>📋 Tablero de Contratos</h2>
-        <button class="btn btn-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-          </svg>
-          Crear Contrato Directo
-        </button>
+        <div class="header-buttons">
+          <button class="btn btn-secondary" (click)="crearContratoPrueba()">
+            🧪 Crear Contrato de Prueba
+          </button>
+          <button class="btn btn-warning" (click)="verificarCargaContratos()">
+            🔍 Verificar Carga
+          </button>
+          <button class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Crear Contrato Directo
+          </button>
+        </div>
       </div>
 
       <!-- Vista de lista de contratos -->
       <div class="contratos-list">
-        <div *ngIf="(contratosFiltrados$ | async)?.length === 0" class="no-data">
-          <p>No se encontraron contratos con los filtros aplicados</p>
+        <div *ngIf="cargando" class="loading-container">
+          <div class="loading-spinner">⏳</div>
+          <p>Cargando contratos...</p>
         </div>
 
-        <app-contract-card 
-          *ngFor="let contrato of contratosFiltrados$ | async"
-          [contrato]="contrato"
-          (verContrato)="onVerContrato($event)"
-          (editarContrato)="onEditarContrato($event)"
-          (eliminarContrato)="onEliminarContrato($event)"
-          (cambiarEstado)="onCambiarEstado($event)"
-          (enviarFirma)="onEnviarFirma($event)"
-          (generarPDF)="onGenerarPDF($event)">
-        </app-contract-card>
+        <div *ngIf="!cargando && contratosFiltrados.length === 0" class="no-data">
+          <div class="empty-icon">📄</div>
+          <p>No se encontraron contratos con los filtros aplicados</p>
+          <p class="empty-subtitle">Los contratos aparecerán aquí una vez que se creen</p>
+        </div>
+
+        <div *ngIf="!cargando && contratosFiltrados.length > 0" class="contratos-grid">
+          <app-contract-card 
+            *ngFor="let contrato of contratosFiltrados"
+            [contrato]="contrato"
+            (verContrato)="onVerContrato($event)"
+            (editarContrato)="onEditarContrato($event)"
+            (eliminarContrato)="onEliminarContrato($event)"
+            (cambiarEstado)="onCambiarEstado($event)"
+            (enviarFirma)="onEnviarFirma($event)"
+            (generarPDF)="onGenerarPDF($event)">
+          </app-contract-card>
+        </div>
       </div>
     </div>
   </main>
