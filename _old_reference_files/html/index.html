@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cotizador Final - SUBE IA</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #00B8D9;
+    }
+    .user-info {
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    .checkbox-group {
+      margin: 10px 0;
+    }
+    .checkbox-group label {
+      display: inline-block;
+      margin-left: 10px;
+      font-weight: normal;
+    }
+    .servicio-detalle {
+      background: #f9f9f9;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 8px;
+      border-left: 4px solid #00B8D9;
+    }
+    .servicio-detalle h3 {
+      margin-top: 0;
+      color: #00B8D9;
+    }
+    .campo-cobro {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: #e3f2fd;
+      border-radius: 5px;
+    }
+    .campo-cobro.active {
+      display: block;
+    }
+    .btn {
+      background: linear-gradient(135deg, #00B8D9, #FF4EFF);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      margin-top: 20px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .btn-group .btn {
+      flex: 1;
+    }
+    
+    .btn-logout {
+      background: #dc3545;
+      width: auto;
+      padding: 8px 16px;
+      font-size: 14px;
+      margin: 0;
+    }
+    .btn-admin {
+      background: #28a745;
+      width: auto;
+      padding: 8px 16px;
+      font-size: 14px;
+      margin: 0 10px;
+    }
+    .result {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .subtotal {
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-weight: bold;
+      color: #1976d2;
+    }
+    .radio-group {
+      margin: 10px 0;
+    }
+    .radio-group label {
+      display: inline-block;
+      margin-right: 20px;
+      font-weight: normal;
+    }
+    .login-section {
+      text-align: center;
+      padding: 40px;
+    }
+    .login-form {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📄 Cotizador Final - SUBE IA TECH</h1>
+      <div id="user-info" class="user-info" style="display: none;">
+        <span id="user-email"></span>
+        <button class="btn btn-admin" onclick="irAlAdmin()">Panel Admin</button>
+        <button class="btn btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+      </div>
+      <div style="margin-top: 10px;">
+        <a href="/login" class="btn btn-admin" style="text-decoration: none; display: inline-block;">🔐 Acceso Administrativo</a>
+      </div>
+    </div>
+    
+    <!-- Sección de Login -->
+    <div id="login-section" class="login-section">
+      <h2>🔐 Iniciar Sesión</h2>
+      <p>Debes iniciar sesión para usar el cotizador</p>
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" required value="admin@subeia.tech">
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" required value="admin123">
+        </div>
+        <button type="submit" class="btn">Iniciar Sesión</button>
+      </form>
+      <div id="login-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <!-- Sección del Cotizador -->
+    <div id="cotizador-section" style="display: none;">
+      <form id="cotizador-form">
+        <div class="form-group">
+          <label for="nombre">Nombre completo *</label>
+          <input type="text" id="nombre" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="email-cliente">Email *</label>
+          <input type="email" id="email-cliente" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="rut">RUT (cliente) *</label>
+          <input type="text" id="rut" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="empresa">Empresa *</label>
+          <input type="text" id="empresa" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="telefono">Teléfono</label>
+          <input type="tel" id="telefono" placeholder="+56 9 1234 5678">
+        </div>
+        
+        <div class="form-group">
+          <label for="direccion">Dirección</label>
+          <input type="text" id="direccion" placeholder="Av. Providencia 1234">
+        </div>
+        
+        <div class="form-group">
+          <label for="comuna">Comuna</label>
+          <input type="text" id="comuna" placeholder="Providencia">
+        </div>
+        
+        <div class="form-group">
+          <label for="ciudad">Ciudad</label>
+          <input type="text" id="ciudad" placeholder="Santiago">
+        </div>
+        
+        <div class="form-group">
+          <label for="region">Región</label>
+          <input type="text" id="region" placeholder="Metropolitana">
+        </div>
+        
+        <div class="form-group">
+          <label for="moneda">Moneda *</label>
+          <select id="moneda" required>
+            <option value="CLP">CLP</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="ARS">ARS</option>
+            <option value="BRL">BRL</option>
+            <option value="PEN">PEN</option>
+            <option value="UYU">UYU</option>
+            <option value="PYG">PYG</option>
+            <option value="BOB">BOB</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Servicios *</label>
+          <div class="checkbox-group">
+            <input type="checkbox" id="charlas" name="servicios" value="Charlas">
+            <label for="charlas">Charlas – Presentaciones orales</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="capacitaciones" name="servicios" value="Capacitaciones">
+            <label for="capacitaciones">Capacitaciones – Talleres prácticos</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="certificaciones" name="servicios" value="Certificaciones">
+            <label for="certificaciones">Certificaciones – Programas con diploma</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="consultorias" name="servicios" value="Consultorías">
+            <label for="consultorias">Consultorías – Diagnóstico y plan de acción</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="mentorias" name="servicios" value="Mentorías">
+            <label for="mentorias">Mentorías – Acompañamiento a largo plazo</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="asesorias" name="servicios" value="Asesorías de IA">
+            <label for="asesorias">Asesorías de IA – Soporte en proyectos de IA</label>
+          </div>
+        </div>
+        
+        <div id="servicios-detalle"></div>
+        
+        <div class="form-group">
+          <label for="descuento">Descuento (%)</label>
+          <input type="number" id="descuento" min="0" max="100" step="0.01" placeholder="0" value="0">
+        </div>
+        
+        <div class="form-group">
+          <label for="atendedor">Atendido por *</label>
+          <select id="atendedor" required>
+            <option value="">Selecciona...</option>
+            <option value="Rodrigo Carrillo">Rodrigo Carrillo</option>
+            <option value="Bruno Villalobos">Bruno Villalobos</option>
+            <option value="Mario Muñoz">Mario Muñoz</option>
+            <option value="Nicolás Valenzuela">Nicolás Valenzuela</option>
+            <option value="Ignacio Villarroel">Ignacio Villarroel</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="notas">Notas adicionales (opcional)</label>
+          <textarea id="notas" rows="3" placeholder="Agrega detalles, condiciones, observaciones, etc."></textarea>
+        </div>
+        
+        <div class="btn-group" style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn" id="preview-pdf" style="flex: 1;">
+            👁️ Previsualizar
+          </button>
+          <button type="button" class="btn" id="descargar-pdf" style="flex: 1;">
+            📄 Generar PDF
+          </button>
+          <button type="button" class="btn" id="enviar-cotizacion" style="flex: 1;">
+            📧 Enviar al Cliente
+          </button>
+        </div>
+      </form>
+      
+      <div id="result" class="result" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module" src="js/firebase-config.js"></script>
+  
+  <!-- html2pdf (versión más estable) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <!-- Script del cotizador -->
+  <script type="module" src="js/script.js"></script>
+  
+  <!-- Sistema de Ruteo (cargado después de Firebase) -->
+  <script src="js/router.js"></script>
+  <script src="js/navigation.js"></script>
+</body>
+</html> 
