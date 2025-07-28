@@ -5,92 +5,169 @@
     <div class="dashboard-content">
       <!-- Título del Dashboard -->
       <div class="dashboard-header">
-        <h1>🏠 Dashboard Principal</h1>
+        <h1>📊 Panel de Administración</h1>
         <p>Bienvenido al sistema de gestión SUBE IA</p>
       </div>
 
-      <!-- Tarjetas de Navegación -->
-      <div class="navigation-cards">
-        <!-- Panel de Administración -->
-        <div class="nav-card" routerLink="/admin">
-          <div class="nav-card-icon">📊</div>
-          <div class="nav-card-content">
-            <h3>Panel de Administración</h3>
-            <p>Gestiona cotizaciones, estadísticas y filtros avanzados</p>
-            <div class="nav-card-features">
-              <span class="feature">📋 Cotizaciones</span>
-              <span class="feature">📈 Estadísticas</span>
-              <span class="feature">🔍 Filtros</span>
-            </div>
-          </div>
-          <div class="nav-card-arrow">→</div>
-        </div>
-
-        <!-- Gestión de Contratos -->
-        <div class="nav-card" routerLink="/contratos">
-          <div class="nav-card-icon">📄</div>
-          <div class="nav-card-content">
-            <h3>Gestión de Contratos</h3>
-            <p>Administra contratos, firmas digitales y seguimiento</p>
-            <div class="nav-card-features">
-              <span class="feature">📝 Contratos</span>
-              <span class="feature">✍️ Firmas</span>
-              <span class="feature">📊 Seguimiento</span>
-            </div>
-          </div>
-          <div class="nav-card-arrow">→</div>
-        </div>
-
-        <!-- Crear Cotización -->
-        <div class="nav-card" routerLink="/cotizaciones/crear">
-          <div class="nav-card-icon">➕</div>
-          <div class="nav-card-content">
-            <h3>Crear Nueva Cotización</h3>
-            <p>Genera cotizaciones personalizadas para clientes</p>
-            <div class="nav-card-features">
-              <span class="feature">🎯 Personalizada</span>
-              <span class="feature">💰 Precios</span>
-              <span class="feature">📧 Envío</span>
-            </div>
-          </div>
-          <div class="nav-card-arrow">→</div>
-        </div>
-
-        <!-- Configuración -->
-        <div class="nav-card">
-          <div class="nav-card-icon">⚙️</div>
-          <div class="nav-card-content">
-            <h3>Configuración</h3>
-            <p>Configura el sistema y gestiona usuarios</p>
-            <div class="nav-card-features">
-              <span class="feature">👥 Usuarios</span>
-              <span class="feature">🔧 Sistema</span>
-              <span class="feature">📊 Reportes</span>
-            </div>
-          </div>
-          <div class="nav-card-arrow">→</div>
-        </div>
+      <!-- Indicador de carga -->
+      <div *ngIf="cargando" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Cargando datos del dashboard...</p>
       </div>
 
-      <!-- Estadísticas Rápidas -->
-      <div class="quick-stats">
-        <h2>📈 Estadísticas Rápidas</h2>
-        <div class="stats-grid">
-          <div class="quick-stat-card">
-            <div class="stat-number">15</div>
-            <div class="stat-label">Cotizaciones Activas</div>
+      <!-- Contenido principal cuando no está cargando -->
+      <div *ngIf="!cargando" class="dashboard-content-main">
+        <!-- Tarjetas de Estadísticas -->
+        <div class="stats-section">
+          <app-stat-card 
+            title="Total Cotizaciones" 
+            [value]="estadisticas.totalCotizaciones.toString()" 
+            icon="📋"
+            color="primary">
+          </app-stat-card>
+          
+          <app-stat-card 
+            title="Este Mes" 
+            [value]="estadisticas.cotizacionesMes.toString()" 
+            icon="📅"
+            color="info">
+          </app-stat-card>
+          
+          <app-stat-card 
+            title="Valor Total" 
+            [value]="formatearMoneda(estadisticas.valorTotal)" 
+            icon="💰"
+            color="success">
+          </app-stat-card>
+          
+          <app-stat-card 
+            title="Total Aceptado" 
+            [value]="formatearMoneda(estadisticas.totalAceptadas)" 
+            icon="✅"
+            color="warning">
+          </app-stat-card>
+          
+          <app-stat-card 
+            title="Total Contratos" 
+            [value]="estadisticas.totalContratos.toString()" 
+            icon="📄"
+            color="secondary">
+          </app-stat-card>
+          
+          <app-stat-card 
+            title="Contratos Pendientes" 
+            [value]="estadisticas.contratosPendientes.toString()" 
+            icon="⏳"
+            color="danger">
+          </app-stat-card>
+          
+          <app-stat-card 
+            title="Tasa de Éxito" 
+            [value]="estadisticas.tasaExito + '%'" 
+            icon="📈"
+            color="accent">
+          </app-stat-card>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="charts-section">
+          <!-- Gráfico de Tendencias -->
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3>📈 Tendencias de Cotizaciones</h3>
+              <p>Evolución mensual de cotizaciones y valores</p>
+            </div>
+            <div class="chart-wrapper">
+              <canvas #tendenciasChart></canvas>
+            </div>
           </div>
-          <div class="quick-stat-card">
-            <div class="stat-number">8</div>
-            <div class="stat-label">Contratos Pendientes</div>
+
+          <!-- Gráfico de Estados -->
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3>🎯 Distribución por Estados</h3>
+              <p>Distribución de cotizaciones por estado actual</p>
+            </div>
+            <div class="chart-wrapper">
+              <canvas #estadosChart></canvas>
+            </div>
           </div>
-          <div class="quick-stat-card">
-            <div class="stat-number">$45,200</div>
-            <div class="stat-label">Valor Total</div>
+
+          <!-- Gráfico de Ventas -->
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3>💰 Ventas Mensuales</h3>
+              <p>Ventas totales por mes (cotizaciones aceptadas + contratos)</p>
+            </div>
+            <div class="chart-wrapper">
+              <canvas #ventasChart></canvas>
+            </div>
           </div>
-          <div class="quick-stat-card">
-            <div class="stat-number">92%</div>
-            <div class="stat-label">Tasa de Éxito</div>
+        </div>
+
+        <!-- Tarjetas de Navegación -->
+        <div class="navigation-section">
+          <h2>🚀 Acciones Rápidas</h2>
+          <div class="navigation-cards">
+            <!-- Panel de Administración -->
+            <div class="nav-card" routerLink="/cotizaciones">
+              <div class="nav-card-icon">📊</div>
+              <div class="nav-card-content">
+                <h3>Gestión de Cotizaciones</h3>
+                <p>Administra cotizaciones, estadísticas y filtros avanzados</p>
+                <div class="nav-card-features">
+                  <span class="feature">📋 Cotizaciones</span>
+                  <span class="feature">📈 Estadísticas</span>
+                  <span class="feature">🔍 Filtros</span>
+                </div>
+              </div>
+              <div class="nav-card-arrow">→</div>
+            </div>
+
+            <!-- Gestión de Contratos -->
+            <div class="nav-card" routerLink="/contratos">
+              <div class="nav-card-icon">📄</div>
+              <div class="nav-card-content">
+                <h3>Gestión de Contratos</h3>
+                <p>Administra contratos, firmas digitales y seguimiento</p>
+                <div class="nav-card-features">
+                  <span class="feature">📝 Contratos</span>
+                  <span class="feature">✍️ Firmas</span>
+                  <span class="feature">📊 Seguimiento</span>
+                </div>
+              </div>
+              <div class="nav-card-arrow">→</div>
+            </div>
+
+            <!-- Crear Cotización -->
+            <div class="nav-card" routerLink="/cotizaciones/crear">
+              <div class="nav-card-icon">➕</div>
+              <div class="nav-card-content">
+                <h3>Crear Nueva Cotización</h3>
+                <p>Genera cotizaciones personalizadas para clientes</p>
+                <div class="nav-card-features">
+                  <span class="feature">🎯 Personalizada</span>
+                  <span class="feature">💰 Precios</span>
+                  <span class="feature">📧 Envío</span>
+                </div>
+              </div>
+              <div class="nav-card-arrow">→</div>
+            </div>
+
+            <!-- Configuración -->
+            <div class="nav-card">
+              <div class="nav-card-icon">⚙️</div>
+              <div class="nav-card-content">
+                <h3>Configuración</h3>
+                <p>Configura el sistema y gestiona usuarios</p>
+                <div class="nav-card-features">
+                  <span class="feature">👥 Usuarios</span>
+                  <span class="feature">🔧 Sistema</span>
+                  <span class="feature">📊 Reportes</span>
+                </div>
+              </div>
+              <div class="nav-card-arrow">→</div>
+            </div>
           </div>
         </div>
       </div>

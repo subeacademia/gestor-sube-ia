@@ -1,4 +1,7 @@
-<div class="stat-card">
-  <h3>{{ title }}</h3>
-  <p>{{ value }}</p>
+<div class="stat-card" [ngClass]="'stat-card-' + color">
+  <div class="stat-card-icon" *ngIf="icon">{{ icon }}</div>
+  <div class="stat-card-content">
+    <h3>{{ title }}</h3>
+    <p class="stat-value">{{ value }}</p>
+  </div>
 </div>

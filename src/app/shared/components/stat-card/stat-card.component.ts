@@ -11,4 +11,6 @@ import { CommonModule } from '@angular/common';
 export class StatCardComponent {
   @Input() title: string = '';
   @Input() value: string = '';
+  @Input() icon: string = '';
+  @Input() color: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'accent' = 'primary';
 }
