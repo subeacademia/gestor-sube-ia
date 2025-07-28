@@ -117,6 +117,34 @@ export class CotizacionesComponent implements OnInit {
 
   onGenerarContrato(cotizacion: any) {
     console.log('Generar contrato:', cotizacion);
+    
+    // Si el estado es "aceptada", crear el contrato automáticamente
+    if (cotizacion.estado === 'aceptada') {
+      this.crearContratoDesdeCotizacion(cotizacion);
+    } else {
+      // Si no está aceptada, cambiar el estado a aceptada y luego crear el contrato
+      this.firebaseService.updateCotizacion(cotizacion.id, { estado: 'aceptada' })
+        .then(() => {
+          this.crearContratoDesdeCotizacion(cotizacion);
+        })
+        .catch(error => {
+          console.error('Error al actualizar cotización:', error);
+        });
+    }
+  }
+
+  private crearContratoDesdeCotizacion(cotizacion: any) {
+    this.firebaseService.createContratoFromCotizacion(cotizacion)
+      .then((contrato) => {
+        console.log('Contrato creado exitosamente:', contrato);
+        // Aquí podrías mostrar una notificación de éxito
+        alert(`Contrato ${contrato.codigo} creado exitosamente desde la cotización ${cotizacion.codigo}`);
+      })
+      .catch(error => {
+        console.error('Error al crear contrato:', error);
+        // Aquí podrías mostrar una notificación de error
+        alert('Error al crear el contrato. Por favor, inténtalo de nuevo.');
+      });
   }
 
   onEliminar(cotizacion: any) {

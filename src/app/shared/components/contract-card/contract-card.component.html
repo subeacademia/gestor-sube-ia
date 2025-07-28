@@ -1,1 +1,117 @@
-<p>contract-card works!</p>
+<div class="contract-card">
+  <div class="contract-header">
+    <div class="contract-title">
+      <h3>{{ contrato.titulo || 'Contrato sin título' }}</h3>
+      <span class="contract-code">{{ contrato.codigo }}</span>
+    </div>
+    <div class="contract-date">
+      {{ formatearFecha(contrato.fechaCreacionContrato) }}
+    </div>
+  </div>
+
+  <div class="contract-body">
+    <div class="client-info">
+      <p><strong>Cliente:</strong> {{ contrato.nombreCliente }}</p>
+      <p><strong>Empresa:</strong> {{ contrato.empresa }}</p>
+      <p><strong>Email:</strong> {{ contrato.emailCliente }}</p>
+    </div>
+
+    <div class="services-info">
+      <p><strong>Servicios:</strong> {{ contrato.servicios }}</p>
+    </div>
+
+    <div class="financial-info">
+      <div class="total-amount">
+        <strong>Valor Total:</strong>
+        <span class="amount">{{ formatearMoneda(contrato.valorTotal) }}</span>
+      </div>
+    </div>
+
+    <div class="status-section">
+      <span class="status-badge" [class]="getEstadoClass(contrato.estado)">
+        {{ contrato.estado }}
+      </span>
+    </div>
+  </div>
+
+  <div class="contract-actions">
+    <div class="action-buttons">
+      <button class="btn-action btn-primary" (click)="onVerContrato()" title="Ver detalles">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+        </svg>
+        Ver
+      </button>
+
+      <button class="btn-action btn-secondary" (click)="onEditarContrato()" title="Editar contrato">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+        </svg>
+        Editar
+      </button>
+
+      <div class="dropdown">
+        <button class="btn-action btn-dropdown" (click)="toggleDropdown($event)" title="Más acciones">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+          </svg>
+        </button>
+        
+        <div class="dropdown-menu" [class.show]="dropdownOpen">
+          <button class="dropdown-item" (click)="onCambiarEstado('Pendiente de Firma')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Pendiente de Firma
+          </button>
+          
+          <button class="dropdown-item" (click)="onCambiarEstado('Enviado')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+            Enviado
+          </button>
+          
+          <button class="dropdown-item" (click)="onCambiarEstado('Firmado')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+            Firmado
+          </button>
+          
+          <button class="dropdown-item" (click)="onCambiarEstado('Finalizado')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Finalizado
+          </button>
+          
+          <div class="dropdown-divider"></div>
+          
+          <button class="dropdown-item" (click)="onEnviarFirma()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+            Enviar para Firma
+          </button>
+          
+          <button class="dropdown-item" (click)="onGenerarPDF()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+            </svg>
+            Generar PDF
+          </button>
+          
+          <div class="dropdown-divider"></div>
+          
+          <button class="dropdown-item dropdown-item-danger" (click)="onEliminarContrato()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

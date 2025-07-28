@@ -1,1 +1,113 @@
-<p>contratos works!</p>
+<div class="admin-container">
+  <!-- Header -->
+  <app-header (logoutEvent)="onLogout()"></app-header>
+
+  <main class="admin-main">
+    <!-- Sección de Estadísticas -->
+    <div class="stats-section">
+      <app-stat-card 
+        *ngFor="let stat of stats" 
+        [title]="stat.title" 
+        [value]="stat.value">
+      </app-stat-card>
+    </div>
+
+    <!-- Sección de Filtros -->
+    <div class="filters-section">
+      <div class="search-group">
+        <label for="buscador-contratos">🔍 Buscar contratos:</label>
+        <input 
+          type="text" 
+          id="buscador-contratos" 
+          [(ngModel)]="searchTerm"
+          (input)="aplicarFiltros()"
+          placeholder="Buscar por código, cliente, empresa..." 
+          class="search-input">
+      </div>
+
+      <div class="filter-group">
+        <label for="filtro-estado-contrato">Filtrar por estado:</label>
+        <select 
+          id="filtro-estado-contrato" 
+          [(ngModel)]="filtroEstado"
+          (change)="aplicarFiltros()">
+          <option value="todos">Todos los estados</option>
+          <option value="Pendiente de Firma">Pendiente de Firma</option>
+          <option value="Enviado">Enviado</option>
+          <option value="Firmado">Firmado</option>
+          <option value="Finalizado">Finalizado</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filtro-mes-contrato">Filtrar por mes:</label>
+        <select 
+          id="filtro-mes-contrato" 
+          [(ngModel)]="filtroMes"
+          (change)="aplicarFiltros()">
+          <option value="todos">Todos los meses</option>
+          <option value="1">Enero</option>
+          <option value="2">Febrero</option>
+          <option value="3">Marzo</option>
+          <option value="4">Abril</option>
+          <option value="5">Mayo</option>
+          <option value="6">Junio</option>
+          <option value="7">Julio</option>
+          <option value="8">Agosto</option>
+          <option value="9">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filtro-ano-contrato">Filtrar por año:</label>
+        <select 
+          id="filtro-ano-contrato" 
+          [(ngModel)]="filtroAno"
+          (change)="aplicarFiltros()">
+          <option value="todos">Todos los años</option>
+          <option value="2024">2024</option>
+          <option value="2023">2023</option>
+          <option value="2022">2022</option>
+        </select>
+      </div>
+
+      <button class="btn btn-filter" (click)="aplicarFiltros()">
+        🔍 Aplicar Filtros
+      </button>
+    </div>
+
+    <!-- Sección de Contratos -->
+    <div class="contratos-section">
+      <div class="section-header">
+        <h2>📋 Tablero de Contratos</h2>
+        <button class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          Crear Contrato Directo
+        </button>
+      </div>
+
+      <!-- Vista de lista de contratos -->
+      <div class="contratos-list">
+        <div *ngIf="(contratosFiltrados$ | async)?.length === 0" class="no-data">
+          <p>No se encontraron contratos con los filtros aplicados</p>
+        </div>
+
+        <app-contract-card 
+          *ngFor="let contrato of contratosFiltrados$ | async"
+          [contrato]="contrato"
+          (verContrato)="onVerContrato($event)"
+          (editarContrato)="onEditarContrato($event)"
+          (eliminarContrato)="onEliminarContrato($event)"
+          (cambiarEstado)="onCambiarEstado($event)"
+          (enviarFirma)="onEnviarFirma($event)"
+          (generarPDF)="onGenerarPDF($event)">
+        </app-contract-card>
+      </div>
+    </div>
+  </main>
+</div>
