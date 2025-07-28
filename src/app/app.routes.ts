@@ -13,27 +13,26 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
   {
     path: 'cotizaciones',
-    loadComponent: () => import('./components/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent),
+    loadComponent: () => import('./pages/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent),
     canActivate: [authGuard]
   },
   {
     path: 'cotizaciones/crear',
-    loadComponent: () => import('./components/crear-cotizacion/crear-cotizacion.component').then(m => m.CrearCotizacionComponent),
+    loadComponent: () => import('./pages/crear-cotizacion/crear-cotizacion.component').then(m => m.CrearCotizacionComponent),
     canActivate: [authGuard]
   },
   {
     path: 'contratos',
-    loadComponent: () => import('./components/contratos/contratos.component').then(m => m.ContratosComponent),
+    loadComponent: () => import('./pages/contratos/contratos.component').then(m => m.ContratosComponent),
     canActivate: [authGuard]
   },
   {
-    path: 'contratos/firmar/:id',
-    loadComponent: () => import('./components/firmar-contrato/firmar-contrato.component').then(m => m.FirmarContratoComponent),
-    canActivate: [authGuard]
+    path: 'firmar-contrato/:id',
+    loadComponent: () => import('./pages/firmar-contrato/firmar-contrato.component').then(m => m.FirmarContratoComponent)
   }
 ];

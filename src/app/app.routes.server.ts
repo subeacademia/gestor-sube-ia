@@ -2,7 +2,7 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
   {
-    path: 'contratos/firmar/:id',
+    path: 'firmar-contrato/:id',
     renderMode: RenderMode.Prerender,
     getPrerenderParams: () => Promise.resolve([
       { id: '1' },
