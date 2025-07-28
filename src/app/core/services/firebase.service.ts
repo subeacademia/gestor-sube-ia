@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { collection, collectionData, Firestore, doc, updateDoc, deleteDoc, addDoc, query, where, orderBy } from '@angular/fire/firestore';
+import { collection, collectionData, Firestore, doc, updateDoc, deleteDoc, addDoc, query, where, orderBy, setDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -11,6 +11,18 @@ export class FirebaseService {
   getCotizaciones(): Observable<any[]> {
     const cotizacionesCollection = collection(this.firestore, 'cotizaciones');
     return collectionData(cotizacionesCollection, { idField: 'id' }) as Observable<any[]>;
+  }
+
+  // Método para crear nueva cotización
+  async createCotizacion(data: any): Promise<void> {
+    try {
+      const codigo = data.codigo;
+      const cotizacionRef = doc(this.firestore, 'cotizaciones', codigo);
+      await setDoc(cotizacionRef, data);
+    } catch (error) {
+      console.error('Error al crear cotización:', error);
+      throw new Error(`Error al guardar en la base de datos: ${error}`);
+    }
   }
 
   // Métodos para contratos

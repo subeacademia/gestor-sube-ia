@@ -36,7 +36,7 @@ export const routes: Routes = [
   },
   {
     path: 'cotizaciones/crear',
-    loadComponent: () => import('./pages/crear-cotizacion/crear-cotizacion.component').then(m => m.CrearCotizacionComponent),
+    loadComponent: () => import('./components/crear-cotizacion/crear-cotizacion.component').then(m => m.CrearCotizacionComponent),
     canActivate: [authGuard]
   },
   {
