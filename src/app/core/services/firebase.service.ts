@@ -215,10 +215,17 @@ export class FirebaseService {
       
       console.log('📊 FirebaseService: Snapshot obtenido, documentos:', snapshot.size);
       
+      if (snapshot.empty) {
+        console.log('📭 FirebaseService: No hay documentos en la colección');
+        return [];
+      }
+      
       const cotizaciones = snapshot.docs.map(doc => {
         const data = doc.data();
-        console.log('📄 FirebaseService: Documento ID:', doc.id, 'Data:', data);
-        return {
+        console.log('📄 FirebaseService: Documento ID:', doc.id);
+        console.log('📄 FirebaseService: Datos del documento:', JSON.stringify(data, null, 2));
+        
+        const cotizacionProcesada = {
           id: doc.id,
           ...data,
           // Normalizar campos para compatibilidad
@@ -227,10 +234,21 @@ export class FirebaseService {
           valorTotal: data['valorTotal'] || data['total'],
           fechaCreacion: data['fechaCreacion'] || data['fechaTimestamp'] || data['fecha']
         } as any;
+        
+        console.log('📄 FirebaseService: Cotización procesada:', JSON.stringify(cotizacionProcesada, null, 2));
+        return cotizacionProcesada;
       });
       
       console.log('✅ FirebaseService: Cotizaciones procesadas:', cotizaciones.length);
       console.log('📋 FirebaseService: Estados encontrados:', [...new Set(cotizaciones.map(c => c['estado']))]);
+      
+      // Debug: mostrar las primeras 2 cotizaciones completas
+      if (cotizaciones.length > 0) {
+        console.log('🔍 FirebaseService: Primera cotización completa:', cotizaciones[0]);
+        if (cotizaciones.length > 1) {
+          console.log('🔍 FirebaseService: Segunda cotización completa:', cotizaciones[1]);
+        }
+      }
       
       return cotizaciones;
     } catch (error) {

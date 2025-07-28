@@ -84,6 +84,10 @@
           <span class="btn-icon">🧪</span>
           Crear 21 Cotizaciones de Prueba
         </button>
+        <button (click)="recargarDatos()" class="btn btn-reload">
+          <span class="btn-icon">🔄</span>
+          Recargar Datos
+        </button>
       </div>
     </div>
 
@@ -271,6 +275,13 @@
 
         <!-- Lista con datos -->
         <div *ngIf="cotizacionesFiltradas.length > 0">
+          <!-- Debug info temporal -->
+          <div class="debug-info" style="background: rgba(255, 0, 0, 0.1); padding: 10px; margin: 10px; border-radius: 5px; color: white;">
+            <strong>DEBUG:</strong> Total cotizaciones: {{ cotizaciones.length }} | Filtradas: {{ cotizacionesFiltradas.length }}
+            <br>
+            <strong>Primera cotización:</strong> {{ cotizacionesFiltradas[0]?.codigo || 'NO HAY DATOS' }}
+          </div>
+          
           <div class="list-header">
             <div class="list-column">Código</div>
             <div class="list-column">Cliente</div>
@@ -281,13 +292,13 @@
             <div class="list-column">Acciones</div>
           </div>
           <div class="list-item" *ngFor="let cotizacion of cotizacionesFiltradas; trackBy: trackByCotizacion">
-            <div class="list-column">{{ cotizacion.codigo }}</div>
-            <div class="list-column">{{ cotizacion.nombre }}</div>
-            <div class="list-column">{{ cotizacion.empresa }}</div>
+            <div class="list-column">{{ cotizacion.codigo || 'Sin código' }}</div>
+            <div class="list-column">{{ cotizacion.nombre || 'Sin nombre' }}</div>
+            <div class="list-column">{{ cotizacion.empresa || 'Sin empresa' }}</div>
             <div class="list-column">{{ formatCurrency(cotizacion.valor) }}</div>
             <div class="list-column">
-              <span class="status-badge" [class]="'status-' + cotizacion.estado.toLowerCase().replace(' ', '-')">
-                {{ cotizacion.estado }}
+              <span class="status-badge" [class]="'status-' + (cotizacion.estado || 'pendiente').toLowerCase().replace(' ', '-')">
+                {{ cotizacion.estado || 'Pendiente' }}
               </span>
             </div>
             <div class="list-column">{{ formatDate(cotizacion.fecha) }}</div>

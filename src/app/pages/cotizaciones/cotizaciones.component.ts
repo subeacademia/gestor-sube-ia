@@ -71,6 +71,23 @@ export class CotizacionesComponent implements OnInit {
       this.cotizaciones = await this.firebaseService.getCotizacionesAsync();
       console.log('✅ CotizacionesComponent: Cotizaciones cargadas:', this.cotizaciones.length);
       
+      // Debug: mostrar detalles de las primeras 3 cotizaciones
+      if (this.cotizaciones.length > 0) {
+        console.log('🔍 CotizacionesComponent: Detalles de las primeras 3 cotizaciones:');
+        this.cotizaciones.slice(0, 3).forEach((cot, index) => {
+          console.log(`  ${index + 1}. ID: ${cot.id}`);
+          console.log(`     Código: ${cot.codigo}`);
+          console.log(`     Nombre: ${cot.nombre}`);
+          console.log(`     Empresa: ${cot.empresa}`);
+          console.log(`     Email: ${cot.email}`);
+          console.log(`     Atendido: ${cot.atendido}`);
+          console.log(`     Estado: ${cot.estado}`);
+          console.log(`     Valor: ${cot.valor}`);
+          console.log(`     Fecha: ${cot.fecha}`);
+          console.log(`     ---`);
+        });
+      }
+      
       // Inicializar cotizacionesFiltradas con todas las cotizaciones
       this.cotizacionesFiltradas = [...this.cotizaciones];
       console.log('📊 CotizacionesComponent: Cotizaciones filtradas inicializadas:', this.cotizacionesFiltradas.length);
@@ -736,6 +753,17 @@ export class CotizacionesComponent implements OnInit {
     } catch (error) {
       console.error('❌ CotizacionesComponent: Error al crear datos de prueba:', error);
       this.mostrarNotificacion('Error al crear datos de prueba: ' + error, 'error');
+    }
+  }
+
+  async recargarDatos() {
+    try {
+      console.log('🔄 CotizacionesComponent: Recargando datos...');
+      await this.cargarCotizaciones();
+      this.mostrarNotificacion('Datos recargados correctamente', 'success');
+    } catch (error) {
+      console.error('❌ CotizacionesComponent: Error al recargar datos:', error);
+      this.mostrarNotificacion('Error al recargar datos: ' + error, 'error');
     }
   }
 
