@@ -85,11 +85,6 @@
       
       <!-- Vista Kanban -->
       <div class="kanban-board" *ngIf="viewMode === 'kanban'">
-        <!-- Debug Info -->
-        <div class="debug-info" style="background: rgba(255,0,0,0.1); padding: 10px; margin-bottom: 20px; border-radius: 5px;">
-          <p><strong>Debug:</strong> Total contratos: {{ contratos.length }} | Filtrados: {{ contratosFiltrados.length }}</p>
-          <p>Estados únicos: {{ getEstadosUnicos().join(', ') }}</p>
-        </div>
         
         <!-- Columna: Pendiente de Firma -->
         <div class="kanban-column" 

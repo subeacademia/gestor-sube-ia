@@ -411,8 +411,11 @@
 .kanban-column-content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-xl);
   min-height: 400px;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  max-height: 75vh;
 }
 
 .empty-state {
