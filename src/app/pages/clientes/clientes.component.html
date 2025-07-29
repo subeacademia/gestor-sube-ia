@@ -1,0 +1,185 @@
+<div class="clientes-container">
+  <!-- Header -->
+  <app-header></app-header>
+
+  <!-- Contenido Principal -->
+  <main class="main-content">
+    <div class="content-header">
+      <h1 class="page-title">👥 Gestión de Clientes</h1>
+      <div class="header-actions">
+        <button class="btn-secondary" (click)="procesarContratosExistentes()" [disabled]="procesando">
+          🔄 Procesar Contratos Existentes
+        </button>
+        <button class="btn-primary" (click)="abrirModalCliente()">
+          ➕ Añadir Nuevo Cliente
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla de Clientes -->
+    <div class="table-container">
+      <div class="loading-state" *ngIf="loading">
+        <div class="spinner"></div>
+        <p>Cargando clientes...</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!loading && (!clientes$ || !(clientes$ | async) || (clientes$ | async)!.length === 0)">
+        <div class="empty-icon">👥</div>
+        <h3>No hay clientes registrados</h3>
+        <p>Comienza añadiendo tu primer cliente para gestionar tus relaciones comerciales.</p>
+        <button class="btn-primary" (click)="abrirModalCliente()">
+          ➕ Añadir Primer Cliente
+        </button>
+      </div>
+
+      <table class="clientes-table" *ngIf="!loading && clientes$ && (clientes$ | async) && (clientes$ | async)!.length > 0">
+        <thead>
+          <tr>
+            <th>Empresa</th>
+            <th>Contacto Principal</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Valor Total Facturado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cliente of (clientes$ | async) || []">
+            <td>
+              <div class="empresa-info">
+                <strong>{{ cliente.empresa }}</strong>
+                <span class="rut">{{ cliente.rut }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="contacto-info">
+                <strong>{{ cliente.nombre }}</strong>
+                <span class="cargo">{{ cliente.cargo }}</span>
+              </div>
+            </td>
+            <td>
+              <a href="mailto:{{ cliente.email }}" class="email-link">
+                {{ cliente.email }}
+              </a>
+            </td>
+            <td>
+              <a href="tel:{{ cliente.telefono }}" class="phone-link">
+                {{ cliente.telefono }}
+              </a>
+            </td>
+            <td>
+              <span class="valor-facturado">
+                ${{ cliente.valorTotalFacturado | number:'1.0-0':'es-CL' }}
+              </span>
+            </td>
+            <td>
+              <div class="acciones">
+                <button class="btn-action btn-edit" 
+                        (click)="editarCliente(cliente)"
+                        title="Editar cliente">
+                  ✏️
+                </button>
+                <button class="btn-action btn-delete" 
+                        (click)="eliminarCliente(cliente.id)"
+                        title="Eliminar cliente">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Modal para Crear/Editar Cliente -->
+  <div class="modal-overlay" *ngIf="mostrarModal" (click)="cerrarModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ clienteEnEdicion ? 'Editar Cliente' : 'Nuevo Cliente' }}</h2>
+        <button class="btn-close" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <form [formGroup]="clienteForm" (ngSubmit)="guardarCliente()" class="modal-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="empresa">Empresa *</label>
+            <input type="text" id="empresa" formControlName="empresa" placeholder="Nombre de la empresa"
+                   [class.invalid]="esCampoInvalido('empresa')">
+            <span class="error-message" *ngIf="esCampoInvalido('empresa')">
+              {{ obtenerMensajeError('empresa') }}
+            </span>
+          </div>
+          <div class="form-group">
+            <label for="rut">RUT *</label>
+            <input type="text" id="rut" formControlName="rut" placeholder="12.345.678-9"
+                   [class.invalid]="esCampoInvalido('rut')">
+            <span class="error-message" *ngIf="esCampoInvalido('rut')">
+              {{ obtenerMensajeError('rut') }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nombre">Nombre Contacto *</label>
+            <input type="text" id="nombre" formControlName="nombre" placeholder="Nombre completo"
+                   [class.invalid]="esCampoInvalido('nombre')">
+            <span class="error-message" *ngIf="esCampoInvalido('nombre')">
+              {{ obtenerMensajeError('nombre') }}
+            </span>
+          </div>
+          <div class="form-group">
+            <label for="cargo">Cargo</label>
+            <input type="text" id="cargo" formControlName="cargo" placeholder="Cargo o posición">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input type="email" id="email" formControlName="email" placeholder="email@empresa.com"
+                   [class.invalid]="esCampoInvalido('email')">
+            <span class="error-message" *ngIf="esCampoInvalido('email')">
+              {{ obtenerMensajeError('email') }}
+            </span>
+          </div>
+          <div class="form-group">
+            <label for="telefono">Teléfono *</label>
+            <input type="tel" id="telefono" formControlName="telefono" placeholder="+56 9 1234 5678"
+                   [class.invalid]="esCampoInvalido('telefono')">
+            <span class="error-message" *ngIf="esCampoInvalido('telefono')">
+              {{ obtenerMensajeError('telefono') }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="direccion">Dirección</label>
+            <input type="text" id="direccion" formControlName="direccion" placeholder="Dirección completa">
+          </div>
+          <div class="form-group">
+            <label for="ciudad">Ciudad</label>
+            <input type="text" id="ciudad" formControlName="ciudad" placeholder="Ciudad">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="notas">Notas</label>
+          <textarea id="notas" formControlName="notas" rows="3" placeholder="Información adicional del cliente"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cerrarModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="clienteForm.invalid || guardando">
+            <span *ngIf="guardando">💾 Guardando...</span>
+            <span *ngIf="!guardando">{{ clienteEnEdicion ? 'Actualizar' : 'Crear' }} Cliente</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

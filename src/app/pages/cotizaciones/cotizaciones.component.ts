@@ -655,19 +655,28 @@ export class CotizacionesComponent implements OnInit {
     }
   }
 
-  async crearDatosPrueba() {
+  async crearCotizacionPrueba() {
     try {
-      console.log('🧪 CotizacionesComponent: Creando datos de prueba...');
-      await this.firebaseService.crearDatosPrueba();
-      console.log('✅ CotizacionesComponent: Datos de prueba creados exitosamente');
-      this.notificationService.showSuccess('21 cotizaciones de prueba creadas exitosamente');
+      console.log('🧪 CotizacionesComponent: Creando 1 cotización de prueba...');
+      await this.firebaseService.crearCotizacionPrueba();
+      console.log('✅ CotizacionesComponent: Cotización de prueba creada exitosamente');
+      this.notificationService.showSuccess('1 cotización de prueba creada exitosamente');
       
       // Recargar cotizaciones después de crear los datos
       await this.cargarCotizaciones();
     } catch (error) {
-      console.error('❌ CotizacionesComponent: Error al crear datos de prueba:', error);
-      this.notificationService.showError('Error al crear datos de prueba: ' + error);
+      console.error('❌ CotizacionesComponent: Error al crear cotización de prueba:', error);
+      this.notificationService.showError('Error al crear cotización de prueba: ' + error);
     }
+  }
+
+  navegarACrearCotizacion() {
+    console.log('🔗 CotizacionesComponent: Navegando a crear cotización...');
+    this.router.navigate(['/cotizaciones/crear']).then(() => {
+      console.log('✅ CotizacionesComponent: Navegación a crear cotización exitosa');
+    }).catch((error) => {
+      console.error('❌ CotizacionesComponent: Error al navegar a crear cotización:', error);
+    });
   }
 
   async recargarDatos() {

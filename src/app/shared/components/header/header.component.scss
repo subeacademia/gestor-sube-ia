@@ -1,27 +1,34 @@
 .admin-header {
-  background: rgba(22, 27, 34, 0.8);
-  backdrop-filter: blur(10px);
+  background: rgba(22, 27, 34, 0.95);
+  backdrop-filter: blur(15px);
   border-bottom: 1px solid var(--borde-color);
-  padding: 1.5rem 0;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.header-content {
+/* Barra de Navegación Principal */
+.main-nav {
+  padding: 1rem 0;
+}
+
+.nav-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
-.admin-header h1 {
+/* Logo */
+.logo h1 {
   font-family: var(--font-family-display);
-  font-size: 1.875rem;
+  font-size: 1.5rem;
   font-weight: 700;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
@@ -29,44 +36,116 @@
   background-clip: text;
   margin: 0;
   letter-spacing: -0.025em;
+  white-space: nowrap;
 }
 
-.header-actions {
+/* Navegación Principal */
+.nav-links {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  gap: 1.5rem;
+  flex: 1;
+  justify-content: center;
 }
 
-.header-actions h2 {
-  font-family: var(--font-family-display);
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--texto-principal);
-  margin: 0;
-  opacity: 0.9;
-}
-
-.btn {
+.nav-link {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.5rem;
-  border: none;
+  padding: 0.75rem 1.25rem;
   border-radius: 0.75rem;
   font-family: var(--font-family-sans);
   font-size: 0.875rem;
   font-weight: 600;
+  color: var(--texto-secundario);
   text-decoration: none;
-  cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   white-space: nowrap;
 }
 
-.btn::before {
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-link:hover::before {
+  opacity: 1;
+}
+
+.nav-link:hover {
+  color: var(--texto-principal);
+  transform: translateY(-1px);
+}
+
+.nav-link.active {
+  background: var(--gradient-primary);
+  color: var(--texto-principal);
+  box-shadow: 0 4px 15px rgba(88, 166, 255, 0.3);
+}
+
+.nav-link.active::before {
+  display: none;
+}
+
+.nav-link.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.nav-link.disabled:hover {
+  transform: none;
+}
+
+/* Acciones de Usuario */
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-email {
+  color: var(--texto-secundario);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--color-danger), #dc2626);
+  color: var(--texto-principal);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-logout::before {
   content: '';
   position: absolute;
   top: 0;
@@ -77,63 +156,8 @@
   transition: left 0.5s ease;
 }
 
-.btn:hover::before {
+.btn-logout:hover::before {
   left: 100%;
-}
-
-.btn-primary {
-  background: var(--gradient-primary);
-  color: var(--texto-principal);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.btn-primary:hover {
-  filter: brightness(1.1);
-  box-shadow: var(--shadow-glow);
-  transform: translateY(-1px);
-}
-
-.btn-success {
-  background: linear-gradient(135deg, var(--color-success), #059669);
-  color: var(--texto-principal);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.btn-success:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 0 20px rgba(63, 185, 80, 0.4);
-  transform: translateY(-1px);
-}
-
-.btn-warning {
-  background: linear-gradient(135deg, var(--color-warning), #d97706);
-  color: var(--color-text-dark);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.btn-warning:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 0 20px rgba(240, 136, 62, 0.4);
-  transform: translateY(-1px);
-}
-
-.btn-info {
-  background: linear-gradient(135deg, var(--acento-cian), #3b82f6);
-  color: var(--texto-principal);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.btn-info:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 0 20px rgba(88, 166, 255, 0.4);
-  transform: translateY(-1px);
-}
-
-.btn-logout {
-  background: linear-gradient(135deg, var(--color-danger), #dc2626);
-  color: var(--texto-principal);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(248, 81, 73, 0.3);
 }
 
 .btn-logout:hover {
@@ -142,25 +166,64 @@
   transform: translateY(-1px);
 }
 
-.user-info {
-  text-align: center;
-  padding: 0.5rem;
-  color: var(--texto-secundario);
-  font-size: 0.875rem;
-}
-
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    text-align: center;
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .nav-container {
+    padding: 0 1rem;
     gap: 1rem;
   }
   
-  .header-actions {
+  .nav-links {
+    gap: 1rem;
+  }
+  
+  .nav-link {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .nav-links {
+    order: 2;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .user-actions {
+    order: 3;
+    width: 100%;
     justify-content: center;
   }
   
-  .admin-header h1 {
-    font-size: 1.5rem;
+  .logo {
+    order: 1;
+  }
+  
+  .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .nav-links {
+    justify-content: center;
+  }
+  
+  .nav-link {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.7rem;
   }
 }

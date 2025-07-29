@@ -1,16 +1,56 @@
 <header class="admin-header">
-  <div class="header-content">
-    <h1>📊 Panel de Administración</h1>
-    <div class="header-actions">
-      <h2>SUBE IA TECH</h2>
-      <button (click)="navegarADashboard()" class="btn btn-info">📊 Dashboard</button>
-      <button (click)="navegarACotizaciones()" class="btn btn-warning">📋 Panel de Cotizaciones</button>
-      <button (click)="navegarACrearCotizacion()" class="btn btn-primary">Crear Nueva Cotización</button>
-      <button (click)="navegarAContratos()" class="btn btn-success">📋 Gestión de Contratos</button>
-      <button (click)="cerrarSesion()" class="btn btn-logout">Cerrar Sesión</button>
+  <!-- Barra de Navegación Principal -->
+  <nav class="main-nav">
+    <div class="nav-container">
+      <!-- Logo -->
+      <div class="logo">
+        <h1>🚀 SUBE IA TECH</h1>
+      </div>
+      
+      <!-- Navegación Principal -->
+      <div class="nav-links">
+        <a routerLink="/dashboard" 
+           routerLinkActive="active" 
+           class="nav-link">
+          📊 Dashboard
+        </a>
+        
+        <a routerLink="/cotizaciones" 
+           routerLinkActive="active" 
+           class="nav-link">
+          📋 Cotizaciones
+        </a>
+        
+        <a routerLink="/contratos" 
+           routerLinkActive="active" 
+           class="nav-link">
+          📄 Contratos
+        </a>
+        
+        <a routerLink="/clientes" 
+           routerLinkActive="active" 
+           class="nav-link">
+          👥 Clientes
+        </a>
+        
+        <span class="nav-link disabled">
+          📦 Entregas
+        </span>
+        
+        <span class="nav-link disabled">
+          💰 Finanzas
+        </span>
+      </div>
+      
+      <!-- Acciones de Usuario -->
+      <div class="user-actions">
+        <div class="user-info" *ngIf="userInfo">
+          <span class="user-email">{{ userInfo.email }}</span>
+        </div>
+        <button (click)="cerrarSesion()" class="btn-logout">
+          🚪 Cerrar Sesión
+        </button>
+      </div>
     </div>
-  </div>
-  <div class="user-info" *ngIf="userInfo">
-    <span>{{ userInfo.email }}</span>
-  </div>
+  </nav>
 </header>

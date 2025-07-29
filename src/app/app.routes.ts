@@ -49,6 +49,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/preview-contrato/preview-contrato.component').then(c => c.PreviewContratoComponent),
     canActivate: [authGuard]
   },
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: '**', redirectTo: 'login' }
+  {
+    path: 'clientes',
+    loadComponent: () => import('./pages/clientes/clientes.component').then(c => c.ClientesComponent),
+    canActivate: [authGuard]
+  },
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: '**', redirectTo: 'dashboard' }
 ];

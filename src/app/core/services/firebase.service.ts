@@ -157,9 +157,88 @@ export class FirebaseService {
       const contratoRef = await addDoc(contratosCollection, contratoPrueba);
       console.log('✅ FirebaseService: Contrato de prueba creado con ID:', contratoRef.id);
 
+      // Crear clientes de prueba
+      await this.crearClientesPrueba();
+
       console.log('✅ FirebaseService: Datos de prueba creados exitosamente');
     } catch (error) {
       console.error('❌ FirebaseService: Error al crear datos de prueba:', error);
+      throw error;
+    }
+  }
+
+  // Método para crear una sola cotización de prueba completa
+  async crearCotizacionPrueba(): Promise<void> {
+    console.log('🧪 FirebaseService: Creando 1 cotización de prueba completa...');
+    try {
+      const cotizacionesCollection = collection(this.firestore, 'cotizaciones');
+      
+      // Crear una cotización de prueba completa con todos los campos
+      const cotizacionPrueba = {
+        codigo: `SUBEIA-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString().slice(-4)}`,
+        nombre: 'Cliente de Prueba Completo',
+        email: 'cliente.prueba@empresa.com',
+        rut: '12345678-9',
+        empresa: 'Empresa de Prueba SPA',
+        moneda: 'CLP',
+        servicios: [
+          {
+            nombre: 'Desarrollo Web Corporativo',
+            detalle: 'Sitio web completo con diseño responsive, SEO optimizado y panel de administración',
+            modalidad: 'Online',
+            alumnos: 1,
+            tipoCobro: 'proyecto',
+            subtotal: 1500000,
+            detallesCobro: {
+              proyecto: 'Desarrollo completo',
+              valorProyecto: 1500000
+            }
+          },
+          {
+            nombre: 'Capacitación en Marketing Digital',
+            detalle: 'Curso completo de marketing digital para el equipo de la empresa',
+            modalidad: 'Presencial',
+            alumnos: 10,
+            tipoCobro: 'sesion',
+            subtotal: 500000,
+            detallesCobro: {
+              sesiones: 5,
+              valorSesion: 100000
+            }
+          },
+          {
+            nombre: 'Consultoría SEO',
+            detalle: 'Optimización de motores de búsqueda y estrategia de posicionamiento',
+            modalidad: 'Online',
+            alumnos: 1,
+            tipoCobro: 'mensual',
+            subtotal: 300000,
+            detallesCobro: {
+              meses: 3,
+              valorMensual: 100000
+            }
+          }
+        ],
+        atendido: 'Rodrigo Carrillo',
+        subtotal: 2300000,
+        descuento: 10,
+        descuentoValor: 230000,
+        totalConDescuento: 2070000,
+        total: 2070000,
+        valor: 2070000,
+        valorTotal: 2070000,
+        notas: 'Cotización de prueba completa creada automáticamente con todos los campos y servicios múltiples',
+        estado: 'Emitida',
+        fechaTimestamp: new Date(),
+        fecha: new Date().toLocaleDateString('es-CL'),
+        fechaCreacion: new Date()
+      };
+
+      await addDoc(cotizacionesCollection, cotizacionPrueba);
+      console.log(`✅ FirebaseService: Cotización de prueba completa creada con código: ${cotizacionPrueba.codigo}`);
+      console.log('✅ FirebaseService: Cotización de prueba creada exitosamente');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al crear cotización de prueba:', error);
       throw error;
     }
   }
@@ -300,6 +379,14 @@ export class FirebaseService {
       const contratosCollection = collection(this.firestore, 'contratos');
       const docRef = await addDoc(contratosCollection, data);
       console.log('✅ FirebaseService: Contrato creado con ID:', docRef.id);
+      
+      // Gestionar cliente automáticamente después de crear el contrato
+      try {
+        await this.gestionarClienteDesdeContrato({ id: docRef.id, ...data });
+      } catch (error) {
+        console.warn('⚠️ FirebaseService: Error al gestionar cliente automáticamente:', error);
+      }
+      
       return docRef;
     } catch (error) {
       console.error('❌ FirebaseService: Error al crear contrato:', error);
@@ -364,6 +451,13 @@ export class FirebaseService {
           } catch (error) {
             console.warn('⚠️ FirebaseService: No se pudo actualizar la cotización:', error);
           }
+        }
+
+        // Gestionar cliente automáticamente después de crear el contrato
+        try {
+          await this.gestionarClienteDesdeContrato({ id: docRef.id, ...contrato });
+        } catch (error) {
+          console.warn('⚠️ FirebaseService: Error al gestionar cliente automáticamente:', error);
         }
 
         resolve({ id: docRef.id, ...contrato });
@@ -604,14 +698,32 @@ export class FirebaseService {
   async actualizarFirmaRepresentante(contratoId: string, firmaBase64: string, representanteLegal: string): Promise<void> {
     console.log('✍️ FirebaseService: Actualizando firma del representante...');
     try {
+      // Verificar si ya tiene firma del cliente
+      const contrato = await this.getContratoById(contratoId);
+      const tieneFirmaCliente = contrato.firmaClienteBase64;
+
+      // Determinar el estado final
+      let estadoFinal = 'Pendiente Firma Cliente';
+      if (tieneFirmaCliente) {
+        estadoFinal = 'Completamente Firmado'; // Ambas firmas completadas
+      }
+
       await this.updateContrato(contratoId, {
         firmaInternaBase64: firmaBase64,
         firmaRepresentanteBase64: firmaBase64, // Mantener compatibilidad
         representanteLegal: representanteLegal,
         fechaFirmaRepresentante: new Date(),
-        estadoContrato: 'Pendiente Firma Cliente'
+        estadoContrato: estadoFinal,
+        ambasFirmasCompletadas: tieneFirmaCliente ? true : false
       });
+      
       console.log('✅ FirebaseService: Firma del representante actualizada');
+      console.log(`📋 Estado actualizado a: ${estadoFinal}`);
+
+      // Si ambas firmas están completas, crear cliente automáticamente
+      if (tieneFirmaCliente) {
+        await this.crearClienteDesdeContrato(contrato);
+      }
     } catch (error) {
       console.error('❌ FirebaseService: Error al actualizar firma del representante:', error);
       throw error;
@@ -643,6 +755,11 @@ export class FirebaseService {
       
       console.log('✅ FirebaseService: Firma del cliente actualizada');
       console.log(`📋 Estado actualizado a: ${estadoFinal}`);
+
+      // Si ambas firmas están completas, crear cliente automáticamente
+      if (tieneFirmaRepresentante) {
+        await this.crearClienteDesdeContrato(contrato);
+      }
     } catch (error) {
       console.error('❌ FirebaseService: Error al actualizar firma del cliente:', error);
       throw error;
@@ -808,6 +925,337 @@ export class FirebaseService {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 15);
     return `${timestamp}-${random}`;
+  }
+
+  // ===== MÉTODOS PARA MANEJO DE CLIENTES =====
+
+  // Método para obtener clientes como Observable
+  getClientes(): Observable<any[]> {
+    console.log('👥 FirebaseService: Obteniendo clientes...');
+    try {
+      const clientesCollection = collection(this.firestore, 'clientes');
+      const q = query(clientesCollection, orderBy('fechaCreacion', 'desc'));
+      return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener clientes:', error);
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+  }
+
+  // Método para crear nuevo cliente
+  async createCliente(data: any): Promise<DocumentReference> {
+    console.log('➕ FirebaseService: Creando nuevo cliente:', data);
+    try {
+      const clientesCollection = collection(this.firestore, 'clientes');
+      const docRef = await addDoc(clientesCollection, data);
+      console.log('✅ FirebaseService: Cliente creado con ID:', docRef.id);
+      return docRef;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al crear cliente:', error);
+      throw error;
+    }
+  }
+
+  // Método para actualizar cliente
+  async updateCliente(id: string, data: any): Promise<void> {
+    console.log('🔄 FirebaseService: Actualizando cliente:', id);
+    try {
+      const clienteRef = doc(this.firestore, 'clientes', id);
+      await updateDoc(clienteRef, data);
+      console.log('✅ FirebaseService: Cliente actualizado exitosamente');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al actualizar cliente:', error);
+      throw error;
+    }
+  }
+
+  // Método para eliminar cliente
+  async deleteCliente(id: string): Promise<void> {
+    console.log('🗑️ FirebaseService: Eliminando cliente:', id);
+    try {
+      const clienteRef = doc(this.firestore, 'clientes', id);
+      await deleteDoc(clienteRef);
+      console.log('✅ FirebaseService: Cliente eliminado exitosamente');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al eliminar cliente:', error);
+      throw error;
+    }
+  }
+
+  // Método para obtener cliente por ID
+  async getClienteById(clienteId: string): Promise<any> {
+    console.log('🔍 FirebaseService: Obteniendo cliente por ID:', clienteId);
+    try {
+      const clientes = await this.getClientesAsync();
+      const cliente = clientes.find(c => c.id === clienteId);
+      
+      if (!cliente) {
+        throw new Error('Cliente no encontrado');
+      }
+      
+      console.log('✅ FirebaseService: Cliente encontrado:', cliente);
+      return cliente;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener cliente por ID:', error);
+      throw error;
+    }
+  }
+
+  // Método simple para obtener clientes sin Observable
+  async getClientesAsync(): Promise<any[]> {
+    console.log('👥 FirebaseService: Obteniendo clientes (método async)...');
+    try {
+      const clientesCollection = collection(this.firestore, 'clientes');
+      const q = query(clientesCollection, orderBy('fechaCreacion', 'desc'));
+      const snapshot = await getDocs(q);
+      
+      const clientes = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      console.log('✅ FirebaseService: Clientes obtenidos:', clientes.length);
+      return clientes;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error en getClientesAsync:', error);
+      throw error;
+    }
+  }
+
+  // Método para crear cliente automáticamente desde un contrato firmado
+  async crearClienteDesdeContrato(contrato: any): Promise<void> {
+    console.log('👥 FirebaseService: Creando cliente automáticamente desde contrato...');
+    try {
+      // Verificar si ya existe un cliente con el mismo RUT
+      const clientesExistentes = await this.getClientesAsync();
+      const clienteExistente = clientesExistentes.find(cliente => 
+        cliente.rut === contrato.rutCliente || 
+        cliente.empresa === contrato.empresa
+      );
+
+      if (clienteExistente) {
+        console.log('ℹ️ FirebaseService: Cliente ya existe, actualizando valor facturado...');
+        // Actualizar el valor total facturado del cliente existente
+        const nuevoValorTotal = (clienteExistente.valorTotalFacturado || 0) + (contrato.valorTotal || 0);
+        await this.updateCliente(clienteExistente.id, {
+          valorTotalFacturado: nuevoValorTotal,
+          fechaActualizacion: new Date(),
+          contratosRelacionados: [...(clienteExistente.contratosRelacionados || []), contrato.id]
+        });
+        console.log('✅ FirebaseService: Cliente existente actualizado');
+        return;
+      }
+
+      // Crear nuevo cliente con los datos del contrato
+      const datosCliente = {
+        empresa: contrato.empresa || 'Empresa no especificada',
+        rut: contrato.rutCliente || 'RUT no especificado',
+        nombre: contrato.nombreCliente || 'Cliente no especificado',
+        email: contrato.emailCliente || '',
+        telefono: contrato.telefonoCliente || '',
+        direccion: contrato.direccionCliente || '',
+        ciudad: contrato.ciudadCliente || '',
+        cargo: contrato.cargoCliente || '',
+        notas: `Cliente creado automáticamente desde contrato ${contrato.codigo || contrato.id}`,
+        valorTotalFacturado: contrato.valorTotal || 0,
+        fechaCreacion: new Date(),
+        fechaActualizacion: new Date(),
+        contratosRelacionados: [contrato.id],
+        origen: 'contrato_automatico',
+        contratoOrigen: contrato.id
+      };
+
+      const nuevoCliente = await this.createCliente(datosCliente);
+      console.log('✅ FirebaseService: Cliente creado automáticamente con ID:', nuevoCliente.id);
+      console.log('📋 Datos del cliente creado:', datosCliente);
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al crear cliente desde contrato:', error);
+      // No lanzar el error para no interrumpir el proceso de firma
+      console.log('⚠️ FirebaseService: Continuando con el proceso de firma...');
+    }
+  }
+
+  // Método para gestionar cliente automáticamente desde datos de contrato
+  async gestionarClienteDesdeContrato(contratoData: any): Promise<string> {
+    console.log('🔧 FirebaseService: Gestionando cliente desde contrato:', contratoData);
+    try {
+      // Extraer datos del cliente del contrato
+      const datosCliente = {
+        empresa: contratoData.empresa || contratoData.nombreCliente || 'Empresa no especificada',
+        rut: contratoData.rutCliente || contratoData.rut || 'RUT no especificado',
+        nombre: contratoData.nombreCliente || contratoData.nombre || 'Cliente no especificado',
+        email: contratoData.emailCliente || contratoData.email || '',
+        telefono: contratoData.telefonoCliente || contratoData.telefono || '',
+        direccion: contratoData.direccionCliente || contratoData.direccion || '',
+        ciudad: contratoData.ciudadCliente || contratoData.ciudad || '',
+        cargo: contratoData.cargoCliente || contratoData.cargo || '',
+        valorTotalFacturado: contratoData.valorTotal || 0
+      };
+
+      // Verificar si ya existe un cliente con el mismo email o RUT
+      const clientesExistentes = await this.getClientesAsync();
+      const clienteExistente = clientesExistentes.find(cliente => 
+        cliente.email === datosCliente.email || 
+        cliente.rut === datosCliente.rut ||
+        cliente.empresa === datosCliente.empresa
+      );
+
+      if (clienteExistente) {
+        console.log('ℹ️ FirebaseService: Cliente ya existe, actualizando datos...');
+        // Actualizar el valor total facturado y agregar el contrato a la lista
+        const nuevoValorTotal = (clienteExistente.valorTotalFacturado || 0) + datosCliente.valorTotalFacturado;
+        const contratosRelacionados = [...(clienteExistente.contratosRelacionados || []), contratoData.id];
+        
+        await this.updateCliente(clienteExistente.id, {
+          valorTotalFacturado: nuevoValorTotal,
+          fechaActualizacion: new Date(),
+          contratosRelacionados: contratosRelacionados
+        });
+        
+        console.log('✅ FirebaseService: Cliente existente actualizado con ID:', clienteExistente.id);
+        return clienteExistente.id;
+      }
+
+      // Crear nuevo cliente
+      const nuevoClienteData = {
+        ...datosCliente,
+        notas: `Cliente creado automáticamente desde contrato ${contratoData.codigo || contratoData.id}`,
+        fechaCreacion: new Date(),
+        fechaActualizacion: new Date(),
+        contratosRelacionados: [contratoData.id],
+        origen: 'contrato_automatico',
+        contratoOrigen: contratoData.id
+      };
+
+      const nuevoCliente = await this.createCliente(nuevoClienteData);
+      console.log('✅ FirebaseService: Nuevo cliente creado con ID:', nuevoCliente.id);
+      return nuevoCliente.id;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al gestionar cliente desde contrato:', error);
+      throw error;
+    }
+  }
+
+  // Método para procesar contratos existentes y crear clientes automáticamente
+  async procesarContratosExistentesParaClientes(): Promise<void> {
+    console.log('🔄 FirebaseService: Procesando contratos existentes para crear clientes...');
+    try {
+      const contratos = await this.getContratosAsync();
+      const contratosCompletamenteFirmados = contratos.filter(contrato => 
+        contrato.ambasFirmasCompletadas === true || 
+        (contrato.firmaInternaBase64 && contrato.firmaClienteBase64) ||
+        (contrato.firmaRepresentanteBase64 && contrato.firmaClienteBase64)
+      );
+
+      console.log(`📋 FirebaseService: Encontrados ${contratosCompletamenteFirmados.length} contratos completamente firmados`);
+
+      for (const contrato of contratosCompletamenteFirmados) {
+        try {
+          await this.crearClienteDesdeContrato(contrato);
+        } catch (error) {
+          console.error(`❌ FirebaseService: Error procesando contrato ${contrato.id}:`, error);
+        }
+      }
+
+      console.log('✅ FirebaseService: Procesamiento de contratos existentes completado');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al procesar contratos existentes:', error);
+      throw error;
+    }
+  }
+
+  // Método para crear clientes de prueba
+  async crearClientesPrueba(): Promise<void> {
+    console.log('🧪 FirebaseService: Creando clientes de prueba...');
+    try {
+      const clientesCollection = collection(this.firestore, 'clientes');
+      
+      const clientesPrueba = [
+        {
+          empresa: 'TechCorp Solutions SPA',
+          rut: '76.123.456-7',
+          nombre: 'María González',
+          cargo: 'Gerente de Tecnología',
+          email: 'maria.gonzalez@techcorp.cl',
+          telefono: '+56 9 1234 5678',
+          direccion: 'Av. Providencia 1234, Providencia',
+          ciudad: 'Santiago',
+          notas: 'Cliente premium, interesado en desarrollo web y apps móviles',
+          valorTotalFacturado: 2500000,
+          fechaCreacion: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 días atrás
+          fechaActualizacion: new Date()
+        },
+        {
+          empresa: 'Innovación Digital Ltda.',
+          rut: '89.456.789-0',
+          nombre: 'Carlos Mendoza',
+          cargo: 'Director de Marketing',
+          email: 'carlos.mendoza@innovacion.cl',
+          telefono: '+56 9 9876 5432',
+          direccion: 'Las Condes 567, Las Condes',
+          ciudad: 'Santiago',
+          notas: 'Empresa en crecimiento, necesita estrategia digital completa',
+          valorTotalFacturado: 1800000,
+          fechaCreacion: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 días atrás
+          fechaActualizacion: new Date()
+        },
+        {
+          empresa: 'Startup Chile Ventures',
+          rut: '12.345.678-9',
+          nombre: 'Ana Silva',
+          cargo: 'CEO',
+          email: 'ana.silva@startupchile.cl',
+          telefono: '+56 9 5555 1234',
+          direccion: 'Bellavista 890, Providencia',
+          ciudad: 'Santiago',
+          notas: 'Startup en fase de expansión, buscando inversión',
+          valorTotalFacturado: 3200000,
+          fechaCreacion: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 días atrás
+          fechaActualizacion: new Date()
+        },
+        {
+          empresa: 'Consultoría Empresarial SPA',
+          rut: '45.678.901-2',
+          nombre: 'Roberto Fuentes',
+          cargo: 'Socio Director',
+          email: 'roberto.fuentes@consultoria.cl',
+          telefono: '+56 9 7777 8888',
+          direccion: 'Vitacura 2345, Vitacura',
+          ciudad: 'Santiago',
+          notas: 'Consultora establecida, necesita modernización de sistemas',
+          valorTotalFacturado: 4100000,
+          fechaCreacion: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000), // 45 días atrás
+          fechaActualizacion: new Date()
+        },
+        {
+          empresa: 'E-commerce Express',
+          rut: '67.890.123-4',
+          nombre: 'Patricia López',
+          cargo: 'Gerente Comercial',
+          email: 'patricia.lopez@ecommerce.cl',
+          telefono: '+56 9 9999 0000',
+          direccion: 'Ñuñoa 456, Ñuñoa',
+          ciudad: 'Santiago',
+          notas: 'Empresa de comercio electrónico, necesita optimización de plataforma',
+          valorTotalFacturado: 1500000,
+          fechaCreacion: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 días atrás
+          fechaActualizacion: new Date()
+        }
+      ];
+
+      for (const cliente of clientesPrueba) {
+        await addDoc(clientesCollection, cliente);
+        console.log(`✅ FirebaseService: Cliente de prueba creado: ${cliente.empresa}`);
+      }
+
+      console.log('✅ FirebaseService: Clientes de prueba creados exitosamente');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al crear clientes de prueba:', error);
+      throw error;
+    }
   }
 
   // Método para generar código de cotización automático y correlativo
