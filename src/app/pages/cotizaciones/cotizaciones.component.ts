@@ -4,7 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { QuoteCardComponent } from '../../shared/components/quote-card/quote-card.component';
 import { FirebaseService } from '../../core/services/firebase.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { Router } from '@angular/router';
+
+declare var html2pdf: any;
 
 interface Cotizacion {
   id: string;
@@ -58,6 +61,7 @@ export class CotizacionesComponent implements OnInit {
 
   constructor(
     private firebaseService: FirebaseService,
+    private notificationService: NotificationService,
     private router: Router
   ) {}
 
@@ -258,10 +262,10 @@ export class CotizacionesComponent implements OnInit {
         await this.cargarCotizaciones();
         
         // Mostrar notificación de éxito
-        this.mostrarNotificacion(`Cotización movida a ${nuevoEstado}`, 'success');
+        this.notificationService.showSuccess(`Cotización movida a ${nuevoEstado}`);
       } catch (error) {
         console.error('Error al cambiar estado:', error);
-        this.mostrarNotificacion('Error al cambiar estado', 'error');
+        this.notificationService.showError('Error al cambiar estado');
       }
     }
     
@@ -278,11 +282,11 @@ export class CotizacionesComponent implements OnInit {
         if (cotizacion) {
           try {
             await this.firebaseService.createContratoFromCotizacion(cotizacion);
-            this.mostrarNotificacion('Cotización enviada a Gestión de Contratos', 'success');
+            this.notificationService.showSuccess('Cotización enviada a Gestión de Contratos');
             console.log('✅ CotizacionesComponent: Contrato creado automáticamente desde cotización aceptada');
           } catch (error) {
             console.error('❌ CotizacionesComponent: Error al crear contrato automáticamente:', error);
-            this.mostrarNotificacion('Error al crear contrato automáticamente', 'error');
+            this.notificationService.showError('Error al crear contrato automáticamente');
           }
         }
       }
@@ -291,10 +295,10 @@ export class CotizacionesComponent implements OnInit {
       await this.cargarCotizaciones();
       
       // Mostrar notificación
-      this.mostrarNotificacion(`Estado cambiado a ${event.nuevoEstado}`, 'success');
+      this.notificationService.showSuccess(`Estado cambiado a ${event.nuevoEstado}`);
     } catch (error) {
       console.error('Error al cambiar estado:', error);
-      this.mostrarNotificacion('Error al cambiar estado', 'error');
+      this.notificationService.showError('Error al cambiar estado');
     }
   }
 
@@ -305,10 +309,10 @@ export class CotizacionesComponent implements OnInit {
       const cotizacionRef = doc(this.firebaseService['firestore'], 'cotizaciones', cotizacionId);
       await deleteDoc(cotizacionRef);
       await this.cargarCotizaciones();
-      this.mostrarNotificacion('Cotización eliminada', 'success');
+      this.notificationService.showSuccess('Cotización eliminada');
     } catch (error) {
       console.error('Error al eliminar cotización:', error);
-      this.mostrarNotificacion('Error al eliminar cotización', 'error');
+      this.notificationService.showError('Error al eliminar cotización');
     }
   }
 
@@ -350,7 +354,7 @@ export class CotizacionesComponent implements OnInit {
     console.log('Generando vista previa de PDF para:', cotizacion.codigo);
     this.cotizacionSeleccionada = cotizacion;
     this.mostrarModalPDF = true;
-    this.mostrarNotificacion('Abriendo vista previa del PDF...', 'info');
+    this.notificationService.showInfo('Abriendo vista previa del PDF...');
   }
 
   cerrarModalPDF() {
@@ -358,206 +362,109 @@ export class CotizacionesComponent implements OnInit {
     this.cotizacionSeleccionada = null;
   }
 
-  descargarPDF() {
+  async descargarPDF() {
     if (!this.cotizacionSeleccionada) return;
     
-    console.log('📥 CotizacionesComponent: Descargando PDF para:', this.cotizacionSeleccionada.codigo);
-    
-    // Crear contenido HTML para el PDF
-    const contenidoHTML = this.generarContenidoPDF(this.cotizacionSeleccionada);
-    
-    // Crear una nueva ventana para imprimir/descargar
-    const ventanaPDF = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
-    if (ventanaPDF) {
-      ventanaPDF.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>PDF - ${this.cotizacionSeleccionada.codigo}</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 40px;
-              background: white;
-              color: #333;
-            }
-            .pdf-container {
-              background: white;
-              padding: 40px;
-              max-width: 800px;
-              margin: 0 auto;
-            }
-            .header {
-              text-align: center;
-              border-bottom: 2px solid #007bff;
-              padding-bottom: 20px;
-              margin-bottom: 30px;
-            }
-            .title {
-              font-size: 24px;
-              color: #007bff;
-              margin: 0;
-            }
-            .subtitle {
-              font-size: 16px;
-              color: #666;
-              margin: 10px 0;
-            }
-            .section {
-              margin: 20px 0;
-              padding: 15px;
-              border-left: 4px solid #007bff;
-              background: #f8f9fa;
-            }
-            .section h3 {
-              margin: 0 0 10px 0;
-              color: #007bff;
-            }
-            .info-row {
-              display: flex;
-              justify-content: space-between;
-              margin: 8px 0;
-              padding: 5px 0;
-              border-bottom: 1px solid #eee;
-            }
-            .label {
-              font-weight: bold;
-              color: #555;
-            }
-            .value {
-              color: #333;
-            }
-            .services {
-              margin: 20px 0;
-            }
-            .service-item {
-              background: #f8f9fa;
-              padding: 15px;
-              margin: 10px 0;
-              border-radius: 5px;
-              border-left: 3px solid #28a745;
-            }
-            .total {
-              font-size: 18px;
-              font-weight: bold;
-              text-align: right;
-              color: #007bff;
-              border-top: 2px solid #007bff;
-              padding-top: 15px;
-              margin-top: 20px;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 40px;
-              padding-top: 20px;
-              border-top: 1px solid #ddd;
-              color: #666;
-            }
-            @media print {
-              body { margin: 0; }
-              .pdf-container { padding: 20px; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="pdf-container">
-            ${contenidoHTML}
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-            };
-          </script>
-        </body>
-        </html>
-      `);
-      ventanaPDF.document.close();
-      this.mostrarNotificacion('PDF generado. Se abrirá la ventana de impresión.', 'success');
-    } else {
-      this.mostrarNotificacion('Error al generar PDF', 'error');
+    try {
+      console.log('📄 Iniciando descarga de PDF...');
+
+      // Cargar html2pdf si no está disponible
+      if (typeof html2pdf === 'undefined') {
+        await this.cargarHtml2Pdf();
+      }
+
+      // Importar el template dinámicamente
+      const templateModule = await import('../../templates/invoice-template.js');
+      const { renderInvoice } = templateModule as any;
+
+      // Preparar datos de la cotización
+      const datosCotizacion = {
+        nombre: this.cotizacionSeleccionada.nombre,
+        email: this.cotizacionSeleccionada.email,
+        rut: this.cotizacionSeleccionada['rut'],
+        empresa: this.cotizacionSeleccionada.empresa,
+        moneda: 'CLP',
+        codigo: this.cotizacionSeleccionada.codigo,
+        fecha: this.cotizacionSeleccionada.fecha,
+        serviciosData: this.cotizacionSeleccionada.servicios || [],
+        total: this.cotizacionSeleccionada.valor,
+        atendedor: this.cotizacionSeleccionada.atendido,
+        notasAdicionales: this.cotizacionSeleccionada['notasAdicionales'],
+        descuento: this.cotizacionSeleccionada['descuento'] || 0
+      };
+
+      // Generar HTML de la cotización
+      const htmlCotizacion = renderInvoice(datosCotizacion);
+
+      // Crear elemento temporal
+      const elemento = document.createElement('div');
+      elemento.innerHTML = htmlCotizacion;
+      elemento.style.position = 'absolute';
+      elemento.style.left = '-9999px';
+      elemento.style.top = '-9999px';
+      elemento.style.width = '210mm'; // A4 width
+      elemento.style.padding = '20px';
+      elemento.style.backgroundColor = 'white';
+      document.body.appendChild(elemento);
+
+      // Configuración de html2pdf
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `cotizacion-${this.cotizacionSeleccionada.codigo || this.cotizacionSeleccionada.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        }
+      };
+
+      // Generar PDF
+      await html2pdf().set(opt).from(elemento).save();
+
+      // Limpiar elemento temporal
+      document.body.removeChild(elemento);
+
+      console.log('✅ PDF generado y descargado exitosamente');
+      this.notificationService.showSuccess('PDF de la cotización descargado exitosamente');
+
+    } catch (error: any) {
+      console.error('❌ Error al generar PDF:', error);
+      this.notificationService.showError('Error al generar el PDF: ' + error.message);
     }
   }
 
-  generarContenidoPDF(cotizacion: Cotizacion): string {
-    const serviciosHTML = cotizacion.servicios?.map(servicio => `
-      <div class="service-item">
-        <div class="info-row">
-          <span class="label">Servicio:</span>
-          <span class="value">${servicio.nombre || 'Sin nombre'}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Detalle:</span>
-          <span class="value">${servicio.detalle || 'Sin detalle'}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Modalidad:</span>
-          <span class="value">${servicio.modalidad || 'No especificada'}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Alumnos:</span>
-          <span class="value">${servicio.alumnos || 0}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Subtotal:</span>
-          <span class="value">${this.formatCurrency(servicio.subtotal || 0)}</span>
-        </div>
-      </div>
-    `).join('') || '<p>No hay servicios registrados</p>';
-
-    return `
-      <div class="header">
-        <h1 class="title">COTIZACIÓN</h1>
-        <p class="subtitle">${cotizacion.codigo}</p>
-        <p class="subtitle">Fecha: ${this.formatDate(cotizacion.fecha)}</p>
-      </div>
-
-      <div class="section">
-        <h3>Información del Cliente</h3>
-        <div class="info-row">
-          <span class="label">Nombre:</span>
-          <span class="value">${cotizacion.nombre || 'No especificado'}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Empresa:</span>
-          <span class="value">${cotizacion.empresa || 'No especificada'}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Email:</span>
-          <span class="value">${cotizacion.email || 'No especificado'}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Atendido por:</span>
-          <span class="value">${cotizacion.atendido || 'No especificado'}</span>
-        </div>
-      </div>
-
-      <div class="section">
-        <h3>Servicios Cotizados</h3>
-        <div class="services">
-          ${serviciosHTML}
-        </div>
-      </div>
-
-      <div class="total">
-        <div class="info-row">
-          <span class="label">TOTAL:</span>
-          <span class="value">${this.formatCurrency(cotizacion.valor || 0)}</span>
-        </div>
-      </div>
-
-      <div class="footer">
-        <p>Esta cotización es válida por 30 días desde su emisión.</p>
-        <p>Para cualquier consulta, contacte a ${cotizacion.atendido || 'nuestro equipo'}.</p>
-      </div>
-    `;
+  // Cargar html2pdf dinámicamente
+  async cargarHtml2Pdf(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = () => {
+        console.log('✅ html2pdf cargado dinámicamente');
+        resolve();
+      };
+      script.onerror = () => {
+        console.error('❌ Error al cargar html2pdf');
+        reject(new Error('No se pudo cargar html2pdf'));
+      };
+      document.head.appendChild(script);
+    });
   }
+
+
 
   async onGenerarContrato(cotizacionId: string) {
     try {
       // Buscar la cotización
       const cotizacion = this.cotizaciones.find(c => c.id === cotizacionId);
       if (!cotizacion) {
-        this.mostrarNotificacion('Cotización no encontrada', 'error');
+        this.notificationService.showError('Cotización no encontrada');
         return;
       }
 
@@ -571,18 +478,18 @@ export class CotizacionesComponent implements OnInit {
       const contratoGenerado = await this.firebaseService.createContratoFromCotizacion(cotizacion);
       
       if (contratoGenerado) {
-        this.mostrarNotificacion('Contrato generado correctamente', 'success');
+        this.notificationService.showSuccess('Contrato generado correctamente');
         
         // Navegar a la página de contratos
         setTimeout(() => {
           this.router.navigate(['/contratos']);
         }, 1500);
       } else {
-        this.mostrarNotificacion('Error al generar contrato', 'error');
+        this.notificationService.showError('Error al generar contrato');
       }
     } catch (error) {
       console.error('Error al generar contrato:', error);
-      this.mostrarNotificacion('Error al generar contrato', 'error');
+      this.notificationService.showError('Error al generar contrato');
     }
   }
 
@@ -598,7 +505,7 @@ export class CotizacionesComponent implements OnInit {
       const contratoGenerado = await this.firebaseService.createContratoFromCotizacion(cotizacion);
       
       if (contratoGenerado) {
-        this.mostrarNotificacion('Contrato generado correctamente. Redirigiendo...', 'success');
+        this.notificationService.showSuccess('Contrato generado correctamente. Redirigiendo...');
         
         // Recargar cotizaciones para reflejar el cambio de estado
         await this.cargarCotizaciones();
@@ -608,11 +515,11 @@ export class CotizacionesComponent implements OnInit {
           this.router.navigate(['/contratos']);
         }, 1500);
       } else {
-        this.mostrarNotificacion('Error al generar contrato', 'error');
+        this.notificationService.showError('Error al generar contrato');
       }
     } catch (error) {
       console.error('❌ CotizacionesComponent: Error al generar contrato:', error);
-      this.mostrarNotificacion('Error al generar contrato: ' + error, 'error');
+      this.notificationService.showError('Error al generar contrato: ' + error);
     }
   }
 
@@ -732,12 +639,12 @@ export class CotizacionesComponent implements OnInit {
 
       try {
         await this.firebaseService.updateCotizacion(cotizacion.id, formData);
-        this.mostrarNotificacion('Cotización actualizada correctamente', 'success');
+        this.notificationService.showSuccess('Cotización actualizada correctamente');
         await this.cargarCotizaciones();
         cerrarModal();
       } catch (error) {
         console.error('Error al actualizar cotización:', error);
-        this.mostrarNotificacion('Error al actualizar cotización', 'error');
+        this.notificationService.showError('Error al actualizar cotización');
       }
     });
   }
@@ -753,13 +660,13 @@ export class CotizacionesComponent implements OnInit {
       console.log('🧪 CotizacionesComponent: Creando datos de prueba...');
       await this.firebaseService.crearDatosPrueba();
       console.log('✅ CotizacionesComponent: Datos de prueba creados exitosamente');
-      this.mostrarNotificacion('21 cotizaciones de prueba creadas exitosamente', 'success');
+      this.notificationService.showSuccess('21 cotizaciones de prueba creadas exitosamente');
       
       // Recargar cotizaciones después de crear los datos
       await this.cargarCotizaciones();
     } catch (error) {
       console.error('❌ CotizacionesComponent: Error al crear datos de prueba:', error);
-      this.mostrarNotificacion('Error al crear datos de prueba: ' + error, 'error');
+      this.notificationService.showError('Error al crear datos de prueba: ' + error);
     }
   }
 
@@ -767,41 +674,14 @@ export class CotizacionesComponent implements OnInit {
     try {
       console.log('🔄 CotizacionesComponent: Recargando datos...');
       await this.cargarCotizaciones();
-      this.mostrarNotificacion('Datos recargados correctamente', 'success');
+      this.notificationService.showSuccess('Datos recargados correctamente');
     } catch (error) {
       console.error('❌ CotizacionesComponent: Error al recargar datos:', error);
-      this.mostrarNotificacion('Error al recargar datos: ' + error, 'error');
+      this.notificationService.showError('Error al recargar datos: ' + error);
     }
   }
 
-  // Método para mostrar notificaciones
-  mostrarNotificacion(mensaje: string, tipo: 'success' | 'error' | 'info' = 'info') {
-    // Crear elemento de notificación
-    const notificacion = document.createElement('div');
-    notificacion.className = `notificacion notificacion-${tipo}`;
-    notificacion.innerHTML = `
-      <div class="notificacion-contenido">
-        <span class="notificacion-icono">${tipo === 'success' ? '✅' : tipo === 'error' ? '❌' : 'ℹ️'}</span>
-        <span class="notificacion-mensaje">${mensaje}</span>
-      </div>
-    `;
-    
-    // Agregar al DOM
-    document.body.appendChild(notificacion);
-    
-    // Mostrar con animación
-    setTimeout(() => notificacion.classList.add('mostrar'), 100);
-    
-    // Remover después de 3 segundos
-    setTimeout(() => {
-      notificacion.classList.remove('mostrar');
-      setTimeout(() => {
-        if (document.body.contains(notificacion)) {
-          document.body.removeChild(notificacion);
-        }
-      }, 300);
-    }, 3000);
-  }
+
 
   onLogout() {
     // El logout se maneja en el header component

@@ -15,6 +15,7 @@ export function renderContract(contratoData) {
     descripcionServicios,
     terminosCondiciones,
     // Firmas
+    firmaInternaBase64,
     firmaRepresentanteBase64,
     firmaClienteBase64,
     representanteLegal,
@@ -55,93 +56,131 @@ export function renderContract(contratoData) {
 
   // Sección de firmas
   const seccionFirmas = `
-    <div class="seccion-firmas" style="margin-top: 40px; page-break-before: always;">
-      <h3 style="font-weight:bold;color:#00B8D9;border-bottom: 2px solid #00B8D9;padding-bottom: 8px;margin-bottom: 20px;">✍️ Firmas Digitales</h3>
+    <div class="seccion-firmas" style="margin-top: 50px; page-break-before: always;">
+      <div style="display: flex; align-items: center; margin-bottom: 30px;">
+        <div style="width: 4px; height: 24px; background: linear-gradient(135deg, #00B8D9, #FF4EFF); border-radius: 2px; margin-right: 12px;"></div>
+        <h3 style="font-weight: 700; color: #1e293b; margin: 0; font-size: 1.3rem;">✍️ Firmas Digitales</h3>
+      </div>
       
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
         <!-- Firma del Representante Legal -->
-        <div class="firma-representante" style="border: 2px solid #E2E8F0; border-radius: 8px; padding: 20px; background: #F8FAFC;">
-          <h4 style="color:#00B8D9;font-weight:bold;margin-bottom: 15px;text-align:center;">👤 Firma del Representante Legal</h4>
-          
-          ${representanteLegal ? `
-            <div style="margin-bottom: 15px;">
-              <strong>Representante:</strong> ${representanteLegal}
-            </div>
-          ` : ''}
-          
-          ${fechaFirmaRepresentante ? `
-            <div style="margin-bottom: 15px;">
-              <strong>Fecha de Firma:</strong> ${formatearFecha(fechaFirmaRepresentante)}
-            </div>
-          ` : ''}
-          
-          ${firmaRepresentanteBase64 ? `
-            <div style="text-align: center; margin-top: 20px;">
-              <img src="${firmaRepresentanteBase64}" alt="Firma del Representante" style="max-width: 200px; max-height: 100px; border: 1px solid #E2E8F0; border-radius: 4px;">
-            </div>
-          ` : `
-            <div style="text-align: center; color: #64748B; font-style: italic; margin-top: 20px;">
-              Firma pendiente
-            </div>
-          `}
+        <div class="firma-representante" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+          <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="color: #1e293b; font-weight: 700; margin-bottom: 20px; text-align: center; font-size: 1.1rem;">👤 Firma del Representante Legal</h4>
+            
+            ${representanteLegal ? `
+              <div style="margin-bottom: 15px; padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #00B8D9;">
+                <div style="color: #64748b; font-size: 0.85rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Representante</div>
+                <div style="color: #1e293b; font-weight: 600;">${representanteLegal}</div>
+              </div>
+            ` : ''}
+            
+            ${fechaFirmaRepresentante ? `
+              <div style="margin-bottom: 15px; padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #00B8D9;">
+                <div style="color: #64748b; font-size: 0.85rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Fecha de Firma</div>
+                <div style="color: #1e293b; font-weight: 600;">${formatearFecha(fechaFirmaRepresentante)}</div>
+              </div>
+            ` : ''}
+            
+            ${(firmaInternaBase64 || firmaRepresentanteBase64) ? `
+              <div style="text-align: center; margin-top: 20px; padding: 20px; background: #f0fdf4; border: 2px solid #10B981; border-radius: 8px;">
+                <img src="${firmaInternaBase64 || firmaRepresentanteBase64}" alt="Firma del Representante" style="max-width: 250px; max-height: 120px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="margin-top: 15px; color: #10B981; font-weight: 700; font-size: 1.1rem;">✅ Firma Válida</div>
+              </div>
+            ` : `
+              <div style="text-align: center; color: #64748b; font-style: italic; margin-top: 20px; padding: 30px; background: #fef3c7; border: 2px dashed #f59e0b; border-radius: 8px;">
+                <div style="font-size: 3rem; margin-bottom: 15px;">⏳</div>
+                <div style="font-weight: 600; color: #92400e;">Firma pendiente</div>
+              </div>
+            `}
+          </div>
         </div>
         
         <!-- Firma del Cliente -->
-        <div class="firma-cliente" style="border: 2px solid #E2E8F0; border-radius: 8px; padding: 20px; background: #F8FAFC;">
-          <h4 style="color:#00B8D9;font-weight:bold;margin-bottom: 15px;text-align:center;">👤 Firma del Cliente</h4>
-          
-          <div style="margin-bottom: 15px;">
-            <strong>Cliente:</strong> ${nombre}
+        <div class="firma-cliente" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+          <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="color: #1e293b; font-weight: 700; margin-bottom: 20px; text-align: center; font-size: 1.1rem;">👤 Firma del Cliente</h4>
+            
+            <div style="margin-bottom: 15px; padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #00B8D9;">
+              <div style="color: #64748b; font-size: 0.85rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Cliente</div>
+              <div style="color: #1e293b; font-weight: 600;">${nombre}</div>
+            </div>
+            
+            <div style="margin-bottom: 15px; padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #00B8D9;">
+              <div style="color: #64748b; font-size: 0.85rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Empresa</div>
+              <div style="color: #1e293b; font-weight: 600;">${empresa}</div>
+            </div>
+            
+            ${fechaFirmaCliente ? `
+              <div style="margin-bottom: 15px; padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #00B8D9;">
+                <div style="color: #64748b; font-size: 0.85rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Fecha de Firma</div>
+                <div style="color: #1e293b; font-weight: 600;">${formatearFecha(fechaFirmaCliente)}</div>
+              </div>
+            ` : ''}
+            
+            ${firmaClienteBase64 ? `
+              <div style="text-align: center; margin-top: 20px; padding: 20px; background: #f0fdf4; border: 2px solid #10B981; border-radius: 8px;">
+                <img src="${firmaClienteBase64}" alt="Firma del Cliente" style="max-width: 250px; max-height: 120px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="margin-top: 15px; color: #10B981; font-weight: 700; font-size: 1.1rem;">✅ Firma Válida</div>
+              </div>
+            ` : `
+              <div style="text-align: center; color: #64748b; font-style: italic; margin-top: 20px; padding: 30px; background: #fef3c7; border: 2px dashed #f59e0b; border-radius: 8px;">
+                <div style="font-size: 3rem; margin-bottom: 15px;">⏳</div>
+                <div style="font-weight: 600; color: #92400e;">Firma pendiente</div>
+              </div>
+            `}
           </div>
-          
-          <div style="margin-bottom: 15px;">
-            <strong>Empresa:</strong> ${empresa}
-          </div>
-          
-          ${fechaFirmaCliente ? `
-            <div style="margin-bottom: 15px;">
-              <strong>Fecha de Firma:</strong> ${formatearFecha(fechaFirmaCliente)}
-            </div>
-          ` : ''}
-          
-          ${firmaClienteBase64 ? `
-            <div style="text-align: center; margin-top: 20px;">
-              <img src="${firmaClienteBase64}" alt="Firma del Cliente" style="max-width: 200px; max-height: 100px; border: 1px solid #E2E8F0; border-radius: 4px;">
-            </div>
-          ` : `
-            <div style="text-align: center; color: #64748B; font-style: italic; margin-top: 20px;">
-              Firma pendiente
-            </div>
-          `}
         </div>
       </div>
       
       <!-- Estado del contrato -->
-      <div style="background: #F0FDF4; border: 2px solid #10B981; border-radius: 8px; padding: 15px; text-align: center; margin-top: 20px;">
-        <strong style="color: #065F46;">Estado del Contrato: ${estadoContrato}</strong>
-        ${firmaRepresentanteBase64 && firmaClienteBase64 ? `
-          <br><span style="color: #10B981; font-weight: bold;">✅ Contrato Completamente Firmado</span>
-        ` : ''}
+      <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #10B981; border-radius: 12px; padding: 25px; text-align: center; margin-top: 30px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);">
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+          <div style="color: #065f46; font-weight: 700; font-size: 1.2rem; margin-bottom: 10px;">Estado del Contrato: ${estadoContrato}</div>
+          ${(firmaInternaBase64 || firmaRepresentanteBase64) && firmaClienteBase64 ? `
+            <div style="color: #10B981; font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;">✅ Contrato Completamente Firmado</div>
+            <div style="color: #065f46; font-size: 0.9rem;">Documento válido y legalmente vinculante</div>
+          ` : ''}
+        </div>
       </div>
     </div>
   `;
 
   return `
-  <div class="pdf-header" style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #00B8D9; padding-bottom: 20px;">
-    <img src="./assets/logo-blanco.png" alt="Logo SUBE IA TECH" style="height:80px; margin-bottom: 15px;">
-    <h1 style="font-size:2.5rem;color:#23263A;font-weight:bold;margin:0;">SUBE IA TECH</h1>
-    <h2 style="font-size:1.8rem;color:#23263A;font-weight:600;margin:10px 0;">${tituloContrato}</h2>
-    <div class="info-empresa" style="color:#23263A;font-weight:bold;margin:10px 0;">
-      <strong>Sube IA Tech Ltda.</strong><br>
-      Fco. Mansilla 1007, Castro, Chile<br>
-      RUT: 77.994.591-K<br>
-      contacto@subeia.tech
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 0 auto; background: white; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-radius: 12px;">
+    
+    <!-- Header del PDF con diseño mejorado -->
+    <div style="text-align: center; margin-bottom: 40px; padding: 30px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 12px; border: 2px solid #e2e8f0;">
+      <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #00B8D9, #FF4EFF); border-radius: 12px; margin-right: 20px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px;">SUBE</div>
+        <div>
+          <h1 style="font-size: 2.8rem; color: #1e293b; font-weight: 800; margin: 0; letter-spacing: -0.025em;">SUBE IA TECH</h1>
+          <h2 style="font-size: 1.4rem; color: #64748b; font-weight: 600; margin: 5px 0 0 0;">${tituloContrato}</h2>
+        </div>
+      </div>
+      
+      <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="color: #1e293b; font-weight: 600; margin-bottom: 10px;">
+          <strong>Sube IA Tech Ltda.</strong>
+        </div>
+        <div style="color: #64748b; font-size: 0.95rem; line-height: 1.5;">
+          Fco. Mansilla 1007, Castro, Chile<br>
+          RUT: 77.994.591-K<br>
+          contacto@subeia.tech
+        </div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="text-align: left;">
+          <div style="color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">Código de Contrato</div>
+          <div style="color: #00B8D9; font-weight: 700; font-size: 1.2rem; font-family: 'Courier New', monospace; letter-spacing: 1px;">${codigoCotizacion}</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">Estado</div>
+          <div style="color: #FF4EFF; font-weight: 700; font-size: 1.1rem;">${estadoContrato}</div>
+        </div>
+      </div>
     </div>
-    <div class="datos-contrato" style="color:#23263A;font-weight:bold;margin-top: 15px;">
-      <span style="margin: 0 15px;"><b>Código:</b> <span style="font-family:monospace;color:#00B8D9;font-size:1.1em;">${codigoCotizacion}</span></span>
-      <span style="margin: 0 15px;"><b>Estado:</b> <span style="color:#FF4EFF;">${estadoContrato}</span></span>
-    </div>
-  </div>
 
   <div class="pdf-body" style="color:#23263A;font-size:14px;line-height:1.6;">
     

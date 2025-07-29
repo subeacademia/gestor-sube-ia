@@ -41,6 +41,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/firmar-contrato-cliente/firmar-contrato-cliente.component').then(c => c.FirmarContratoClienteComponent)
   },
   {
+    path: 'firmar-cliente/:idContrato',
+    loadComponent: () => import('./pages/firmar-contrato-cliente/firmar-contrato-cliente.component').then(c => c.FirmarContratoClienteComponent)
+  },
+  {
     path: 'preview-contrato/:id',
     loadComponent: () => import('./pages/preview-contrato/preview-contrato.component').then(c => c.PreviewContratoComponent),
     canActivate: [authGuard]

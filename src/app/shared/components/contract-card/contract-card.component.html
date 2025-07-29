@@ -72,8 +72,22 @@
     </div>
     
     <div class="action-buttons">
-      <button class="btn-action btn-info" (click)="verPDF($event)" title="Ver PDF">
+      <!-- Botón de descarga de PDF (solo si está firmado) -->
+      <button 
+        class="btn-action btn-info" 
+        (click)="verPDF($event)" 
+        title="Descargar PDF Firmado"
+        *ngIf="isContratoFirmado() || tieneFirmas()">
         <span class="btn-icon">📄</span>
+      </button>
+      
+      <!-- Botón de ver PDF (si no está firmado) -->
+      <button 
+        class="btn-action btn-info" 
+        (click)="verPDF($event)" 
+        title="Ver PDF"
+        *ngIf="!isContratoFirmado() && !tieneFirmas()">
+        <span class="btn-icon">👁️</span>
       </button>
       
       <button 
@@ -90,6 +104,24 @@
         title="Firmar como Representante"
         *ngIf="contrato.estado === 'Pendiente de Firma' && !contrato.firmas?.representante">
         <span class="btn-icon">✍️</span>
+      </button>
+      
+      <!-- Botón para eliminar firma del representante -->
+      <button 
+        class="btn-action btn-danger" 
+        (click)="eliminarFirmaRepresentante($event)" 
+        title="Eliminar Firma del Representante"
+        *ngIf="contrato['firmaInternaBase64'] || contrato['firmaRepresentanteBase64']">
+        <span class="btn-icon">🗑️</span>
+      </button>
+      
+      <!-- Botón para eliminar firma del cliente -->
+      <button 
+        class="btn-action btn-danger" 
+        (click)="eliminarFirmaCliente($event)" 
+        title="Eliminar Firma del Cliente"
+        *ngIf="contrato['firmaClienteBase64']">
+        <span class="btn-icon">🗑️</span>
       </button>
       
       <button class="btn-action btn-warning" (click)="editarContratoCard($event)" title="Editar">
@@ -211,11 +243,69 @@
     
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="cerrarModal()">Cerrar</button>
-      <button class="btn btn-info" (click)="verPDF($event)">📄 Ver PDF</button>
+      
+      <!-- Botón de descarga de PDF (solo si está firmado) -->
+      <button 
+        class="btn btn-info" 
+        (click)="verPDF($event)" 
+        *ngIf="isContratoFirmado() || tieneFirmas()">
+        📄 Descargar PDF Firmado
+      </button>
+      
+      <!-- Botón de ver PDF (si no está firmado) -->
+      <button 
+        class="btn btn-info" 
+        (click)="verPDF($event)" 
+        *ngIf="!isContratoFirmado() && !tieneFirmas()">
+        👁️ Ver PDF
+      </button>
+      
       <button class="btn btn-success" (click)="enviarFirma($event)" *ngIf="contrato.estado === 'Pendiente de Firma'">📧 Enviar</button>
       <button class="btn btn-primary" (click)="firmarRepresentante($event)" *ngIf="contrato.estado === 'Pendiente de Firma' && !contrato.firmas?.representante">✍️ Firmar</button>
       <button class="btn btn-warning" (click)="editarContratoCard($event)">✏️ Editar</button>
       <button class="btn btn-danger" (click)="eliminarContrato($event)">🗑️ Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de envío de firma -->
+<div class="modal-overlay" [class.show]="mostrarModalEnvio" (click)="cerrarModalEnvio()">
+  <div class="modal-content modal-envio" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📧 Enviar Contrato para Firma</h3>
+      <button class="modal-close" (click)="cerrarModalEnvio()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="envio-info">
+        <h4>📋 Información del Contrato</h4>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Código:</span>
+            <span class="value">{{ contrato.codigo || contrato.id }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Cliente:</span>
+            <span class="value">{{ contrato.nombreCliente }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Email:</span>
+            <span class="value">{{ contrato.emailCliente }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="envio-actions">
+        <p>¿Deseas enviar este contrato al cliente para firma?</p>
+        <p class="envio-note">Se generará un enlace seguro y se enviará por email al cliente.</p>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalEnvio()">Cancelar</button>
+      <button class="btn btn-success" (click)="confirmarEnvio()">
+        📧 Enviar para Firma
+      </button>
     </div>
   </div>
 </div>

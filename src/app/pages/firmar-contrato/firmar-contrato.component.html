@@ -20,8 +20,8 @@
 <div *ngIf="!loading && !error && contrato" class="firma-container">
   <!-- Header -->
   <div class="firma-header">
-    <h1>✍️ Firma Digital de Contrato</h1>
-    <p class="subtitle">Proceso de firma digital para {{ contrato.tituloContrato || contrato.titulo || 'Contrato' }}</p>
+    <h1>✍️ Firma Interna de Contrato</h1>
+    <p class="subtitle">Firma del representante legal para {{ contrato.tituloContrato || contrato.titulo || 'Contrato' }}</p>
   </div>
 
   <!-- Resumen del contrato -->
@@ -89,146 +89,123 @@
     </div>
   </div>
   
-  <!-- Área de firma -->
+  <!-- Área de firma interna -->
   <div class="firma-pad-container">
-    <h3>✍️ Firma Digital - Doble Firma</h3>
+    <h3>✍️ Firma del Representante Legal</h3>
     <div class="firma-info">
-      <p>Este contrato requiere la firma del representante legal y del cliente para ser válido</p>
+      <p>Esta es la firma interna del representante legal de SUBE IA. Una vez guardada, podrás enviar el contrato al cliente para su firma.</p>
     </div>
     
-    <!-- Firma del Representante Legal -->
-    <div class="firma-seccion" [class.completada]="firmaRepresentanteGuardada">
-      <div class="firma-header-seccion">
-        <h4>👤 Firma del Representante Legal</h4>
-        <div class="firma-status" [class.completada]="firmaRepresentanteGuardada">
-          <span class="status-icon">{{ firmaRepresentanteGuardada ? '✅' : '⏳' }}</span>
-          <span class="status-text">{{ firmaRepresentanteGuardada ? 'Completada' : 'Pendiente' }}</span>
-        </div>
-      </div>
-      
-      <!-- Selección de representante legal -->
-      <div class="representante-seleccion" *ngIf="!firmaRepresentanteGuardada">
-        <label for="representante-legal">Representante Legal:</label>
-        <select id="representante-legal" [(ngModel)]="representanteSeleccionado" class="estado-select">
-          <option value="">Selecciona un representante legal</option>
-          <option *ngFor="let rep of representantes" [value]="rep.value">{{ rep.label }}</option>
-        </select>
-      </div>
-      
-      <!-- Información del representante si ya está firmado -->
-      <div class="representante-info" *ngIf="firmaRepresentanteGuardada">
-        <p><strong>Representante:</strong> {{ contrato.representanteLegal }}</p>
-        <p><strong>Fecha de firma:</strong> {{ formatearFecha(contrato.fechaFirmaRepresentante) }}</p>
-      </div>
-      
-      <!-- Área de firma del representante -->
-      <div class="firma-area" *ngIf="!firmaRepresentanteGuardada">
-        <label>Firma del Representante:</label>
-        <div class="canvas-container">
-          <canvas #firmaRepresentanteCanvas width="600" height="200"></canvas>
-        </div>
-        <div class="firma-acciones-seccion">
-          <button (click)="limpiarFirmaRepresentante()" class="btn btn-secondary btn-limpiar-firma">
-            🧹 Limpiar Firma
-          </button>
-          <button (click)="guardarFirmaRepresentante()" class="btn btn-primary" 
-                  [disabled]="!representanteSeleccionado">
-            Guardar Firma Representante
-          </button>
-        </div>
-      </div>
+    <!-- Estado de la firma -->
+    <div class="firma-status" [class.completada]="firmaInternaGuardada">
+      <span class="status-icon">{{ firmaInternaGuardada ? '✅' : '⏳' }}</span>
+      <span class="status-text">{{ firmaInternaGuardada ? 'Firma Interna Completada' : 'Firma Interna Pendiente' }}</span>
     </div>
     
-    <!-- Firma del Cliente -->
-    <div class="firma-seccion" [class.completada]="firmaClienteGuardada">
-      <div class="firma-header-seccion">
-        <h4>👤 Firma del Cliente</h4>
-        <div class="firma-status" [class.completada]="firmaClienteGuardada">
-          <span class="status-icon">{{ firmaClienteGuardada ? '✅' : '⏳' }}</span>
-          <span class="status-text">{{ firmaClienteGuardada ? 'Completada' : 'Pendiente' }}</span>
-        </div>
+    <!-- Información del representante si ya está firmado -->
+    <div class="representante-info" *ngIf="firmaInternaGuardada">
+      <p><strong>Representante:</strong> {{ contrato.representanteLegal }}</p>
+      <p><strong>Fecha de firma:</strong> {{ formatearFecha(contrato.fechaFirmaRepresentante) }}</p>
+    </div>
+    
+    <!-- Selección de representante legal -->
+    <div class="representante-seleccion" *ngIf="!firmaInternaGuardada">
+      <label for="representante-legal">Representante Legal:</label>
+      <select id="representante-legal" [(ngModel)]="representanteSeleccionado" class="estado-select">
+        <option value="">Selecciona un representante legal</option>
+        <option *ngFor="let rep of representantes" [value]="rep.value">{{ rep.label }}</option>
+      </select>
+    </div>
+    
+    <!-- Área de firma -->
+    <div class="firma-area" *ngIf="!firmaInternaGuardada">
+      <label>Firma del Representante Legal:</label>
+      <div class="canvas-container">
+        <canvas #firmaCanvas width="600" height="200"></canvas>
       </div>
-      
-      <!-- Información del cliente -->
-      <div class="cliente-info-firma">
-        <p><strong>Cliente:</strong> <span>{{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</span></p>
-        <p><strong>Empresa:</strong> <span>{{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</span></p>
-        <p *ngIf="firmaClienteGuardada"><strong>Fecha de firma:</strong> {{ formatearFecha(contrato.fechaFirmaCliente) }}</p>
-      </div>
-      
-      <!-- Área de firma del cliente -->
-      <div class="firma-area" *ngIf="!firmaClienteGuardada">
-        <label>Firma del Cliente:</label>
-        <div class="canvas-container">
-          <canvas #firmaClienteCanvas width="600" height="200"></canvas>
-        </div>
-        <div class="firma-acciones-seccion">
-          <button (click)="limpiarFirmaCliente()" class="btn btn-secondary btn-limpiar-firma">
-            🧹 Limpiar Firma
-          </button>
-          <button (click)="guardarFirmaCliente()" class="btn btn-primary">
-            Guardar Firma Cliente
-          </button>
-        </div>
+      <div class="firma-acciones">
+        <button (click)="limpiarFirma()" class="btn btn-secondary btn-limpiar-firma">
+          🧹 Limpiar Firma
+        </button>
+        <button (click)="probarSignaturePad()" class="btn btn-warning">
+          🧪 Probar Pad
+        </button>
+        <button (click)="guardarFirmaInterna()" class="btn btn-primary" 
+                [disabled]="!representanteSeleccionado">
+          💾 Guardar Firma Interna
+        </button>
       </div>
     </div>
     
-    <!-- Estado de las firmas -->
-    <div class="estado-firmas">
-      <h4>📋 Estado de las Firmas</h4>
-      <div class="firma-status">
-        <div class="status-item" [class.completado]="firmaRepresentanteGuardada">
-          <span class="status-icon">
-            {{ firmaRepresentanteGuardada ? '✅' : '⏳' }}
-          </span>
-          <span class="status-text">
-            Representante Legal: <span>{{ firmaRepresentanteGuardada ? 'Completada' : 'Pendiente' }}</span>
-          </span>
-        </div>
-        <div class="status-item" [class.completado]="firmaClienteGuardada">
-          <span class="status-icon">
-            {{ firmaClienteGuardada ? '✅' : '⏳' }}
-          </span>
-          <span class="status-text">
-            Cliente: <span>{{ firmaClienteGuardada ? 'Completada' : 'Pendiente' }}</span>
-          </span>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Opciones de finalización cuando la firma del representante está completa -->
-    <div *ngIf="firmaRepresentanteGuardada && !firmaClienteGuardada" class="firma-representante-completada">
+    <!-- Opciones después de guardar la firma interna -->
+    <div *ngIf="firmaInternaGuardada" class="firma-completada">
       <div class="mensaje-confirmacion">
-        <h3>✅ Firma del Representante Completada</h3>
+        <h3>✅ Firma Interna Completada</h3>
         <p>La firma del representante legal ha sido guardada exitosamente.</p>
         <div class="opciones-finalizacion">
-          <button (click)="generarLinkCliente()" class="btn btn-primary">
-            🔗 Generar Link para Cliente
-          </button>
-          <button (click)="enviarEmailCliente()" class="btn btn-success">
-            📧 Enviar Email al Cliente
+          <button (click)="abrirModalEnvio()" class="btn btn-success">
+            📧 Enviar a Cliente para Firma
           </button>
           <button (click)="volverContratos()" class="btn btn-secondary">
             📋 Volver a Contratos
+          </button>
+          <button (click)="eliminarFirmaRepresentante()" class="btn btn-danger">
+            🗑️ Eliminar Firma y Firmar de Nuevo
           </button>
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Modal de envío al cliente -->
+<div *ngIf="mostrandoModalEnvio" class="modal-overlay" (click)="cerrarModalEnvio()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📧 Enviar Contrato al Cliente</h3>
+      <button class="modal-close" (click)="cerrarModalEnvio()">×</button>
+    </div>
     
-    <!-- Mensaje cuando el contrato está completamente firmado -->
-    <div *ngIf="firmaRepresentanteGuardada && firmaClienteGuardada" class="contrato-completamente-firmado">
-      <div class="mensaje-confirmacion">
-        <h3>🎉 ¡Contrato Completamente Firmado!</h3>
-        <p>Ambas firmas han sido completadas. El contrato está listo para ser finalizado.</p>
-        <div class="opciones-finalizacion">
-          <button (click)="finalizarContrato()" class="btn btn-success">
-            ✅ Finalizar Contrato
-          </button>
-          <button (click)="volverContratos()" class="btn btn-secondary">
-            📋 Volver a Contratos
-          </button>
-        </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="email-cliente">Email del Cliente:</label>
+        <input 
+          type="email" 
+          id="email-cliente" 
+          [(ngModel)]="emailCliente" 
+          placeholder="cliente@empresa.com"
+          class="form-control"
+        >
       </div>
+      
+      <div class="form-group">
+        <label for="mensaje-personalizado">Mensaje Personalizado (opcional):</label>
+        <textarea 
+          id="mensaje-personalizado" 
+          [(ngModel)]="mensajePersonalizado" 
+          placeholder="Escribe un mensaje personalizado para el cliente..."
+          class="form-control"
+          rows="4"
+        ></textarea>
+      </div>
+      
+      <div class="info-envio">
+        <h4>📋 Información del Envío</h4>
+        <p><strong>Contrato:</strong> {{ contrato?.tituloContrato || contrato?.titulo }}</p>
+        <p><strong>Código:</strong> {{ contrato?.codigoCotizacion || contrato?.codigo }}</p>
+        <p><strong>Valor:</strong> {{ formatearMoneda(contrato?.totalConDescuento || contrato?.valorTotal || contrato?.total || 0) }}</p>
+        <p><strong>Cliente:</strong> {{ contrato?.cliente?.nombre || contrato?.nombreCliente }}</p>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button (click)="probarGeneracionToken()" class="btn btn-warning">
+        🧪 Probar Token
+      </button>
+      <button (click)="cerrarModalEnvio()" class="btn btn-secondary">Cancelar</button>
+      <button (click)="enviarACliente()" class="btn btn-success" [disabled]="!emailCliente">
+        📧 Enviar Contrato
+      </button>
     </div>
   </div>
 </div>

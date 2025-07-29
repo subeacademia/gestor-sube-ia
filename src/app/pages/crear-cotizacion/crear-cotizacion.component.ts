@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } fr
 import { Router } from '@angular/router';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { FirebaseService } from '../../core/services/firebase.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-crear-cotizacion',
@@ -27,6 +28,7 @@ export class CrearCotizacionComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private firebaseService: FirebaseService,
+    private notificationService: NotificationService,
     private router: Router
   ) {
     this.cotizacionForm = this.fb.group({
@@ -69,7 +71,7 @@ export class CrearCotizacionComponent implements OnInit {
       console.log('✅ Código generado automáticamente:', codigo);
     } catch (error) {
       console.error('❌ Error al generar código:', error);
-      this.errorMessage = 'Error al generar el código de cotización';
+      this.notificationService.showError('Error al generar el código de cotización');
     } finally {
       this.isGeneratingCode = false;
     }
@@ -158,22 +160,23 @@ export class CrearCotizacionComponent implements OnInit {
   async onSubmit() {
     if (this.cotizacionForm.invalid) {
       this.marcarCamposInvalidos();
+      this.notificationService.showError('Por favor, completa todos los campos obligatorios correctamente.');
       return;
     }
 
     // Validaciones adicionales
     if (!this.cotizacionForm.get('nombre')?.value) {
-      this.errorMessage = 'El nombre del cliente es obligatorio';
+      this.notificationService.showError('El nombre del cliente es obligatorio');
       return;
     }
 
     if (!this.cotizacionForm.get('atendido')?.value) {
-      this.errorMessage = 'El campo "Atendido por" es obligatorio';
+      this.notificationService.showError('El campo "Atendido por" es obligatorio');
       return;
     }
 
     if (this.cotizacionForm.get('total')?.value <= 0) {
-      this.errorMessage = 'El valor total debe ser mayor a cero';
+      this.notificationService.showError('El valor total debe ser mayor a cero');
       return;
     }
 
@@ -191,7 +194,7 @@ export class CrearCotizacionComponent implements OnInit {
 
       await this.firebaseService.createCotizacion(cotizacionData);
       
-      this.successMessage = 'Cotización creada exitosamente';
+      this.notificationService.showSuccess('Cotización creada exitosamente');
       
       // Redirigir al panel de cotizaciones después de 2 segundos
       setTimeout(() => {
@@ -200,7 +203,7 @@ export class CrearCotizacionComponent implements OnInit {
       
     } catch (error) {
       console.error('Error al crear cotización:', error);
-      this.errorMessage = 'Error al crear la cotización. Por favor, inténtalo de nuevo.';
+      this.notificationService.showError('Error al crear la cotización. Por favor, inténtalo de nuevo.');
     } finally {
       this.isLoading = false;
     }

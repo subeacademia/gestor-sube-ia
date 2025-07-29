@@ -324,9 +324,24 @@
           
           <div class="list-column">
             <div class="list-actions">
-              <button class="btn-action btn-info" (click)="verPDF(contrato)" title="Ver PDF">
+              <!-- Botón de descarga de PDF (solo si está firmado) -->
+              <button 
+                class="btn-action btn-info" 
+                (click)="verPDF(contrato)" 
+                title="Descargar PDF Firmado"
+                *ngIf="isContratoFirmado(contrato) || tieneFirmas(contrato)">
                 <span class="btn-icon">📄</span>
-                <span class="btn-text">PDF</span>
+                <span class="btn-text">PDF Firmado</span>
+              </button>
+              
+              <!-- Botón de ver PDF (si no está firmado) -->
+              <button 
+                class="btn-action btn-info" 
+                (click)="verPDF(contrato)" 
+                title="Ver PDF"
+                *ngIf="!isContratoFirmado(contrato) && !tieneFirmas(contrato)">
+                <span class="btn-icon">👁️</span>
+                <span class="btn-text">Ver PDF</span>
               </button>
               
               <button 

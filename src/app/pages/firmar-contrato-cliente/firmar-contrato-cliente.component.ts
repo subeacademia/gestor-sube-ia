@@ -13,7 +13,8 @@ declare var SignaturePad: any;
   styleUrls: ['./firmar-contrato-cliente.component.scss']
 })
 export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
-  @ViewChild('firmaClienteCanvas', { static: false }) firmaClienteCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('firmaCanvas', { static: false }) signaturePadElement!: ElementRef<HTMLCanvasElement>;
+  private signaturePad: any = null;
 
   // Variables del componente
   contrato: any = null;
@@ -22,10 +23,7 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
   errorMessage = '';
   
   // Variables de firma
-  signaturePadCliente: any = null;
   firmaClienteGuardada = false;
-  
-  // Variables de estado
   contratoFirmado = false;
   mostrandoExito = false;
 
@@ -76,6 +74,9 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
         }
       }
 
+      // Verificar si ya tiene firma del cliente
+      this.verificarFirmaCliente();
+
       console.log('✅ Contrato cargado para firma del cliente:', this.contrato);
 
     } catch (error: any) {
@@ -107,24 +108,44 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
     }
   }
 
+  verificarFirmaCliente(): void {
+    console.log('🔍 Verificando firma del cliente existente...');
+
+    if (this.contrato.firmaClienteBase64) {
+      console.log('✅ Firma del cliente encontrada');
+      this.firmaClienteGuardada = true;
+      this.contratoFirmado = true;
+    } else {
+      console.log('❌ Firma del cliente no encontrada');
+      this.firmaClienteGuardada = false;
+    }
+  }
+
   inicializarSignaturePad(): void {
     try {
-      // Verificar que SignaturePad esté disponible
+      // Cargar SignaturePad dinámicamente si no está disponible
       if (typeof SignaturePad === 'undefined') {
-        throw new Error('SignaturePad no está disponible');
+        console.log('📦 SignaturePad no disponible, cargando dinámicamente...');
+        this.cargarSignaturePad();
+        return;
       }
 
       console.log('🎨 Inicializando SignaturePad para cliente...');
 
-      // Inicializar SignaturePad para cliente
-      if (this.firmaClienteCanvas) {
-        this.signaturePadCliente = new SignaturePad(this.firmaClienteCanvas.nativeElement, {
+      // Inicializar SignaturePad solo si no hay firma guardada
+      if (this.signaturePadElement && !this.firmaClienteGuardada) {
+        this.signaturePad = new SignaturePad(this.signaturePadElement.nativeElement, {
           backgroundColor: 'rgb(250, 250, 250)',
           penColor: 'rgb(0, 0, 0)',
-          penWidth: 2
+          penWidth: 2,
+          minWidth: 0.5,
+          maxWidth: 2.5
         });
-        console.log('✅ SignaturePad cliente inicializado');
+        console.log('✅ SignaturePad cliente inicializado correctamente');
       }
+
+      // Mostrar firma existente si la hay
+      this.mostrarFirmaExistente();
 
     } catch (error: any) {
       console.error('❌ Error al inicializar SignaturePad:', error);
@@ -133,28 +154,59 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
     }
   }
 
+  cargarSignaturePad(): void {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js';
+    script.onload = () => {
+      console.log('✅ SignaturePad cargado dinámicamente');
+      setTimeout(() => {
+        this.inicializarSignaturePad();
+      }, 100);
+    };
+    script.onerror = () => {
+      console.error('❌ Error al cargar SignaturePad');
+      this.mostrarNotificacion('Error al cargar SignaturePad. La funcionalidad de firma no estará disponible.', 'error');
+    };
+    document.head.appendChild(script);
+  }
+
+  mostrarFirmaExistente(): void {
+    // Mostrar firma del cliente si existe
+    if (this.contrato.firmaClienteBase64 && this.signaturePadElement) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = this.signaturePadElement.nativeElement;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        }
+      };
+      img.src = this.contrato.firmaClienteBase64;
+    }
+  }
+
   // Funciones de firma del cliente
   limpiarFirma(): void {
-    if (this.signaturePadCliente) {
-      this.signaturePadCliente.clear();
+    if (this.signaturePad) {
+      this.signaturePad.clear();
       console.log('🧹 Firma del cliente limpiada');
       this.mostrarNotificacion('Firma limpiada', 'success');
     }
   }
 
-  async firmarContrato(): Promise<void> {
+  async guardarFirmaCliente(): Promise<void> {
     if (!this.contrato) {
       this.mostrarNotificacion('Error: No hay contrato cargado', 'error');
       return;
     }
 
-    if (!this.signaturePadCliente) {
+    if (!this.signaturePad) {
       this.mostrarNotificacion('Error: Pad de firma no inicializado', 'error');
       return;
     }
 
     // Verificar si el pad de firma está vacío
-    if (this.signaturePadCliente.isEmpty()) {
+    if (this.signaturePad.isEmpty()) {
       this.mostrarNotificacion('Por favor, firme en el área antes de continuar', 'error');
       return;
     }
@@ -163,15 +215,15 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
       console.log('✍️ Guardando firma del cliente...');
 
       // Obtener la firma como imagen Base64
-      const firmaBase64 = this.signaturePadCliente.toDataURL('image/png');
+      const firmaBase64 = this.signaturePad.toDataURL('image/png');
 
       // Verificar si ya tiene firma del representante
-      const tieneFirmaRepresentante = this.contrato.firmaRepresentanteBase64;
+      const tieneFirmaRepresentante = this.contrato.firmaInternaBase64 || this.contrato.firmaRepresentanteBase64;
 
       // Determinar el estado final
       let estadoFinal = 'Firmado';
       if (tieneFirmaRepresentante) {
-        estadoFinal = 'Finalizado'; // Ambas firmas completadas
+        estadoFinal = 'Completamente Firmado'; // Ambas firmas completadas
       }
 
       // Actualizar firma del cliente
@@ -179,12 +231,10 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
 
       // Actualizar estado del contrato
       await this.firebaseService.updateContrato(this.contrato.id, {
-        estado: estadoFinal,
+        estadoContrato: estadoFinal,
         fechaFirmaCliente: new Date(),
         fechaFirmaFinal: new Date(),
         contratoValido: true,
-        esPreContrato: false,
-        fechaCompletado: new Date(),
         ambasFirmasCompletadas: tieneFirmaRepresentante ? true : false
       });
 
@@ -192,7 +242,7 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
       this.firmaClienteGuardada = true;
       this.contrato.firmaClienteBase64 = firmaBase64;
       this.contrato.fechaFirmaCliente = new Date();
-      this.contrato.estado = estadoFinal;
+      this.contrato.estadoContrato = estadoFinal;
 
       console.log('✅ Firma del cliente guardada exitosamente');
       console.log(`📋 Estado actualizado a: ${estadoFinal}`);
@@ -200,9 +250,6 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
 
       // Mostrar mensaje de éxito
       this.mostrarMensajeExito();
-
-      // Enviar email de confirmación
-      await this.enviarEmailConfirmacion();
 
     } catch (error: any) {
       console.error('❌ Error al guardar firma del cliente:', error);
@@ -219,81 +266,40 @@ export class FirmarContratoClienteComponent implements OnInit, AfterViewInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Función para enviar email de confirmación
-  async enviarEmailConfirmacion(): Promise<void> {
-    try {
-      console.log('📧 Enviando email de confirmación...');
-
-      // Generar contenido del email de confirmación
-      const asunto = `✅ Contrato Firmado - ${this.contrato.titulo || this.contrato.codigo}`;
-      const mensaje = `
-Estimado ${this.contrato.nombreCliente || 'Cliente'},
-
-Su contrato ha sido firmado exitosamente.
-
-Detalles del contrato:
-- Título: ${this.contrato.titulo || 'Sin título'}
-- Código: ${this.contrato.codigo || 'Sin código'}
-- Valor: ${this.formatearMoneda(this.contrato.valorTotal || 0)}
-- Fecha de firma: ${this.formatearFecha(new Date())}
-
-Adjunto encontrará una copia del contrato firmado.
-
-Saludos cordiales,
-Equipo SUBE IA
-www.subeia.tech
-      `;
-
-      // Enviar email al cliente
-      await this.enviarEmail(this.contrato.emailCliente, asunto, mensaje);
-
-      // Enviar copia al administrador
-      const asuntoAdmin = `📋 Contrato Firmado - ${this.contrato.nombreCliente} - ${this.contrato.codigo}`;
-      const mensajeAdmin = `
-Se ha firmado un nuevo contrato:
-
-Cliente: ${this.contrato.nombreCliente}
-Empresa: ${this.contrato.empresa}
-Email: ${this.contrato.emailCliente}
-Contrato: ${this.contrato.titulo}
-Código: ${this.contrato.codigo}
-Valor: ${this.formatearMoneda(this.contrato.valorTotal || 0)}
-Fecha: ${this.formatearFecha(new Date())}
-
-El contrato está listo para ser marcado como finalizado.
-      `;
-
-      // Enviar al email del administrador
-      await this.enviarEmail('admin@subeia.tech', asuntoAdmin, mensajeAdmin);
-
-      console.log('✅ Emails de confirmación enviados');
-
-    } catch (error) {
-      console.error('❌ Error al enviar email de confirmación:', error);
+  // Método para eliminar firma del cliente y permitir firmar de nuevo
+  async eliminarFirmaCliente(): Promise<void> {
+    if (!this.contrato) {
+      this.mostrarNotificacion('Error: No hay contrato cargado', 'error');
+      return;
     }
-  }
 
-  // Función de envío de email
-  async enviarEmail(destinatario: string, asunto: string, mensaje: string): Promise<boolean> {
+    if (!confirm('¿Estás seguro de que deseas eliminar tu firma? Esto permitirá firmar de nuevo.')) {
+      return;
+    }
+
     try {
-      // Simular envío de email
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log('📧 Enviando email:');
-      console.log('   Destinatario:', destinatario);
-      console.log('   Asunto:', asunto);
-      console.log('   Mensaje:', mensaje);
-      
-      // En un entorno real, aquí se integraría con un servicio de email
-      // - SendGrid
-      // - Mailgun
-      // - AWS SES
-      // - Firebase Functions + Nodemailer
-      
-      return true;
-    } catch (error) {
-      console.error('❌ Error al enviar email:', error);
-      throw error;
+      console.log('🗑️ Eliminando firma del cliente...');
+
+      // Eliminar firma del cliente en Firebase
+      await this.firebaseService.eliminarFirmaCliente(this.contrato.id);
+
+      // Actualizar estado local
+      this.firmaClienteGuardada = false;
+      this.contrato.firmaClienteBase64 = null;
+      this.contrato.fechaFirmaCliente = null;
+      this.contrato.estadoContrato = 'Pendiente Firma Cliente';
+
+      // Reinicializar SignaturePad
+      setTimeout(() => {
+        this.inicializarSignaturePad();
+      }, 100);
+
+      console.log('✅ Firma del cliente eliminada exitosamente');
+      this.mostrarNotificacion('Firma eliminada. Puedes firmar de nuevo.', 'success');
+
+    } catch (error: any) {
+      console.error('❌ Error al eliminar firma del cliente:', error);
+      this.mostrarNotificacion('Error al eliminar la firma: ' + error.message, 'error');
     }
   }
 

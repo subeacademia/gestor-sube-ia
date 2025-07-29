@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { FirebaseService } from '../../core/services/firebase.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 
@@ -64,7 +65,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   // Subscripciones
   private subscriptions: any[] = [];
   
-  constructor(private firebaseService: FirebaseService) {
+  constructor(
+    private firebaseService: FirebaseService,
+    private notificationService: NotificationService
+  ) {
     console.log('🚀 DashboardComponent: Inicializando dashboard');
   }
   

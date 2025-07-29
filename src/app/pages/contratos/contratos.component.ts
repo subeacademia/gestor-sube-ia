@@ -4,7 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { ContractCardComponent } from '../../shared/components/contract-card/contract-card.component';
 import { FirebaseService } from '../../core/services/firebase.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { Router } from '@angular/router';
+
+declare var html2pdf: any;
 
 interface Contrato {
   id: string;
@@ -71,6 +74,7 @@ export class ContratosComponent implements OnInit {
 
   constructor(
     private firebaseService: FirebaseService,
+    private notificationService: NotificationService,
     private router: Router
   ) {}
 
@@ -99,24 +103,18 @@ export class ContratosComponent implements OnInit {
       console.log('🔍 ContratosComponent: Estados únicos encontrados:', estadosUnicos);
       
     } catch (error) {
-      console.error('Error al cargar contratos:', error);
+      console.error('❌ ContratosComponent: Error al cargar contratos:', error);
+      this.notificationService.showError('Error al cargar los contratos');
     }
   }
 
   calcularEstadisticas() {
     this.totalContratos = this.contratos.length;
-    
-    this.contratosPendientes = this.contratos.filter(cont => 
-      cont.estado === 'Pendiente de Firma' || cont.estado === 'Enviado'
+    this.contratosPendientes = this.contratos.filter(c => c.estado === 'Pendiente de Firma').length;
+    this.contratosFirmados = this.contratos.filter(c => 
+      c.estado === 'Firmado' || c.estado === 'Finalizado' || c.estado === 'Completamente Firmado'
     ).length;
-    
-    this.contratosFirmados = this.contratos.filter(cont => 
-      cont.estado === 'Firmado' || cont.estado === 'Finalizado'
-    ).length;
-    
-    this.valorTotalContratos = this.contratos.reduce((sum, cont) => 
-      sum + (cont.valorTotal || 0), 0
-    );
+    this.valorTotalContratos = this.contratos.reduce((total, c) => total + (c.valorTotal || 0), 0);
   }
 
   onSearchChange() {
@@ -124,25 +122,26 @@ export class ContratosComponent implements OnInit {
   }
 
   aplicarFiltros() {
-    let filtradas = [...this.contratos];
+    let filtrados = [...this.contratos];
 
-    // Filtro de búsqueda
-    if (this.searchTerm) {
+    // Filtro por búsqueda
+    if (this.searchTerm.trim()) {
       const termino = this.searchTerm.toLowerCase();
-      filtradas = filtradas.filter(cont => 
-        cont.codigo?.toLowerCase().includes(termino) ||
-        cont.titulo?.toLowerCase().includes(termino) ||
-        cont.nombreCliente?.toLowerCase().includes(termino) ||
-        cont.empresa?.toLowerCase().includes(termino)
+      filtrados = filtrados.filter(contrato =>
+        contrato.titulo?.toLowerCase().includes(termino) ||
+        contrato.nombreCliente?.toLowerCase().includes(termino) ||
+        contrato.empresa?.toLowerCase().includes(termino) ||
+        contrato.codigo?.toLowerCase().includes(termino) ||
+        contrato.emailCliente?.toLowerCase().includes(termino)
       );
     }
 
-    // Filtro de estado
+    // Filtro por estado
     if (this.filtroEstado !== 'todos') {
-      filtradas = filtradas.filter(cont => cont.estado === this.filtroEstado);
+      filtrados = filtrados.filter(contrato => contrato.estado === this.filtroEstado);
     }
 
-    this.contratosFiltrados = filtradas;
+    this.contratosFiltrados = filtrados;
   }
 
   getEstadosUnicos(): string[] {
@@ -154,58 +153,28 @@ export class ContratosComponent implements OnInit {
   }
 
   getEstadoClass(estado: string): string {
-    if (!estado) return 'desconocido';
     return estado.toLowerCase().replace(/\s+/g, '-');
   }
 
   getContratosPorEstado(estado: string): Contrato[] {
-    console.log(`🔍 ContratosComponent: Filtrando contratos por estado "${estado}"`);
-    
-    const contratosEnEstado = this.contratosFiltrados.filter(cont => {
-      const contratoEstado = cont.estado?.toLowerCase() || '';
-      const estadoBuscado = estado.toLowerCase();
-      
-      // Mapeo de estados para mayor flexibilidad
-      const mapeoEstados: { [key: string]: string[] } = {
-        'pendiente de firma': ['pendiente de firma', 'pendiente', 'nuevo', 'creado'],
-        'enviado': ['enviado', 'enviado para firma', 'pendiente firma cliente'],
-        'firmado': ['firmado', 'completado', 'finalizado'],
-        'finalizado': ['finalizado', 'completado', 'cerrado']
-      };
-      
-      // Verificar coincidencia exacta
-      if (contratoEstado === estadoBuscado) {
-        return true;
-      }
-      
-      // Verificar mapeo de estados
-      if (mapeoEstados[estadoBuscado]) {
-        return mapeoEstados[estadoBuscado].includes(contratoEstado);
-      }
-      
-      // Para estados desconocidos, incluir todos los que no coincidan con estados conocidos
-      if (estadoBuscado === 'desconocido') {
-        const estadosConocidos = [
-          'pendiente de firma', 'pendiente', 'nuevo', 'creado',
-          'enviado', 'enviado para firma', 'pendiente firma cliente',
-          'firmado', 'completado', 'finalizado', 'cerrado'
-        ];
-        return !estadosConocidos.includes(contratoEstado);
-      }
-      
-      return false;
-    });
-    
-    console.log(`📋 ContratosComponent: Encontrados ${contratosEnEstado.length} contratos en estado "${estado}"`);
-    return contratosEnEstado;
+    return this.contratos.filter(c => c.estado === estado);
   }
 
-  // Métodos para cambio de vista
+  // Verificar si el contrato está firmado
+  isContratoFirmado(contrato: Contrato): boolean {
+    const estado = contrato.estado?.toLowerCase() || '';
+    return estado === 'firmado' || estado === 'finalizado' || estado === 'completamente firmado';
+  }
+
+  // Verificar si tiene firmas
+  tieneFirmas(contrato: Contrato): boolean {
+    return !!(contrato['firmaRepresentanteBase64'] || contrato['firmaClienteBase64']);
+  }
+
   setViewMode(mode: 'kanban' | 'list') {
     this.viewMode = mode;
   }
 
-  // Métodos para drag & drop
   onDragStart(event: DragEvent, contrato: Contrato) {
     this.draggedContrato = contrato;
     if (event.dataTransfer) {
@@ -216,9 +185,7 @@ export class ContratosComponent implements OnInit {
 
   onDragOver(event: DragEvent) {
     event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
+    event.dataTransfer!.dropEffect = 'move';
   }
 
   async onDrop(event: DragEvent, nuevoEstado: string) {
@@ -226,28 +193,23 @@ export class ContratosComponent implements OnInit {
     
     if (this.draggedContrato && this.draggedContrato.estado !== nuevoEstado) {
       try {
-        await this.firebaseService.updateContrato(this.draggedContrato.id, { estado: nuevoEstado });
+        console.log(`🔄 Moviendo contrato ${this.draggedContrato.id} de "${this.draggedContrato.estado}" a "${nuevoEstado}"`);
         
-        // Agregar al historial de estados
-        const historialEstados = this.draggedContrato.historialEstados || [];
-        historialEstados.push({
+        await this.firebaseService.updateContrato(this.draggedContrato.id, {
           estado: nuevoEstado,
-          fecha: new Date(),
-          comentario: `Contrato movido a ${nuevoEstado}`
+          fechaActualizacion: new Date()
         });
+
+        // Actualizar estado local
+        this.draggedContrato.estado = nuevoEstado;
+        this.calcularEstadisticas();
         
-        await this.firebaseService.updateContrato(this.draggedContrato.id, { 
-          historialEstados: historialEstados 
-        });
+        console.log('✅ Contrato movido exitosamente');
+        this.notificationService.showSuccess(`Contrato movido a ${nuevoEstado}`);
         
-        // Recargar contratos
-        await this.cargarContratos();
-        
-        // Mostrar notificación de éxito
-        this.mostrarNotificacion(`Contrato movido a ${nuevoEstado}`, 'success');
       } catch (error) {
-        console.error('Error al cambiar estado:', error);
-        this.mostrarNotificacion('Error al cambiar estado', 'error');
+        console.error('❌ Error al mover contrato:', error);
+        this.notificationService.showError('Error al mover el contrato');
       }
     }
     
@@ -256,113 +218,75 @@ export class ContratosComponent implements OnInit {
 
   async onEstadoChanged(event: { contratoId: string, nuevoEstado: string }) {
     try {
-      await this.firebaseService.updateContrato(event.contratoId, { estado: event.nuevoEstado });
+      console.log(`🔄 Cambiando estado del contrato ${event.contratoId} a "${event.nuevoEstado}"`);
       
-      // Agregar al historial de estados
+      await this.firebaseService.updateContrato(event.contratoId, {
+        estado: event.nuevoEstado,
+        fechaActualizacion: new Date()
+      });
+
+      // Actualizar estado local
       const contrato = this.contratos.find(c => c.id === event.contratoId);
       if (contrato) {
-        const historialEstados = contrato.historialEstados || [];
-        historialEstados.push({
-          estado: event.nuevoEstado,
-          fecha: new Date(),
-          comentario: `Estado cambiado manualmente`
-        });
-        
-        await this.firebaseService.updateContrato(event.contratoId, { 
-          historialEstados: historialEstados 
-        });
+        contrato.estado = event.nuevoEstado;
+        this.calcularEstadisticas();
       }
       
-      await this.cargarContratos();
-      this.mostrarNotificacion(`Estado cambiado a ${event.nuevoEstado}`, 'success');
+      console.log('✅ Estado del contrato actualizado exitosamente');
+      this.notificationService.showSuccess(`Estado actualizado a ${event.nuevoEstado}`);
+      
     } catch (error) {
-      console.error('Error al cambiar estado:', error);
-      this.mostrarNotificacion('Error al cambiar estado', 'error');
+      console.error('❌ Error al actualizar estado del contrato:', error);
+      this.notificationService.showError('Error al actualizar el estado del contrato');
     }
   }
 
   async onContratoDeleted(contratoId: string) {
     try {
+      console.log(`🗑️ Eliminando contrato ${contratoId}`);
+      
       await this.firebaseService.deleteContrato(contratoId);
-      await this.cargarContratos();
-      this.mostrarNotificacion('Contrato eliminado', 'success');
+      
+      // Remover de la lista local
+      this.contratos = this.contratos.filter(c => c.id !== contratoId);
+      this.contratosFiltrados = this.contratosFiltrados.filter(c => c.id !== contratoId);
+      this.calcularEstadisticas();
+      
+      console.log('✅ Contrato eliminado exitosamente');
+      this.notificationService.showSuccess('Contrato eliminado exitosamente');
+      
     } catch (error) {
-      console.error('Error al eliminar contrato:', error);
-      this.mostrarNotificacion('Error al eliminar contrato', 'error');
+      console.error('❌ Error al eliminar contrato:', error);
+      this.notificationService.showError('Error al eliminar el contrato');
     }
   }
 
-  // Métodos para firma de representante legal
   async onFirmaRepresentante(event: { contratoId: string }) {
     try {
-      const contrato = this.contratos.find(c => c.id === event.contratoId);
-      if (contrato) {
-        const firmas = contrato.firmas || { cliente: false, representante: false };
-        firmas.representante = true;
-        
-        // Si ambas firmas están completas, cambiar estado a Firmado
-        let nuevoEstado = contrato.estado;
-        if (firmas.cliente && firmas.representante) {
-          nuevoEstado = 'Firmado';
-        }
-        
-        await this.firebaseService.updateContrato(event.contratoId, { 
-          firmas: firmas,
-          estado: nuevoEstado
-        });
-        
-        // Agregar al historial
-        const historialEstados = contrato.historialEstados || [];
-        historialEstados.push({
-          estado: nuevoEstado,
-          fecha: new Date(),
-          comentario: 'Firmado por representante legal'
-        });
-        
-        await this.firebaseService.updateContrato(event.contratoId, { 
-          historialEstados: historialEstados 
-        });
-        
-        await this.cargarContratos();
-        this.mostrarNotificacion('Firmado por representante legal', 'success');
-      }
+      console.log(`✍️ Navegando a firma del representante para contrato ${event.contratoId}`);
+      
+      // Navegar a la página de firma
+      this.router.navigate(['/firmar-contrato', event.contratoId]);
+      
     } catch (error) {
-      console.error('Error al firmar como representante:', error);
-      this.mostrarNotificacion('Error al firmar contrato', 'error');
+      console.error('❌ Error al navegar a firma:', error);
+      this.notificationService.showError('Error al abrir la página de firma');
     }
   }
 
-  // Métodos para enviar a cliente
   async onEnviarCliente(event: { contratoId: string }) {
     try {
-      const contrato = this.contratos.find(c => c.id === event.contratoId);
-      if (contrato) {
-        await this.firebaseService.updateContrato(event.contratoId, { 
-          estado: 'Enviado'
-        });
-        
-        // Agregar al historial
-        const historialEstados = contrato.historialEstados || [];
-        historialEstados.push({
-          estado: 'Enviado',
-          fecha: new Date(),
-          comentario: 'Enviado al cliente para firma'
-        });
-        
-        await this.firebaseService.updateContrato(event.contratoId, { 
-          historialEstados: historialEstados 
-        });
-        
-        await this.cargarContratos();
-        this.mostrarNotificacion('Contrato enviado al cliente', 'success');
-      }
+      console.log(`📧 Navegando a envío de firma para contrato ${event.contratoId}`);
+      
+      // Navegar a la página de envío de firma
+      this.router.navigate(['/enviar-firma', event.contratoId]);
+      
     } catch (error) {
-      console.error('Error al enviar contrato:', error);
-      this.mostrarNotificacion('Error al enviar contrato', 'error');
+      console.error('❌ Error al navegar a envío de firma:', error);
+      this.notificationService.showError('Error al abrir la página de envío de firma');
     }
   }
 
-  // Métodos para vista lista
   formatDate(fecha: any): string {
     if (!fecha) return 'Sin fecha';
     
@@ -395,26 +319,16 @@ export class ContratosComponent implements OnInit {
     }).format(numValor);
   }
 
-  // Métodos de acciones para vista lista
   verPDF(contrato: Contrato) {
-    // Implementar generación de PDF
-    console.log('Generando PDF para:', contrato.codigo);
+    this.descargarPDF(contrato);
   }
 
   enviarCliente(contrato: Contrato) {
-    this.onEnviarCliente({ contratoId: contrato.id });
+    this.router.navigate(['/enviar-firma', contrato.id]);
   }
 
-  // Este método ya está implementado arriba
-  // editarContrato(contrato: Contrato) {
-  //   this.modoEdicion = true;
-  //   this.contratoEditando = contrato;
-  //   this.mostrarModal = true;
-  //   this.cargarDatosContrato(contrato);
-  // }
-
   eliminarContrato(contrato: Contrato) {
-    if (confirm('¿Estás seguro de que quieres eliminar este contrato?')) {
+    if (confirm('¿Estás seguro de que deseas eliminar este contrato?')) {
       this.onContratoDeleted(contrato.id);
     }
   }
@@ -422,28 +336,28 @@ export class ContratosComponent implements OnInit {
   mostrarModalCrearContrato() {
     this.modoEdicion = false;
     this.contratoEditando = null;
-    this.mostrarModal = true;
     this.resetearFormulario();
+    this.mostrarModal = true;
   }
 
   editarContrato(contrato: Contrato) {
     this.modoEdicion = true;
     this.contratoEditando = contrato;
-    this.mostrarModal = true;
     this.cargarDatosContrato(contrato);
+    this.mostrarModal = true;
   }
 
   cargarDatosContrato(contrato: Contrato) {
     this.nuevoContrato = {
       titulo: contrato.titulo || '',
-      fechaInicio: contrato['fechaInicio'] ? this.formatDateForInput(contrato['fechaInicio']) : '',
-      fechaFin: contrato['fechaFin'] ? this.formatDateForInput(contrato['fechaFin']) : '',
+      fechaInicio: this.formatDateForInput(contrato['fechaInicio']),
+      fechaFin: this.formatDateForInput(contrato['fechaFin']),
       valorTotal: contrato.valorTotal || 0,
       nombreCliente: contrato.nombreCliente || '',
       emailCliente: contrato.emailCliente || '',
       rutCliente: contrato.rutCliente || '',
       empresa: contrato.empresa || '',
-      descripcionServicios: contrato['descripcionServicios'] || contrato['servicios'] || '',
+      descripcionServicios: contrato['descripcionServicios'] || '',
       terminosCondiciones: contrato['terminosCondiciones'] || ''
     };
   }
@@ -452,19 +366,22 @@ export class ContratosComponent implements OnInit {
     if (!fecha) return '';
     
     try {
-      let date: Date;
+      let fechaObj: Date;
+      
       if (fecha.toDate) {
-        date = fecha.toDate();
+        fechaObj = fecha.toDate();
       } else if (fecha instanceof Date) {
-        date = fecha;
-      } else if (typeof fecha === 'string') {
-        date = new Date(fecha);
+        fechaObj = fecha;
       } else {
+        fechaObj = new Date(fecha);
+      }
+      
+      if (isNaN(fechaObj.getTime())) {
         return '';
       }
       
-      return date.toISOString().split('T')[0];
-    } catch (error) {
+      return fechaObj.toISOString().split('T')[0];
+    } catch {
       return '';
     }
   }
@@ -493,95 +410,137 @@ export class ContratosComponent implements OnInit {
 
   async guardarContratoDirecto() {
     try {
-      if (this.modoEdicion && this.contratoEditando) {
-        // Modo edición
-        const contratoData = {
-          titulo: this.nuevoContrato.titulo,
-          fechaInicio: this.nuevoContrato.fechaInicio ? new Date(this.nuevoContrato.fechaInicio) : new Date(),
-          fechaFin: this.nuevoContrato.fechaFin ? new Date(this.nuevoContrato.fechaFin) : null,
-          valorTotal: parseFloat(this.nuevoContrato.valorTotal) || 0,
-          nombreCliente: this.nuevoContrato.nombreCliente,
-          emailCliente: this.nuevoContrato.emailCliente,
-          rutCliente: this.nuevoContrato.rutCliente,
-          empresa: this.nuevoContrato.empresa,
-          servicios: this.nuevoContrato.descripcionServicios,
-          descripcionServicios: this.nuevoContrato.descripcionServicios,
-          terminosCondiciones: this.nuevoContrato.terminosCondiciones
-        };
+      console.log('💾 Guardando contrato...');
+      
+      const contratoData = {
+        ...this.nuevoContrato,
+        fechaCreacionContrato: new Date(),
+        estado: 'Pendiente de Firma',
+        codigo: await this.firebaseService.generarCodigoCotizacion()
+      };
 
-        await this.firebaseService.updateContrato(this.contratoEditando.id, contratoData);
-        this.mostrarNotificacion('Contrato actualizado exitosamente', 'success');
-      } else {
-        // Modo creación
-        const contratoData = {
-          codigo: `CON-${Date.now()}`,
-          titulo: this.nuevoContrato.titulo,
-          fechaCreacionContrato: new Date(),
-          fechaInicio: this.nuevoContrato.fechaInicio ? new Date(this.nuevoContrato.fechaInicio) : new Date(),
-          fechaFin: this.nuevoContrato.fechaFin ? new Date(this.nuevoContrato.fechaFin) : null,
-          valorTotal: parseFloat(this.nuevoContrato.valorTotal) || 0,
-          nombreCliente: this.nuevoContrato.nombreCliente,
-          emailCliente: this.nuevoContrato.emailCliente,
-          rutCliente: this.nuevoContrato.rutCliente,
-          empresa: this.nuevoContrato.empresa,
-          servicios: this.nuevoContrato.descripcionServicios,
-          descripcionServicios: this.nuevoContrato.descripcionServicios,
-          terminosCondiciones: this.nuevoContrato.terminosCondiciones,
-          estado: 'Pendiente de Firma',
-          atendido: 'Sistema',
-          firmas: {
-            cliente: false,
-            representante: false
-          },
-          historialEstados: [
-            {
-              estado: 'Pendiente de Firma',
-              fecha: new Date(),
-              comentario: 'Contrato creado directamente'
-            }
-          ]
-        };
-
-        await this.firebaseService.createContrato(contratoData);
-        this.mostrarNotificacion('Contrato creado exitosamente', 'success');
-      }
+      const docRef = await this.firebaseService.createContrato(contratoData);
+      
+      console.log('✅ Contrato creado exitosamente:', docRef.id);
+      this.notificationService.showSuccess('Contrato creado exitosamente');
       
       this.cerrarModal();
-      await this.cargarContratos();
+      this.cargarContratos();
       
-      console.log(this.modoEdicion ? 'Contrato actualizado exitosamente' : 'Contrato creado exitosamente');
     } catch (error) {
-      console.error('Error al guardar contrato:', error);
-      this.mostrarNotificacion('Error al guardar contrato', 'error');
+      console.error('❌ Error al crear contrato:', error);
+      this.notificationService.showError('Error al crear el contrato');
     }
   }
 
-  // Método para mostrar notificaciones
-  mostrarNotificacion(mensaje: string, tipo: 'success' | 'error' | 'info' = 'info') {
-    // Crear elemento de notificación
-    const notificacion = document.createElement('div');
-    notificacion.className = `notificacion notificacion-${tipo}`;
-    notificacion.innerHTML = `
-      <div class="notificacion-contenido">
-        <span class="notificacion-icono">${tipo === 'success' ? '✅' : tipo === 'error' ? '❌' : 'ℹ️'}</span>
-        <span class="notificacion-mensaje">${mensaje}</span>
-      </div>
-    `;
-    
-    // Agregar al DOM
-    document.body.appendChild(notificacion);
-    
-    // Mostrar con animación
-    setTimeout(() => notificacion.classList.add('mostrar'), 100);
-    
-    // Remover después de 3 segundos
-    setTimeout(() => {
-      notificacion.classList.remove('mostrar');
-      setTimeout(() => {
-        if (document.body.contains(notificacion)) {
-          document.body.removeChild(notificacion);
+  // Función para descargar PDF
+  async descargarPDF(contrato: Contrato): Promise<void> {
+    try {
+      console.log('📄 Iniciando descarga de PDF...');
+
+      // Verificar si el contrato tiene firmas
+      const tieneFirmas = contrato['firmaRepresentanteBase64'] || contrato['firmaClienteBase64'];
+      if (!tieneFirmas) {
+        this.notificationService.showError('Este contrato no tiene firmas. Solo se puede descargar contratos firmados.');
+        return;
+      }
+
+      // Cargar html2pdf si no está disponible
+      if (typeof html2pdf === 'undefined') {
+        await this.cargarHtml2Pdf();
+      }
+
+      // Importar el template dinámicamente
+      const templateModule = await import('../../templates/contract-template.js');
+      const { renderContract } = templateModule as any;
+
+      // Preparar datos del contrato
+      const datosContrato = {
+        ...contrato,
+        tituloContrato: contrato.titulo,
+        codigoCotizacion: contrato.codigo,
+        estadoContrato: contrato.estado,
+        fechaCreacionContrato: contrato.fechaCreacionContrato,
+        cliente: {
+          nombre: contrato.nombreCliente,
+          email: contrato.emailCliente,
+          rut: contrato.rutCliente,
+          empresa: contrato.empresa
+        },
+        totalConDescuento: contrato.valorTotal,
+        total: contrato.valorTotal,
+        descuento: contrato['descuento'] || 0,
+        atendido: contrato['atendido'],
+        // Firmas
+        firmaRepresentanteBase64: contrato['firmaRepresentanteBase64'],
+        firmaClienteBase64: contrato['firmaClienteBase64'],
+        representanteLegal: contrato['representanteLegal'],
+        fechaFirmaRepresentante: contrato['fechaFirmaRepresentante'],
+        fechaFirmaCliente: contrato['fechaFirmaCliente']
+      };
+
+      // Generar HTML del contrato
+      const htmlContrato = renderContract(datosContrato);
+
+      // Crear elemento temporal
+      const elemento = document.createElement('div');
+      elemento.innerHTML = htmlContrato;
+      elemento.style.position = 'absolute';
+      elemento.style.left = '-9999px';
+      elemento.style.top = '-9999px';
+      elemento.style.width = '210mm'; // A4 width
+      elemento.style.padding = '20px';
+      elemento.style.backgroundColor = 'white';
+      document.body.appendChild(elemento);
+
+      // Configuración de html2pdf
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `contrato-firmado-${contrato.codigo || contrato.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
         }
-      }, 300);
-    }, 3000);
+      };
+
+      // Generar PDF
+      await html2pdf().set(opt).from(elemento).save();
+
+      // Limpiar elemento temporal
+      document.body.removeChild(elemento);
+
+      console.log('✅ PDF generado y descargado exitosamente');
+      this.notificationService.showSuccess('PDF del contrato firmado descargado exitosamente');
+
+    } catch (error: any) {
+      console.error('❌ Error al generar PDF:', error);
+      this.notificationService.showError('Error al generar el PDF: ' + error.message);
+    }
   }
+
+  // Cargar html2pdf dinámicamente
+  async cargarHtml2Pdf(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = () => {
+        console.log('✅ html2pdf cargado dinámicamente');
+        resolve();
+      };
+      script.onerror = () => {
+        console.error('❌ Error al cargar html2pdf');
+        reject(new Error('No se pudo cargar html2pdf'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
 }

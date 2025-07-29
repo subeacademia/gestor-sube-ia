@@ -1,130 +1,175 @@
 <!-- Loading -->
-<div *ngIf="loading" class="loading">
-  <div>Cargando contrato...</div>
+<div *ngIf="loading" class="loading-firma">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Cargando contrato...</p>
+  </div>
 </div>
 
 <!-- Error -->
-<div *ngIf="error" class="error">
-  {{ errorMessage }}
-</div>
-
-<!-- Mensaje de éxito -->
-<div *ngIf="mostrandoExito" class="success-message">
-  <h3>✅ Contrato Firmado Exitosamente</h3>
-  <p>Su firma ha sido registrada correctamente. Recibirá una copia del contrato firmado en su email.</p>
-  
-  <div class="success-actions">
-    <h4>¿Qué sigue?</h4>
-    <p>Gracias por confiar en SUBE IA. Le invitamos a conocer más sobre nuestros servicios:</p>
-    
-    <div class="success-buttons">
-      <a href="https://www.subeia.tech" target="_blank" class="btn btn-primary">
-        🌐 Visitar Nuestra Web
-      </a>
-      <a href="https://blog.subeia.tech" target="_blank" class="btn btn-secondary">
-        📝 Ver Nuestro Blog
-      </a>
-    </div>
-    
-    <p class="success-note">
-      <small>Recibirá una copia del contrato firmado en su email en los próximos minutos.</small>
-    </p>
+<div *ngIf="error" class="error-firma">
+  <div class="error-content">
+    <span class="error-icon">❌</span>
+    <h3>Error al cargar el contrato</h3>
+    <p>{{ errorMessage }}</p>
+    <button (click)="cargarContrato()" class="btn btn-primary">Reintentar</button>
   </div>
 </div>
 
-<!-- Contenido principal -->
-<div *ngIf="!loading && !error && !mostrandoExito && contrato" class="container">
+<!-- Mensaje de éxito cuando el contrato ya está firmado -->
+<div *ngIf="!loading && !error && contratoFirmado" class="contrato-ya-firmado">
+  <div class="exito-content">
+    <span class="exito-icon">🎉</span>
+    <h2>¡Contrato Firmado Exitosamente!</h2>
+    <p>Este contrato ya ha sido firmado. Gracias por completar el proceso.</p>
+    
+    <div class="contrato-info">
+      <h3>📋 Detalles del Contrato</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Título:</span>
+          <span class="value">{{ contrato.tituloContrato || contrato.titulo || 'Sin título' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Código:</span>
+          <span class="value">{{ contrato.codigoCotizacion || contrato.codigo || 'Sin código' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Fecha de Firma:</span>
+          <span class="value">{{ formatearFecha(contrato.fechaFirmaCliente) }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Estado:</span>
+          <span class="estado-badge" [ngClass]="getEstadoClass(contrato.estadoContrato)">
+            {{ contrato.estadoContrato || 'Firmado' }}
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="acciones">
+      <p>El contrato ha sido procesado correctamente. Recibirá una copia por email.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Contenido principal para firma -->
+<div *ngIf="!loading && !error && contrato && !contratoFirmado" class="firma-container">
   <!-- Header -->
-  <div class="header">
-    <div class="logo">
-      <div class="logo-icon">🤝</div>
-      <div class="logo-text">SUBE IA TECH</div>
-    </div>
-    <h1 class="subtitle">Firma Digital de Contrato</h1>
-    <p>Complete su firma de manera segura y digital</p>
+  <div class="firma-header">
+    <h1>✍️ Firma de Contrato</h1>
+    <p class="subtitle">Firma digital para {{ contrato.tituloContrato || contrato.titulo || 'Contrato' }}</p>
   </div>
 
-  <!-- Contenido principal -->
-  <div class="main-content">
-    <!-- Resumen del contrato -->
-    <div class="contrato-resumen">
-      <h2>📋 Resumen del Contrato</h2>
-      
+  <!-- Resumen del contrato -->
+  <div class="contrato-resumen">
+    <h2>📋 Resumen del Contrato</h2>
+    
+    <div class="resumen-grid">
       <div class="detalle-seccion">
         <h4>📋 Información General</h4>
-        <p><strong>Título:</strong> {{ contrato.tituloContrato || contrato.titulo || 'Sin título' }}</p>
-        <p><strong>Código:</strong> {{ contrato.codigoCotizacion || contrato.codigo || 'Sin código' }}</p>
-        <p><strong>Estado:</strong> 
+        <div class="info-item">
+          <span class="label">Título:</span>
+          <span class="value">{{ contrato.tituloContrato || contrato.titulo || 'Sin título' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Código:</span>
+          <span class="value codigo">{{ contrato.codigoCotizacion || contrato.codigo || 'Sin código' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Estado:</span>
           <span class="estado-badge" [ngClass]="getEstadoClass(contrato.estadoContrato)">
             {{ contrato.estadoContrato || 'Pendiente de Firma' }}
           </span>
-        </p>
-        <p><strong>Fecha de Creación:</strong> {{ formatearFecha(contrato.fechaCreacionContrato) }}</p>
+        </div>
+        <div class="info-item">
+          <span class="label">Fecha de Creación:</span>
+          <span class="value">{{ formatearFecha(contrato.fechaCreacionContrato) }}</span>
+        </div>
       </div>
       
       <div class="detalle-seccion">
         <h4>👤 Información del Cliente</h4>
-        <p><strong>Nombre:</strong> {{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</p>
-        <p><strong>Email:</strong> {{ contrato.cliente?.email || contrato.emailCliente || 'No especificado' }}</p>
-        <p><strong>RUT:</strong> {{ contrato.cliente?.rut || contrato.rutCliente || 'No especificado' }}</p>
-        <p><strong>Empresa:</strong> {{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</p>
+        <div class="info-item">
+          <span class="label">Nombre:</span>
+          <span class="value">{{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Email:</span>
+          <span class="value">{{ contrato.cliente?.email || contrato.emailCliente || 'No especificado' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">RUT:</span>
+          <span class="value">{{ contrato.cliente?.rut || contrato.rutCliente || 'No especificado' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Empresa:</span>
+          <span class="value">{{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</span>
+        </div>
       </div>
       
       <div class="detalle-seccion">
         <h4>💰 Información Financiera</h4>
-        <p><strong>Valor Total:</strong> ${{ (contrato.totalConDescuento || contrato.valorTotal || contrato.total || 0).toLocaleString() }}</p>
-        <p *ngIf="contrato.descuento > 0"><strong>Descuento:</strong> {{ contrato.descuento }}%</p>
-        <p><strong>Atendido por:</strong> {{ contrato.atendido || 'No especificado' }}</p>
-      </div>
-      
-      <div class="detalle-seccion" *ngIf="contrato.partesInvolucradas">
-        <h4>🤝 Partes Involucradas</h4>
-        <p>{{ contrato.partesInvolucradas }}</p>
-      </div>
-      
-      <div class="detalle-seccion" *ngIf="contrato.objetoContrato">
-        <h4>📄 Objeto del Contrato</h4>
-        <p>{{ contrato.objetoContrato }}</p>
-      </div>
-      
-      <div class="detalle-seccion" *ngIf="contrato.clausulas">
-        <h4>📜 Cláusulas y Términos</h4>
-        <p>{{ contrato.clausulas }}</p>
-      </div>
-      
-      <div class="detalle-seccion" *ngIf="contrato.fechaInicio || contrato.fechaFin">
-        <h4>📅 Fechas del Contrato</h4>
-        <p *ngIf="contrato.fechaInicio"><strong>Fecha de Inicio:</strong> {{ formatearFecha(contrato.fechaInicio) }}</p>
-        <p *ngIf="contrato.fechaFin"><strong>Fecha de Fin:</strong> {{ formatearFecha(contrato.fechaFin) }}</p>
-      </div>
-    </div>
-    
-    <!-- Área de firma -->
-    <div class="firma-section">
-      <h3>✍️ Firma Digital</h3>
-      <div class="firma-info">
-        Por favor, firme en el área de abajo para completar el proceso de firma digital
-      </div>
-      
-      <div class="cliente-info">
-        <p><strong>Cliente:</strong> {{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</p>
-        <p><strong>Empresa:</strong> {{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</p>
-      </div>
-      
-      <div class="canvas-container">
-        <canvas #firmaClienteCanvas width="600" height="200"></canvas>
-      </div>
-      
-      <div class="firma-actions">
-        <button (click)="limpiarFirma()" class="btn btn-secondary">🧹 Limpiar Firma</button>
-        <button (click)="firmarContrato()" class="btn btn-primary">✍️ Firmar Contrato</button>
+        <div class="info-item">
+          <span class="label">Valor Total:</span>
+          <span class="value total">{{ formatearMoneda(contrato.totalConDescuento || contrato.valorTotal || contrato.total || 0) }}</span>
+        </div>
+        <div class="info-item" *ngIf="contrato.descuento > 0">
+          <span class="label">Descuento:</span>
+          <span class="value descuento">{{ contrato.descuento }}%</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Atendido por:</span>
+          <span class="value">{{ contrato.atendido || 'No especificado' }}</span>
+        </div>
       </div>
     </div>
   </div>
-
-  <!-- Footer -->
-  <div class="footer">
-    <p>© 2024 SUBE IA TECH. Todos los derechos reservados.</p>
-    <p>Sistema de firma digital seguro y confiable</p>
+  
+  <!-- Área de firma del cliente -->
+  <div class="firma-pad-container">
+    <h3>✍️ Firma del Cliente</h3>
+    <div class="firma-info">
+      <p>Por favor, firme en el área de abajo para completar el proceso de firma del contrato.</p>
+    </div>
+    
+    <!-- Estado de la firma -->
+    <div class="firma-status" [class.completada]="firmaClienteGuardada">
+      <span class="status-icon">{{ firmaClienteGuardada ? '✅' : '⏳' }}</span>
+      <span class="status-text">{{ firmaClienteGuardada ? 'Firma Completada' : 'Firma Pendiente' }}</span>
+    </div>
+    
+    <!-- Área de firma -->
+    <div class="firma-area" *ngIf="!firmaClienteGuardada">
+      <label>Su Firma:</label>
+      <div class="canvas-container">
+        <canvas #firmaCanvas width="600" height="200"></canvas>
+      </div>
+      <div class="firma-acciones">
+        <button (click)="limpiarFirma()" class="btn btn-secondary btn-limpiar-firma">
+          🧹 Limpiar Firma
+        </button>
+        <button (click)="guardarFirmaCliente()" class="btn btn-primary">
+          ✍️ Firmar y Aceptar Contrato
+        </button>
+      </div>
+    </div>
+    
+    <!-- Mensaje cuando la firma está completada -->
+    <div *ngIf="firmaClienteGuardada" class="firma-completada">
+      <div class="mensaje-confirmacion">
+        <h3>✅ Firma Completada</h3>
+        <p>Su firma ha sido guardada exitosamente. El contrato está completamente firmado.</p>
+        <div class="info-firma">
+          <p><strong>Fecha de firma:</strong> {{ formatearFecha(contrato.fechaFirmaCliente) }}</p>
+          <p><strong>Estado del contrato:</strong> {{ contrato.estadoContrato }}</p>
+        </div>
+        <div class="opciones-finalizacion">
+          <button (click)="eliminarFirmaCliente()" class="btn btn-danger">
+            🗑️ Eliminar Firma y Firmar de Nuevo
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div> 

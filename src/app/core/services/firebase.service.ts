@@ -605,10 +605,11 @@ export class FirebaseService {
     console.log('✍️ FirebaseService: Actualizando firma del representante...');
     try {
       await this.updateContrato(contratoId, {
-        firmaRepresentanteBase64: firmaBase64,
+        firmaInternaBase64: firmaBase64,
+        firmaRepresentanteBase64: firmaBase64, // Mantener compatibilidad
         representanteLegal: representanteLegal,
         fechaFirmaRepresentante: new Date(),
-        estadoContrato: 'Firma Representante Completada'
+        estadoContrato: 'Pendiente Firma Cliente'
       });
       console.log('✅ FirebaseService: Firma del representante actualizada');
     } catch (error) {
@@ -623,12 +624,12 @@ export class FirebaseService {
     try {
       // Verificar si ya tiene firma del representante
       const contrato = await this.getContratoById(contratoId);
-      const tieneFirmaRepresentante = contrato.firmaRepresentanteBase64;
+      const tieneFirmaRepresentante = contrato.firmaInternaBase64 || contrato.firmaRepresentanteBase64;
 
       // Determinar el estado final
       let estadoFinal = 'Firmado';
       if (tieneFirmaRepresentante) {
-        estadoFinal = 'Finalizado'; // Ambas firmas completadas
+        estadoFinal = 'Completamente Firmado'; // Ambas firmas completadas
       }
 
       await this.updateContrato(contratoId, {
@@ -637,8 +638,6 @@ export class FirebaseService {
         estadoContrato: estadoFinal,
         fechaFirmaFinal: new Date(),
         contratoValido: true,
-        esPreContrato: false,
-        fechaCompletado: new Date(),
         ambasFirmasCompletadas: tieneFirmaRepresentante ? true : false
       });
       
@@ -737,6 +736,69 @@ export class FirebaseService {
       console.log('✅ FirebaseService: Envío de email registrado');
     } catch (error) {
       console.error('❌ FirebaseService: Error al registrar envío de email:', error);
+      throw error;
+    }
+  }
+
+  // Método para eliminar firma del representante
+  async eliminarFirmaRepresentante(contratoId: string): Promise<void> {
+    console.log('🗑️ FirebaseService: Eliminando firma del representante...');
+    try {
+      await this.updateContrato(contratoId, {
+        firmaInternaBase64: null,
+        firmaRepresentanteBase64: null,
+        representanteLegal: null,
+        fechaFirmaRepresentante: null,
+        estadoContrato: 'Pendiente de Firma'
+      });
+      
+      console.log('✅ FirebaseService: Firma del representante eliminada');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al eliminar firma del representante:', error);
+      throw error;
+    }
+  }
+
+  // Método para eliminar firma del cliente
+  async eliminarFirmaCliente(contratoId: string): Promise<void> {
+    console.log('🗑️ FirebaseService: Eliminando firma del cliente...');
+    try {
+      await this.updateContrato(contratoId, {
+        firmaClienteBase64: null,
+        fechaFirmaCliente: null,
+        estadoContrato: 'Pendiente Firma Cliente',
+        fechaFirmaFinal: null,
+        contratoValido: false,
+        ambasFirmasCompletadas: false
+      });
+      
+      console.log('✅ FirebaseService: Firma del cliente eliminada');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al eliminar firma del cliente:', error);
+      throw error;
+    }
+  }
+
+  // Método para eliminar todas las firmas de un contrato
+  async eliminarTodasLasFirmas(contratoId: string): Promise<void> {
+    console.log('🗑️ FirebaseService: Eliminando todas las firmas...');
+    try {
+      await this.updateContrato(contratoId, {
+        firmaInternaBase64: null,
+        firmaRepresentanteBase64: null,
+        firmaClienteBase64: null,
+        representanteLegal: null,
+        fechaFirmaRepresentante: null,
+        fechaFirmaCliente: null,
+        fechaFirmaFinal: null,
+        estadoContrato: 'Pendiente de Firma',
+        contratoValido: false,
+        ambasFirmasCompletadas: false
+      });
+      
+      console.log('✅ FirebaseService: Todas las firmas eliminadas');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al eliminar todas las firmas:', error);
       throw error;
     }
   }

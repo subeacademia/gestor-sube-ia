@@ -1,5 +1,9 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NotificationService } from '../../../core/services/notification.service';
+import { FirebaseService } from '../../../core/services/firebase.service';
+
+declare var html2pdf: any;
 
 interface Contrato {
   id: string;
@@ -35,6 +39,12 @@ export class ContractCardComponent {
   @Output() editarContrato = new EventEmitter<{ contratoId: string }>();
 
   mostrarModal: boolean = false;
+  mostrarModalEnvio: boolean = false;
+
+  constructor(
+    private notificationService: NotificationService,
+    private firebaseService: FirebaseService
+  ) {}
 
   formatDate(fecha: any): string {
     if (!fecha) return 'Sin fecha';
@@ -101,10 +111,23 @@ export class ContractCardComponent {
     }
   }
 
-  // Método para drag & drop
+  // Verificar si el contrato está firmado
+  isContratoFirmado(): boolean {
+    const estado = this.contrato['estadoContrato']?.toLowerCase() || this.contrato.estado?.toLowerCase() || '';
+    return estado === 'firmado' || estado === 'finalizado' || estado === 'completamente firmado';
+  }
+
+  // Verificar si tiene firmas
+  tieneFirmas(): boolean {
+    return !!(this.contrato['firmaInternaBase64'] || 
+              this.contrato['firmaRepresentanteBase64'] || 
+              this.contrato['firmaClienteBase64'] ||
+              this.contrato['firmaRepresentanteBase64'] || 
+              this.contrato['firmaClienteBase64']);
+  }
+
   onDragStart(event: DragEvent) {
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
+    if (this.draggable && event.dataTransfer) {
       event.dataTransfer.setData('text/plain', this.contrato.id);
     }
   }
@@ -112,16 +135,9 @@ export class ContractCardComponent {
   onEstadoChange(event: Event) {
     const select = event.target as HTMLSelectElement;
     const nuevoEstado = select.value;
-    
-    if (nuevoEstado !== this.contrato.estado) {
-      this.estadoChanged.emit({
-        contratoId: this.contrato.id,
-        nuevoEstado: nuevoEstado
-      });
-    }
+    this.estadoChanged.emit({ contratoId: this.contrato.id, nuevoEstado });
   }
 
-  // Métodos para modal
   abrirModal() {
     this.mostrarModal = true;
   }
@@ -130,12 +146,20 @@ export class ContractCardComponent {
     this.mostrarModal = false;
   }
 
-  // Métodos de acciones
+  cerrarModalEnvio() {
+    this.mostrarModalEnvio = false;
+  }
+
+  confirmarEnvio() {
+    this.cerrarModalEnvio();
+    this.enviarCliente.emit({ contratoId: this.contrato.id });
+  }
+
   verPDF(event?: Event) {
     if (event) {
       event.stopPropagation();
     }
-    console.log('Generando PDF para contrato:', this.contrato.codigo || this.contrato.id);
+    this.descargarPDF();
   }
 
   enviarFirma(event?: Event) {
@@ -163,8 +187,160 @@ export class ContractCardComponent {
     if (event) {
       event.stopPropagation();
     }
-    if (confirm('¿Estás seguro de que quieres eliminar este contrato?')) {
+    if (confirm('¿Estás seguro de que deseas eliminar este contrato?')) {
       this.contratoDeleted.emit(this.contrato.id);
     }
   }
+
+  // Método para eliminar firma del representante
+  eliminarFirmaRepresentante(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (confirm('¿Estás seguro de que deseas eliminar la firma del representante? Esto permitirá firmar de nuevo.')) {
+      this.firebaseService.eliminarFirmaRepresentante(this.contrato.id)
+        .then(() => {
+          this.notificationService.showSuccess('Firma del representante eliminada exitosamente');
+          // Emitir evento para actualizar la lista
+          this.estadoChanged.emit({ contratoId: this.contrato.id, nuevoEstado: 'Pendiente de Firma' });
+        })
+        .catch((error) => {
+          console.error('Error al eliminar firma del representante:', error);
+          this.notificationService.showError('Error al eliminar la firma del representante');
+        });
+    }
+  }
+
+  // Método para eliminar firma del cliente
+  eliminarFirmaCliente(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (confirm('¿Estás seguro de que deseas eliminar la firma del cliente? Esto permitirá firmar de nuevo.')) {
+      this.firebaseService.eliminarFirmaCliente(this.contrato.id)
+        .then(() => {
+          this.notificationService.showSuccess('Firma del cliente eliminada exitosamente');
+          // Emitir evento para actualizar la lista
+          this.estadoChanged.emit({ contratoId: this.contrato.id, nuevoEstado: 'Pendiente Firma Cliente' });
+        })
+        .catch((error) => {
+          console.error('Error al eliminar firma del cliente:', error);
+          this.notificationService.showError('Error al eliminar la firma del cliente');
+        });
+    }
+  }
+
+  // Función para descargar PDF
+  async descargarPDF(): Promise<void> {
+    try {
+      console.log('📄 Iniciando descarga de PDF...');
+
+      // Verificar si el contrato tiene firmas
+      const tieneFirmas = this.contrato['firmaInternaBase64'] || 
+                         this.contrato['firmaRepresentanteBase64'] || 
+                         this.contrato['firmaClienteBase64'];
+      if (!tieneFirmas) {
+        this.notificationService.showError('Este contrato no tiene firmas. Solo se puede descargar contratos firmados.');
+        return;
+      }
+
+      // Cargar html2pdf si no está disponible
+      if (typeof html2pdf === 'undefined') {
+        await this.cargarHtml2Pdf();
+      }
+
+      // Importar el template dinámicamente
+      const templateModule = await import('../../../templates/contract-template.js');
+      const { renderContract } = templateModule as any;
+
+      // Preparar datos del contrato
+      const datosContrato = {
+        ...this.contrato,
+        tituloContrato: this.contrato.titulo,
+        codigoCotizacion: this.contrato.codigo,
+        estadoContrato: this.contrato.estado,
+        fechaCreacionContrato: this.contrato.fechaCreacionContrato,
+        cliente: {
+          nombre: this.contrato.nombreCliente,
+          email: this.contrato.emailCliente,
+          rut: this.contrato.rutCliente,
+          empresa: this.contrato.empresa
+        },
+        totalConDescuento: this.contrato.valorTotal,
+        total: this.contrato.valorTotal,
+        descuento: this.contrato['descuento'] || 0,
+        atendido: this.contrato['atendido'],
+        // Firmas
+        firmaRepresentanteBase64: this.contrato['firmaRepresentanteBase64'],
+        firmaClienteBase64: this.contrato['firmaClienteBase64'],
+        representanteLegal: this.contrato['representanteLegal'],
+        fechaFirmaRepresentante: this.contrato['fechaFirmaRepresentante'],
+        fechaFirmaCliente: this.contrato['fechaFirmaCliente']
+      };
+
+      // Generar HTML del contrato
+      const htmlContrato = renderContract(datosContrato);
+
+      // Crear elemento temporal
+      const elemento = document.createElement('div');
+      elemento.innerHTML = htmlContrato;
+      elemento.style.position = 'absolute';
+      elemento.style.left = '-9999px';
+      elemento.style.top = '-9999px';
+      elemento.style.width = '210mm'; // A4 width
+      elemento.style.padding = '20px';
+      elemento.style.backgroundColor = 'white';
+      document.body.appendChild(elemento);
+
+      // Configuración de html2pdf
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `contrato-firmado-${this.contrato.codigo || this.contrato.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        }
+      };
+
+      // Generar PDF
+      await html2pdf().set(opt).from(elemento).save();
+
+      // Limpiar elemento temporal
+      document.body.removeChild(elemento);
+
+      console.log('✅ PDF generado y descargado exitosamente');
+      this.notificationService.showSuccess('PDF del contrato firmado descargado exitosamente');
+
+    } catch (error: any) {
+      console.error('❌ Error al generar PDF:', error);
+      this.notificationService.showError('Error al generar el PDF: ' + error.message);
+    }
+  }
+
+  // Cargar html2pdf dinámicamente
+  async cargarHtml2Pdf(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = () => {
+        console.log('✅ html2pdf cargado dinámicamente');
+        resolve();
+      };
+      script.onerror = () => {
+        console.error('❌ Error al cargar html2pdf');
+        reject(new Error('No se pudo cargar html2pdf'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+
 }
