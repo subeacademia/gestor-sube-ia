@@ -85,19 +85,33 @@ export class EnviarFirmaComponent implements OnInit {
     // Llenar asunto del email
     this.asuntoEmail = `Firma de Contrato - ${this.contrato.codigoCotizacion || this.contrato.codigo || 'SUBE IA'}`;
 
-    // Llenar mensaje personalizado
-    const mensajePersonalizado = `Estimado ${this.contrato.cliente.nombre || this.contrato.nombreCliente || 'cliente'},
+    // Crear mensaje profesional y completo
+    const mensajePersonalizado = `Estimado/a ${this.contrato.cliente.nombre || this.contrato.nombreCliente || 'cliente'},
 
-Adjunto encontrará el link para firmar su contrato de manera digital y segura.
+Esperamos que se encuentre bien. Le informamos que su contrato está listo para ser firmado de manera digital y segura.
 
-Por favor, haga clic en el enlace de abajo para acceder al sistema de firma:
+**Información del Contrato:**
+- Código: ${this.contrato.codigoCotizacion || this.contrato.codigo || 'Sin código'}
+- Valor: ${this.formatCurrency(this.contrato.valorTotal || this.contrato.total || 0)}
+- Empresa: ${this.contrato.cliente.empresa || this.contrato.empresa || 'No especificada'}
 
-[LINK DE FIRMA]
+**Para proceder con la firma:**
+1. Haga clic en el siguiente enlace seguro
+2. Revise cuidadosamente los términos del contrato
+3. Complete su firma digital
+4. Recibirá una copia del contrato firmado por email
 
-Una vez completada la firma, recibirá una copia del contrato firmado en su email.
+**Enlace para firma:** [LINK DE FIRMA]
+
+Este enlace es único y seguro. Por favor, no lo comparta con terceros.
+
+Si tiene alguna pregunta o necesita asistencia, no dude en contactarnos.
 
 Saludos cordiales,
-Equipo SUBE IA`;
+Equipo SUBE IA
+
+---
+*Este es un email automático. Por favor, no responda a este mensaje.*`;
 
     this.mensajeEmail = mensajePersonalizado;
   }
@@ -468,6 +482,21 @@ Equipo SUBE IA`;
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  // Función para formatear moneda
+  formatCurrency(valor: number | string): string {
+    if (!valor) return '$0';
+    
+    const numValor = typeof valor === 'string' ? parseFloat(valor) : valor;
+    if (isNaN(numValor)) return '$0';
+    
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(numValor);
   }
 
   // Función para obtener la clase CSS del estado

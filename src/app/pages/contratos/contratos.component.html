@@ -447,7 +447,35 @@
             <span class="label">Empresa:</span>
             <span class="value">{{ contratoSeleccionado?.empresa }}</span>
           </div>
+          <div class="info-item">
+            <span class="label">Valor:</span>
+            <span class="value">{{ formatCurrency(contratoSeleccionado?.valorTotal || 0) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Email:</span>
+            <span class="value">{{ contratoSeleccionado?.emailCliente }}</span>
+          </div>
         </div>
+      </div>
+      
+      <div class="link-info" *ngIf="emailEnvio.linkFirma">
+        <h4>🔗 Link de Firma Generado</h4>
+        <div class="link-container">
+          <input 
+            type="text" 
+            [value]="emailEnvio.linkFirma" 
+            readonly 
+            class="link-input"
+            id="link-firma">
+          <button 
+            type="button" 
+            (click)="copiarLink()" 
+            class="btn btn-copy"
+            title="Copiar link">
+            📋
+          </button>
+        </div>
+        <p class="link-note">✅ Link seguro generado con token único</p>
       </div>
       
       <div class="form-group">

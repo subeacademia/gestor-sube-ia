@@ -1192,6 +1192,87 @@
     }
   }
   
+  .link-info {
+    margin: var(--spacing-xl) 0;
+    padding: var(--spacing-lg);
+    background: var(--color-bg-glass);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    h4 {
+      margin: 0 0 var(--spacing-md) 0;
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      
+      &::before {
+        margin-right: var(--spacing-sm);
+      }
+    }
+    
+    .link-container {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-sm);
+      
+      .link-input {
+        flex: 1;
+        padding: var(--spacing-md);
+        background: var(--color-bg-tertiary);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius-md);
+        color: var(--color-text-primary);
+        font-size: var(--text-sm);
+        font-family: var(--font-family-mono);
+        cursor: text;
+        user-select: all;
+        
+        &:focus {
+          outline: none;
+          border-color: var(--color-success);
+          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+      }
+      
+      .btn-copy {
+        padding: var(--spacing-md);
+        background: var(--color-success);
+        border: none;
+        border-radius: var(--border-radius-md);
+        color: white;
+        font-size: var(--text-lg);
+        cursor: pointer;
+        transition: var(--transition-normal);
+        min-width: 48px;
+        
+        &:hover {
+          background: #059669;
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
+        }
+        
+        &:active {
+          transform: translateY(0);
+        }
+      }
+    }
+    
+    .link-note {
+      margin: 0;
+      font-size: var(--text-sm);
+      color: var(--color-success);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      
+      &::before {
+        margin-right: var(--spacing-xs);
+      }
+    }
+  }
+  
   .envio-actions {
     margin-top: var(--spacing-xl);
     padding: var(--spacing-lg);

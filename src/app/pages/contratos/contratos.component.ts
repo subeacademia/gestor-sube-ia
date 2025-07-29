@@ -9,6 +9,7 @@ import { EmailService } from '../../core/services/email.service';
 import { Router } from '@angular/router';
 
 declare var html2pdf: any;
+declare var emailjs: any;
 
 interface Contrato {
   id: string;
@@ -351,11 +352,46 @@ export class ContratosComponent implements OnInit {
         return;
       }
       
+      // Generar token de firma
+      const tokenFirma = await this.firebaseService.generarTokenFirma(event.contratoId);
+      
+      // Generar link completo con token
+      const linkFirma = `${window.location.origin}/firmar-cliente/${event.contratoId}/${tokenFirma}`;
+      
+      // Crear mensaje profesional
+      const mensajeProfesional = `Estimado/a ${this.contratoSeleccionado.nombreCliente},
+
+Esperamos que se encuentre bien. Le informamos que su contrato está listo para ser firmado de manera digital y segura.
+
+**Información del Contrato:**
+- Código: ${this.contratoSeleccionado.codigo || this.contratoSeleccionado.id}
+- Valor: ${this.formatCurrency(this.contratoSeleccionado.valorTotal)}
+- Empresa: ${this.contratoSeleccionado.empresa || 'No especificada'}
+
+**Para proceder con la firma:**
+1. Haga clic en el siguiente enlace seguro
+2. Revise cuidadosamente los términos del contrato
+3. Complete su firma digital
+4. Recibirá una copia del contrato firmado por email
+
+**Enlace para firma:** ${linkFirma}
+
+Este enlace es único y seguro. Por favor, no lo comparta con terceros.
+
+Si tiene alguna pregunta o necesita asistencia, no dude en contactarnos.
+
+Saludos cordiales,
+Equipo SUBE IA
+
+---
+*Este es un email automático. Por favor, no responda a este mensaje.*`;
+      
       // Pre-llenar el formulario de envío
       this.emailEnvio = {
         para: this.contratoSeleccionado.emailCliente || '',
-        asunto: `Firma de contrato - ${this.contratoSeleccionado.codigo || this.contratoSeleccionado.id}`,
-        mensaje: `Estimado ${this.contratoSeleccionado.nombreCliente}, adjunto el enlace para la firma de su contrato. Saludos.`
+        asunto: `Firma de Contrato - ${this.contratoSeleccionado.codigo || this.contratoSeleccionado.id} - SUBE IA`,
+        mensaje: mensajeProfesional,
+        linkFirma: linkFirma
       };
       
       // Abrir el modal
@@ -363,7 +399,7 @@ export class ContratosComponent implements OnInit {
       
     } catch (error) {
       console.error('❌ Error al abrir modal de envío:', error);
-      this.notificationService.showError('Error al abrir el modal de envío');
+      this.notificationService.showError('Error al abrir el modal de envío: ' + error);
     }
   }
 
@@ -391,37 +427,185 @@ export class ContratosComponent implements OnInit {
 
       console.log('📧 Enviando email para firma...');
       
-      // Generar link de firma
-      const linkFirma = `${window.location.origin}/firmar-contrato-cliente/${this.contratoSeleccionado.id}`;
+      // Usar el link ya generado en onEnviarCliente
+      const linkFirma = this.emailEnvio.linkFirma;
       
-      // Enviar email
-      await this.emailService.enviarEmail({
-        para: this.emailEnvio.para,
-        asunto: this.emailEnvio.asunto,
-        mensaje: this.emailEnvio.mensaje + `\n\nEnlace para firma: ${linkFirma}`,
-        contratoId: this.contratoSeleccionado.id
-      });
+      if (!linkFirma) {
+        this.notificationService.showError('Error: No se generó el link de firma');
+        return;
+      }
+      
+      // Enviar email usando EmailJS directamente para mejor control
+      try {
+        // Verificar que EmailJS esté disponible
+        if (typeof emailjs === 'undefined') {
+          throw new Error('EmailJS no está disponible');
+        }
 
-      // Actualizar estado del contrato
-      await this.firebaseService.updateContrato(this.contratoSeleccionado.id, {
-        estado: 'Pendiente de Firma Cliente',
-        fechaEnvioCliente: new Date(),
-        emailEnviado: true
-      });
+        // Preparar parámetros del template
+        const templateParams = {
+          to_email: this.emailEnvio.para,
+          to_name: this.contratoSeleccionado.nombreCliente,
+          subject: this.emailEnvio.asunto,
+          message: this.emailEnvio.mensaje,
+          contract_code: this.contratoSeleccionado.codigo || this.contratoSeleccionado.id,
+          contract_title: this.contratoSeleccionado.titulo || 'Contrato',
+          company_name: this.contratoSeleccionado.empresa || 'Sin empresa',
+          signature_link: linkFirma
+        };
 
-      // Recategorizar contratos
-      this.categorizarContratosPorFirmas();
-      this.calcularEstadisticas();
-      
-      console.log('✅ Email enviado exitosamente');
-      this.notificationService.showSuccess('Email enviado exitosamente al cliente');
-      
-      // Cerrar modal
-      this.cerrarModalEnvio();
+        console.log('📋 Parámetros del email:', templateParams);
+
+        // Enviar email usando EmailJS
+        const response = await emailjs.send(
+          'service_d0m6iqn',
+          'template_im18rqj',
+          templateParams
+        );
+
+        console.log('✅ Email enviado exitosamente:', response);
+
+        // Registrar el envío en Firebase
+        await this.firebaseService.registrarEnvioEmail(
+          this.contratoSeleccionado.id,
+          this.emailEnvio.para,
+          this.emailEnvio.asunto,
+          this.emailEnvio.mensaje,
+          linkFirma
+        );
+
+        // Actualizar estado del contrato
+        await this.firebaseService.updateContrato(this.contratoSeleccionado.id, {
+          estado: 'Pendiente Firma Cliente',
+          fechaEnvioCliente: new Date(),
+          emailEnviado: true,
+          linkFirmaActivo: true
+        });
+
+        // Recategorizar contratos
+        this.categorizarContratosPorFirmas();
+        this.calcularEstadisticas();
+        
+        console.log('✅ Email enviado exitosamente');
+        this.notificationService.showSuccess('Email enviado exitosamente al cliente');
+        
+        // Cerrar modal
+        this.cerrarModalEnvio();
+        
+      } catch (emailError: any) {
+        console.error('❌ Error al enviar email con EmailJS:', emailError);
+        
+        // Ofrecer método de fallback
+        const usarFallback = confirm(`
+          EmailJS no está funcionando. 
+          
+          ¿Deseas usar el método de envío manual?
+          
+          Esto abrirá tu cliente de email con el mensaje pre-rellenado.
+        `);
+        
+        if (usarFallback) {
+          await this.enviarEmailFallback();
+        } else {
+          throw emailError;
+        }
+      }
       
     } catch (error) {
       console.error('❌ Error al enviar email:', error);
       this.notificationService.showError('Error al enviar el email: ' + error);
+    }
+  }
+
+  async enviarEmailFallback(): Promise<void> {
+    try {
+      console.log('📧 Usando método de fallback para envío de email...');
+
+      // Crear un enlace mailto como fallback
+      const mailtoLink = `mailto:${this.emailEnvio.para}?subject=${encodeURIComponent(this.emailEnvio.asunto)}&body=${encodeURIComponent(this.emailEnvio.mensaje)}`;
+
+      // Mostrar instrucciones al usuario
+      const instrucciones = `
+        EmailJS no está funcionando. Para enviar el email manualmente:
+        
+        1. Se abrirá tu cliente de email predeterminado
+        2. El email estará pre-rellenado con:
+           - Para: ${this.emailEnvio.para}
+           - Asunto: ${this.emailEnvio.asunto}
+           - Mensaje: ${this.emailEnvio.mensaje}
+        
+        3. Solo necesitas hacer clic en "Enviar"
+        
+        ¿Deseas continuar?
+      `;
+
+      if (confirm(instrucciones)) {
+        // Abrir el cliente de email
+        window.open(mailtoLink, '_blank');
+
+        // Registrar el envío manual
+        await this.firebaseService.registrarEnvioEmail(
+          this.contratoSeleccionado!.id,
+          this.emailEnvio.para,
+          this.emailEnvio.asunto,
+          this.emailEnvio.mensaje + ' (Enviado manualmente)',
+          this.emailEnvio.linkFirma
+        );
+
+        // Actualizar estado del contrato
+        await this.firebaseService.updateContrato(this.contratoSeleccionado!.id, {
+          estado: 'Pendiente Firma Cliente',
+          fechaEnvioCliente: new Date(),
+          emailEnviado: true,
+          linkFirmaActivo: true
+        });
+
+        this.notificationService.showSuccess('Cliente de email abierto. Por favor, envía el email manualmente.');
+        this.cerrarModalEnvio();
+      }
+
+    } catch (error: any) {
+      console.error('❌ Error en método de fallback:', error);
+      this.notificationService.showError('Error en método de fallback: ' + error.message);
+    }
+  }
+
+  copiarLink(): void {
+    if (!this.emailEnvio.linkFirma) {
+      this.notificationService.showError('Error: No hay link generado para copiar');
+      return;
+    }
+
+    try {
+      // Usar la API moderna de clipboard
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(this.emailEnvio.linkFirma).then(() => {
+          this.notificationService.showSuccess('Link copiado al portapapeles');
+        });
+      } else {
+        // Fallback para navegadores más antiguos
+        const textArea = document.createElement('textarea');
+        textArea.value = this.emailEnvio.linkFirma;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+          document.execCommand('copy');
+          this.notificationService.showSuccess('Link copiado al portapapeles');
+        } catch (err) {
+          console.error('Error al copiar:', err);
+          this.notificationService.showError('Error al copiar el link');
+        }
+
+        document.body.removeChild(textArea);
+      }
+    } catch (error: any) {
+      console.error('❌ Error al copiar link:', error);
+      this.notificationService.showError('Error al copiar el link: ' + error.message);
     }
   }
 

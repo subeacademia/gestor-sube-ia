@@ -8,6 +8,8 @@ export const authGuard: CanActivateFn = (route, state) => {
   const router = inject(Router);
 
   console.log('🛡️ AuthGuard: Verificando acceso a:', state.url);
+  console.log('🛡️ AuthGuard: Ruta completa:', route.url);
+  console.log('🛡️ AuthGuard: Parámetros:', route.params);
 
   return authService.isLoading$.pipe(
     skipWhile(isLoading => {
@@ -18,12 +20,13 @@ export const authGuard: CanActivateFn = (route, state) => {
     map(() => {
       const user = authService.getCurrentUser();
       console.log('👤 AuthGuard: Usuario actual:', user ? user.email : 'No autenticado');
+      console.log('👤 AuthGuard: Usuario completo:', user);
       
       if (user) {
-        console.log('✅ AuthGuard: Acceso permitido');
+        console.log('✅ AuthGuard: Acceso permitido para:', state.url);
         return true;
       } else {
-        console.log('❌ AuthGuard: Acceso denegado, redirigiendo a login');
+        console.log('❌ AuthGuard: Acceso denegado, redirigiendo a login desde:', state.url);
         router.navigate(['/login']);
         return false;
       }

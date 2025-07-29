@@ -16,6 +16,7 @@ export class AuthService {
     
     onAuthStateChanged(this.auth, (user) => {
       console.log('👤 AuthService: Estado de autenticación cambiado:', user ? 'Usuario autenticado' : 'Usuario no autenticado');
+      console.log('👤 AuthService: Usuario completo:', user);
       this.currentUserSubject.next(user);
       this.isLoading$.next(false);
     });
@@ -26,6 +27,7 @@ export class AuthService {
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
       console.log('✅ AuthService: Login exitoso para usuario:', userCredential.user.email);
+      console.log('✅ AuthService: Usuario completo después del login:', userCredential.user);
       return userCredential.user;
     } catch (error) {
       console.error('❌ AuthService: Error en login:', error);
@@ -47,11 +49,15 @@ export class AuthService {
 
   // Método para obtener el usuario actual de forma síncrona
   getCurrentUser(): User | null {
-    return this.currentUserSubject.getValue();
+    const user = this.currentUserSubject.getValue();
+    console.log('👤 AuthService: getCurrentUser() llamado, usuario:', user ? user.email : 'null');
+    return user;
   }
 
   // Método para verificar si el usuario está autenticado
   isAuthenticated(): boolean {
-    return this.getCurrentUser() !== null;
+    const isAuth = this.getCurrentUser() !== null;
+    console.log('🔍 AuthService: isAuthenticated() llamado, resultado:', isAuth);
+    return isAuth;
   }
 } 

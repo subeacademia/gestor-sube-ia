@@ -3,10 +3,10 @@
     <h1>📊 Panel de Administración</h1>
     <div class="header-actions">
       <h2>SUBE IA TECH</h2>
-      <a routerLink="/dashboard" class="btn btn-info">📊 Dashboard</a>
-      <a routerLink="/cotizaciones" class="btn btn-warning">📋 Panel de Cotizaciones</a>
-      <a routerLink="/cotizaciones/crear" class="btn btn-primary">Crear Nueva Cotización</a>
-      <a routerLink="/contratos" class="btn btn-success">📋 Gestión de Contratos</a>
+      <button (click)="navegarADashboard()" class="btn btn-info">📊 Dashboard</button>
+      <button (click)="navegarACotizaciones()" class="btn btn-warning">📋 Panel de Cotizaciones</button>
+      <button (click)="navegarACrearCotizacion()" class="btn btn-primary">Crear Nueva Cotización</button>
+      <button (click)="navegarAContratos()" class="btn btn-success">📋 Gestión de Contratos</button>
       <button (click)="cerrarSesion()" class="btn btn-logout">Cerrar Sesión</button>
     </div>
   </div>
