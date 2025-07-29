@@ -1,387 +1,470 @@
+<!-- ===== DASHBOARD INTERACTIVO ===== -->
 <div class="dashboard-container">
-  <app-header (logoutEvent)="onLogout()"></app-header>
-
+  
+  <!-- Header del Dashboard -->
+  <app-header></app-header>
+  
+  <!-- Contenido Principal -->
   <main class="dashboard-main">
-    <div class="dashboard-content">
-      <!-- Título del Dashboard -->
-      <div class="dashboard-header">
-        <h1>📊 Panel de Control SUBE IA</h1>
-        <p>Visión general del negocio y métricas clave para la toma de decisiones</p>
-      </div>
-
-      <!-- Indicador de carga -->
-      <div *ngIf="cargando" class="loading-container">
-        <div class="loading-spinner"></div>
-        <p>Cargando datos del dashboard...</p>
-      </div>
-
-      <!-- Indicador de error -->
-      <div *ngIf="error" class="error-container">
-        <div class="error-icon">⚠️</div>
-        <h3>Error al cargar datos</h3>
-        <p>No se pudieron cargar los datos del dashboard. Inténtalo de nuevo.</p>
-        <button class="btn btn-primary" (click)="recargarDatos()">
-          🔄 Recargar Datos
-        </button>
-      </div>
-
-      <!-- Contenido principal cuando no está cargando -->
-      <div *ngIf="!cargando && !error" class="dashboard-content-main">
-        <!-- Tarjetas de KPIs -->
-        <section class="kpis-section">
-          <h2 class="section-title">📈 Indicadores Clave de Rendimiento</h2>
-          <div class="kpis-grid">
-            <div class="kpi-card">
-              <div class="kpi-icon">📋</div>
-              <div class="kpi-content">
-                <h3>Total Cotizaciones</h3>
-                <p class="kpi-value">{{ kpis.totalCotizaciones }}</p>
-                <span class="kpi-description">Cotizaciones generadas</span>
-              </div>
-            </div>
-            
-            <div class="kpi-card">
-              <div class="kpi-icon">💰</div>
-              <div class="kpi-content">
-                <h3>Valor Total</h3>
-                <p class="kpi-value">{{ formatearMoneda(kpis.valorTotalCotizaciones) }}</p>
-                <span class="kpi-description">Valor de todas las cotizaciones</span>
-              </div>
-            </div>
-            
-            <div class="kpi-card">
-              <div class="kpi-icon">✅</div>
-              <div class="kpi-content">
-                <h3>Contratos Cerrados</h3>
-                <p class="kpi-value">{{ kpis.totalContratosCerrados }}</p>
-                <span class="kpi-description">Contratos firmados</span>
-              </div>
-            </div>
-            
-            <div class="kpi-card">
-              <div class="kpi-icon">📊</div>
-              <div class="kpi-content">
-                <h3>Tasa de Conversión</h3>
-                <p class="kpi-value">{{ kpis.tasaConversion }}%</p>
-                <span class="kpi-description">Aceptadas → Firmadas</span>
-              </div>
-            </div>
-
-            <div class="kpi-card">
-              <div class="kpi-icon">🎯</div>
-              <div class="kpi-content">
-                <h3>Cotizaciones Aceptadas</h3>
-                <p class="kpi-value">{{ kpis.cotizacionesAceptadas }}</p>
-                <span class="kpi-description">Cotizaciones aprobadas</span>
-              </div>
-            </div>
-
-            <div class="kpi-card">
-              <div class="kpi-icon">⏳</div>
-              <div class="kpi-content">
-                <h3>Cotizaciones Pendientes</h3>
-                <p class="kpi-value">{{ kpis.cotizacionesPendientes }}</p>
-                <span class="kpi-description">En proceso de revisión</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- NUEVA SECCIÓN: Indicadores Estratégicos -->
-        <section class="strategic-indicators-section">
-          <h2 class="section-title">🎯 Indicadores Estratégicos del Negocio</h2>
-          
-          <div class="strategic-indicators-grid">
-            <!-- Análisis de Rentabilidad -->
-            <div class="strategic-card">
-              <div class="strategic-header">
-                <div class="strategic-icon">📊</div>
-                <h3 class="strategic-title">Análisis de Rentabilidad</h3>
-              </div>
-              <div class="strategic-content">
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Margen Promedio</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.margenPromedio }}%</div>
-                  <div class="strategic-item-description">Margen de utilidad promedio</div>
-                </div>
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Servicio Más Rentable</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.rentabilidadPorServicio || 'N/A' }}</div>
-                  <div class="strategic-item-description">Servicio con mayor valor</div>
-                </div>
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Costo de Adquisición</div>
-                  <div class="strategic-item-value">{{ formatearMoneda(indicadoresEstrategicos.costoAcquisicion) }}</div>
-                  <div class="strategic-item-description">Costo por cliente adquirido</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Eficiencia de Ventas -->
-            <div class="strategic-card">
-              <div class="strategic-header">
-                <div class="strategic-icon">🎯</div>
-                <h3 class="strategic-title">Eficiencia de Ventas</h3>
-              </div>
-              <div class="strategic-content">
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Tiempo Promedio Cierre</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.tiempoPromedioCierre }} días</div>
-                  <div class="strategic-item-description">Días para cerrar venta</div>
-                </div>
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Tasa de Rechazo</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.tasaRechazo }}%</div>
-                  <div class="strategic-item-description">Cotizaciones rechazadas</div>
-                </div>
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Mejor Vendedor</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.eficienciaVendedor || 'N/A' }}</div>
-                  <div class="strategic-item-description">Vendedor más eficiente</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tendencias de Crecimiento -->
-            <div class="strategic-card">
-              <div class="strategic-header">
-                <div class="strategic-icon">📈</div>
-                <h3 class="strategic-title">Tendencias de Crecimiento</h3>
-              </div>
-              <div class="strategic-content">
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Crecimiento Mensual</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.crecimientoMensual }}%</div>
-                  <div class="strategic-item-description">vs mes anterior</div>
-                </div>
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Proyección Trimestral</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.proyeccionTrimestral }}</div>
-                  <div class="strategic-item-description">Cotizaciones esperadas</div>
-                </div>
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Estacionalidad</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.estacionalidad || 'N/A' }}</div>
-                  <div class="strategic-item-description">Mes con mayor actividad</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Velocidad Operacional -->
-            <div class="strategic-card">
-              <div class="strategic-header">
-                <div class="strategic-icon">⚡</div>
-                <h3 class="strategic-title">Velocidad Operacional</h3>
-              </div>
-              <div class="strategic-content">
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Tiempo de Respuesta</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.tiempoRespuesta }} hrs</div>
-                  <div class="strategic-item-description">Respuesta promedio</div>
-                </div>
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Velocidad Procesamiento</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.velocidadProcesamiento }}/día</div>
-                  <div class="strategic-item-description">Cotizaciones por día</div>
-                </div>
-                <div class="strategic-item">
-                  <div class="strategic-item-label">Satisfacción Cliente</div>
-                  <div class="strategic-item-value">{{ indicadoresEstrategicos.satisfaccionCliente }}%</div>
-                  <div class="strategic-item-description">Tasa de satisfacción</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Gráficos -->
-        <section class="charts-section">
-          <h2 class="section-title">📊 Análisis de Datos</h2>
-          
-          <div class="charts-grid">
-            <!-- Gráfico de Tendencia de Ventas -->
-            <div class="chart-container">
-              <div class="chart-header">
-                <h3>📈 Tendencia de Ventas</h3>
-                <p>Evolución mensual de cotizaciones aceptadas vs contratos firmados</p>
-              </div>
-              <div class="chart-wrapper">
-                <canvas #tendenciasVentasChart></canvas>
-              </div>
-            </div>
-
-            <!-- Gráfico de Embudo de Ventas -->
-            <div class="chart-container">
-              <div class="chart-header">
-                <h3>🎯 Embudo de Ventas</h3>
-                <p>Distribución de cotizaciones por estado en el proceso de venta</p>
-              </div>
-              <div class="chart-wrapper">
-                <canvas #embudoVentasChart></canvas>
-              </div>
-            </div>
-
-            <!-- Gráfico de Rendimiento por Usuario -->
-            <div class="chart-container chart-full-width">
-              <div class="chart-header">
-                <h3>👥 Rendimiento por Usuario</h3>
-                <p>Cantidad de cotizaciones aceptadas por cada usuario</p>
-              </div>
-              <div class="chart-wrapper">
-                <canvas #rendimientoUsuariosChart></canvas>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Métricas Adicionales -->
-        <section class="metrics-section">
-          <h2 class="section-title">📋 Métricas Detalladas del Negocio</h2>
-          
-          <div class="metrics-grid">
-            <!-- Métricas de Servicios -->
-            <div class="metric-card">
-              <div class="metric-header">
-                <div class="metric-icon">🛠️</div>
-                <h3 class="metric-title">Análisis de Servicios</h3>
-              </div>
-              <div class="metric-content">
-                <div class="metric-item">
-                  <div class="metric-item-label">Servicios Más Vendidos</div>
-                  <div class="metric-item-value">{{ metricasAdicionales.servicioMasVendido || 'N/A' }}</div>
-                  <div class="metric-item-description">Servicio con más cotizaciones</div>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-item-label">Valor Promedio</div>
-                  <div class="metric-item-value">{{ formatearMoneda(metricasAdicionales.valorPromedio) }}</div>
-                  <div class="metric-item-description">Promedio por cotización</div>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-item-label">Tiempo Promedio</div>
-                  <div class="metric-item-value">{{ metricasAdicionales.tiempoPromedio || 'N/A' }}</div>
-                  <div class="metric-item-description">Días para cerrar</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Métricas de Clientes -->
-            <div class="metric-card">
-              <div class="metric-header">
-                <div class="metric-icon">👥</div>
-                <h3 class="metric-title">Análisis de Clientes</h3>
-              </div>
-              <div class="metric-content">
-                <div class="metric-item">
-                  <div class="metric-item-label">Clientes Activos</div>
-                  <div class="metric-item-value">{{ metricasAdicionales.clientesActivos }}</div>
-                  <div class="metric-item-description">Clientes con cotizaciones</div>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-item-label">Cliente Top</div>
-                  <div class="metric-item-value">{{ metricasAdicionales.clienteTop || 'N/A' }}</div>
-                  <div class="metric-item-description">Mayor valor generado</div>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-item-label">Retención</div>
-                  <div class="metric-item-value">{{ metricasAdicionales.tasaRetencion }}%</div>
-                  <div class="metric-item-description">Clientes recurrentes</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Métricas de Rendimiento -->
-            <div class="metric-card">
-              <div class="metric-header">
-                <div class="metric-icon">📈</div>
-                <h3 class="metric-title">Rendimiento Operacional</h3>
-              </div>
-              <div class="metric-content">
-                <div class="metric-item">
-                  <div class="metric-item-label">Eficiencia</div>
-                  <div class="metric-item-value">{{ metricasAdicionales.eficiencia }}%</div>
-                  <div class="metric-item-description">Cotizaciones exitosas</div>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-item-label">Velocidad</div>
-                  <div class="metric-item-value">{{ metricasAdicionales.velocidadPromedio || 'N/A' }}</div>
-                  <div class="metric-item-description">Días promedio</div>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-item-label">Crecimiento</div>
-                  <div class="metric-item-value">{{ metricasAdicionales.tasaCrecimiento }}%</div>
-                  <div class="metric-item-description">vs mes anterior</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Tarjetas de Navegación -->
-        <section class="navigation-section">
-          <h2 class="section-title">🚀 Acciones Rápidas</h2>
-          <div class="navigation-cards">
-            <!-- Gestión de Cotizaciones -->
-            <div class="nav-card" routerLink="/cotizaciones">
-              <div class="nav-card-icon">📊</div>
-              <div class="nav-card-content">
-                <h3>Gestión de Cotizaciones</h3>
-                <p>Administra cotizaciones, estadísticas y filtros avanzados</p>
-                <div class="nav-card-features">
-                  <span class="feature">📋 Cotizaciones</span>
-                  <span class="feature">📈 Estadísticas</span>
-                  <span class="feature">🔍 Filtros</span>
-                </div>
-              </div>
-              <div class="nav-card-arrow">→</div>
-            </div>
-
-            <!-- Gestión de Contratos -->
-            <div class="nav-card" routerLink="/contratos">
-              <div class="nav-card-icon">📄</div>
-              <div class="nav-card-content">
-                <h3>Gestión de Contratos</h3>
-                <p>Administra contratos, firmas digitales y seguimiento</p>
-                <div class="nav-card-features">
-                  <span class="feature">📝 Contratos</span>
-                  <span class="feature">✍️ Firmas</span>
-                  <span class="feature">📊 Seguimiento</span>
-                </div>
-              </div>
-              <div class="nav-card-arrow">→</div>
-            </div>
-
-            <!-- Crear Cotización -->
-            <div class="nav-card" routerLink="/cotizaciones/crear">
-              <div class="nav-card-icon">➕</div>
-              <div class="nav-card-content">
-                <h3>Crear Nueva Cotización</h3>
-                <p>Genera cotizaciones personalizadas para clientes</p>
-                <div class="nav-card-features">
-                  <span class="feature">🎯 Personalizada</span>
-                  <span class="feature">💰 Precios</span>
-                  <span class="feature">📧 Envío</span>
-                </div>
-              </div>
-              <div class="nav-card-arrow">→</div>
-            </div>
-
-            <!-- Configuración -->
-            <div class="nav-card">
-              <div class="nav-card-icon">⚙️</div>
-              <div class="nav-card-content">
-                <h3>Configuración</h3>
-                <p>Configura el sistema y gestiona usuarios</p>
-                <div class="nav-card-features">
-                  <span class="feature">👥 Usuarios</span>
-                  <span class="feature">🔧 Sistema</span>
-                  <span class="feature">📊 Reportes</span>
-                </div>
-              </div>
-              <div class="nav-card-arrow">→</div>
-            </div>
-          </div>
-        </section>
-      </div>
+    
+    <!-- Título del Dashboard -->
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">
+        <span class="title-icon">📊</span>
+        Dashboard de Inteligencia de Negocio
+      </h1>
+      <p class="dashboard-subtitle">
+        Métricas clave y análisis de rendimiento en tiempo real
+      </p>
     </div>
+    
+    <!-- Tarjetas de KPIs -->
+    <section class="kpis-section">
+      <h2 class="section-title">Indicadores Clave de Rendimiento</h2>
+      
+      <div class="kpis-grid">
+        <!-- Total de Cotizaciones -->
+        <app-stat-card
+          title="Total Cotizaciones"
+          value="{{ totalCotizaciones }}"
+          icon="📋"
+          color="primary"
+          trend="up"
+          trendValue="+12%"
+          description="Cotizaciones generadas">
+        </app-stat-card>
+        
+        <!-- Valor Total de Cotizaciones -->
+        <app-stat-card
+          title="Valor Total"
+          value="{{ formatearMoneda(valorTotalCotizaciones) }}"
+          icon="💰"
+          color="success"
+          trend="up"
+          trendValue="+8%"
+          description="Valor acumulado de cotizaciones">
+        </app-stat-card>
+        
+        <!-- Contratos Cerrados -->
+        <app-stat-card
+          title="Contratos Firmados"
+          value="{{ totalContratosCerrados }}"
+          icon="✅"
+          color="info"
+          trend="up"
+          trendValue="+15%"
+          description="Contratos exitosamente firmados">
+        </app-stat-card>
+        
+        <!-- Tasa de Conversión -->
+        <app-stat-card
+          title="Tasa de Conversión"
+          value="{{ tasaConversion }}%"
+          icon="📈"
+          color="warning"
+          trend="up"
+          trendValue="+5%"
+          description="Cotizaciones que se convirtieron en contratos">
+        </app-stat-card>
+        
+        <!-- Cotizaciones Aceptadas -->
+        <app-stat-card
+          title="Cotizaciones Aceptadas"
+          value="{{ cotizacionesAceptadas }}"
+          icon="🎯"
+          color="success"
+          trend="up"
+          trendValue="+18%"
+          description="Cotizaciones aprobadas por clientes">
+        </app-stat-card>
+        
+        <!-- Cotizaciones Pendientes -->
+        <app-stat-card
+          title="Cotizaciones Pendientes"
+          value="{{ cotizacionesPendientes }}"
+          icon="⏳"
+          color="warning"
+          trend="down"
+          trendValue="-3%"
+          description="En proceso de revisión">
+        </app-stat-card>
+      </div>
+    </section>
+    
+    <!-- Indicadores Estratégicos -->
+    <section class="strategic-section">
+      <h2 class="section-title">Indicadores Estratégicos del Negocio</h2>
+      
+      <div class="strategic-grid">
+        <!-- Análisis de Rentabilidad -->
+        <div class="strategic-card">
+          <div class="strategic-header">
+            <div class="strategic-icon">📊</div>
+            <h3 class="strategic-title">Análisis de Rentabilidad</h3>
+          </div>
+          <div class="strategic-content">
+            <div class="strategic-item">
+              <div class="strategic-item-label">Margen Promedio</div>
+              <div class="strategic-item-value">{{ margenPromedio }}%</div>
+              <div class="strategic-item-description">Margen de utilidad promedio</div>
+            </div>
+            <div class="strategic-item">
+              <div class="strategic-item-label">Servicio Más Rentable</div>
+              <div class="strategic-item-value">{{ servicioMasRentable || 'N/A' }}</div>
+              <div class="strategic-item-description">Servicio con mayor valor</div>
+            </div>
+            <div class="strategic-item">
+              <div class="strategic-item-label">Costo de Adquisición</div>
+              <div class="strategic-item-value">{{ formatearMoneda(costoAcquisicion) }}</div>
+              <div class="strategic-item-description">Costo por cliente adquirido</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Eficiencia de Ventas -->
+        <div class="strategic-card">
+          <div class="strategic-header">
+            <div class="strategic-icon">🎯</div>
+            <h3 class="strategic-title">Eficiencia de Ventas</h3>
+          </div>
+          <div class="strategic-content">
+            <div class="strategic-item">
+              <div class="strategic-item-label">Tiempo Promedio Cierre</div>
+              <div class="strategic-item-value">{{ tiempoPromedioCierre }} días</div>
+              <div class="strategic-item-description">Días para cerrar venta</div>
+            </div>
+            <div class="strategic-item">
+              <div class="strategic-item-label">Tasa de Rechazo</div>
+              <div class="strategic-item-value">{{ tasaRechazo }}%</div>
+              <div class="strategic-item-description">Cotizaciones rechazadas</div>
+            </div>
+            <div class="strategic-item">
+              <div class="strategic-item-label">Mejor Vendedor</div>
+              <div class="strategic-item-value">{{ mejorVendedor || 'N/A' }}</div>
+              <div class="strategic-item-description">Vendedor más eficiente</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tendencias de Crecimiento -->
+        <div class="strategic-card">
+          <div class="strategic-header">
+            <div class="strategic-icon">📈</div>
+            <h3 class="strategic-title">Tendencias de Crecimiento</h3>
+          </div>
+          <div class="strategic-content">
+            <div class="strategic-item">
+              <div class="strategic-item-label">Crecimiento Mensual</div>
+              <div class="strategic-item-value">{{ crecimientoMensual }}%</div>
+              <div class="strategic-item-description">vs mes anterior</div>
+            </div>
+            <div class="strategic-item">
+              <div class="strategic-item-label">Proyección Trimestral</div>
+              <div class="strategic-item-value">{{ proyeccionTrimestral }}</div>
+              <div class="strategic-item-description">Cotizaciones esperadas</div>
+            </div>
+            <div class="strategic-item">
+              <div class="strategic-item-label">Estacionalidad</div>
+              <div class="strategic-item-value">{{ estacionalidad || 'N/A' }}</div>
+              <div class="strategic-item-description">Mes con mayor actividad</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Velocidad Operacional -->
+        <div class="strategic-card">
+          <div class="strategic-header">
+            <div class="strategic-icon">⚡</div>
+            <h3 class="strategic-title">Velocidad Operacional</h3>
+          </div>
+          <div class="strategic-content">
+            <div class="strategic-item">
+              <div class="strategic-item-label">Tiempo de Respuesta</div>
+              <div class="strategic-item-value">{{ tiempoRespuesta }} hrs</div>
+              <div class="strategic-item-description">Respuesta promedio</div>
+            </div>
+            <div class="strategic-item">
+              <div class="strategic-item-label">Velocidad Procesamiento</div>
+              <div class="strategic-item-value">{{ velocidadProcesamiento }}/día</div>
+              <div class="strategic-item-description">Cotizaciones por día</div>
+            </div>
+            <div class="strategic-item">
+              <div class="strategic-item-label">Satisfacción Cliente</div>
+              <div class="strategic-item-value">{{ satisfaccionCliente }}%</div>
+              <div class="strategic-item-description">Tasa de satisfacción</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Gráficos de Análisis -->
+    <section class="charts-section">
+      <h2 class="section-title">Análisis de Rendimiento</h2>
+      
+      <div class="charts-grid">
+        
+        <!-- Gráfico de Tendencia de Ventas -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Tendencia de Ventas</h3>
+            <p class="chart-description">Evolución de cotizaciones y contratos en los últimos 6 meses</p>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="tendenciasVentasChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- Gráfico de Rendimiento por Usuario -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Rendimiento por Usuario</h3>
+            <p class="chart-description">Cotizaciones aceptadas por atendedor</p>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="rendimientoUsuariosChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- Gráfico de Embudo de Ventas -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3 class="chart-title">Embudo de Ventas</h3>
+            <p class="chart-description">Distribución de cotizaciones por estado</p>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="embudoVentasChart"></canvas>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+    
+    <!-- Métricas Detalladas -->
+    <section class="metrics-section">
+      <h2 class="section-title">Métricas Detalladas del Negocio</h2>
+      
+      <div class="metrics-grid">
+        <!-- Métricas de Servicios -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-icon">🛠️</div>
+            <h3 class="metric-title">Análisis de Servicios</h3>
+          </div>
+          <div class="metric-content">
+            <div class="metric-item">
+              <div class="metric-item-label">Servicios Más Vendidos</div>
+              <div class="metric-item-value">{{ servicioMasVendido || 'N/A' }}</div>
+              <div class="metric-item-description">Servicio con más cotizaciones</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-item-label">Valor Promedio</div>
+              <div class="metric-item-value">{{ formatearMoneda(valorPromedio) }}</div>
+              <div class="metric-item-description">Promedio por cotización</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-item-label">Tiempo Promedio</div>
+              <div class="metric-item-value">{{ tiempoPromedio || 'N/A' }}</div>
+              <div class="metric-item-description">Días para cerrar</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Métricas de Clientes -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-icon">👥</div>
+            <h3 class="metric-title">Análisis de Clientes</h3>
+          </div>
+          <div class="metric-content">
+            <div class="metric-item">
+              <div class="metric-item-label">Clientes Activos</div>
+              <div class="metric-item-value">{{ clientesActivos }}</div>
+              <div class="metric-item-description">Clientes con cotizaciones</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-item-label">Cliente Top</div>
+              <div class="metric-item-value">{{ clienteTop || 'N/A' }}</div>
+              <div class="metric-item-description">Mayor valor generado</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-item-label">Retención</div>
+              <div class="metric-item-value">{{ tasaRetencion }}%</div>
+              <div class="metric-item-description">Clientes recurrentes</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Métricas de Rendimiento -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-icon">📈</div>
+            <h3 class="metric-title">Rendimiento Operacional</h3>
+          </div>
+          <div class="metric-content">
+            <div class="metric-item">
+              <div class="metric-item-label">Eficiencia</div>
+              <div class="metric-item-value">{{ eficiencia }}%</div>
+              <div class="metric-item-description">Cotizaciones exitosas</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-item-label">Velocidad</div>
+              <div class="metric-item-value">{{ velocidadPromedio || 'N/A' }}</div>
+              <div class="metric-item-description">Días promedio</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-item-label">Crecimiento</div>
+              <div class="metric-item-value">{{ tasaCrecimiento }}%</div>
+              <div class="metric-item-description">vs mes anterior</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Resumen de Actividad -->
+    <section class="activity-section">
+      <h2 class="section-title">Resumen de Actividad</h2>
+      
+      <div class="activity-grid">
+        
+        <!-- Actividad Reciente -->
+        <div class="activity-card">
+          <div class="activity-header">
+            <h3 class="activity-title">
+              <span class="activity-icon">🕒</span>
+              Actividad Reciente
+            </h3>
+          </div>
+          <div class="activity-content">
+            <div class="activity-item">
+              <div class="activity-dot success"></div>
+              <div class="activity-info">
+                <p class="activity-text">Nueva cotización creada</p>
+                <span class="activity-time">Hace 2 minutos</span>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot info"></div>
+              <div class="activity-info">
+                <p class="activity-text">Contrato firmado exitosamente</p>
+                <span class="activity-time">Hace 15 minutos</span>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot warning"></div>
+              <div class="activity-info">
+                <p class="activity-text">Cotización enviada al cliente</p>
+                <span class="activity-time">Hace 1 hora</span>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot primary"></div>
+              <div class="activity-info">
+                <p class="activity-text">Nuevo usuario registrado</p>
+                <span class="activity-time">Hace 2 horas</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Métricas Rápidas -->
+        <div class="metrics-card">
+          <div class="metrics-header">
+            <h3 class="metrics-title">
+              <span class="metrics-icon">⚡</span>
+              Métricas Rápidas
+            </h3>
+          </div>
+          <div class="metrics-content">
+            <div class="metric-item">
+              <div class="metric-label">Promedio de Respuesta</div>
+              <div class="metric-value">2.3 días</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-label">Tiempo Promedio de Firma</div>
+              <div class="metric-value">1.8 días</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-label">Satisfacción del Cliente</div>
+              <div class="metric-value">4.8/5.0</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-label">Eficiencia del Proceso</div>
+              <div class="metric-value">87%</div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+    
+    <!-- Acciones Rápidas -->
+    <section class="navigation-section">
+      <h2 class="section-title">Acciones Rápidas</h2>
+      <div class="navigation-cards">
+        <!-- Gestión de Cotizaciones -->
+        <div class="nav-card" routerLink="/cotizaciones">
+          <div class="nav-card-icon">📊</div>
+          <div class="nav-card-content">
+            <h3>Gestión de Cotizaciones</h3>
+            <p>Administra cotizaciones, estadísticas y filtros avanzados</p>
+            <div class="nav-card-features">
+              <span class="feature">📋 Cotizaciones</span>
+              <span class="feature">📈 Estadísticas</span>
+              <span class="feature">🔍 Filtros</span>
+            </div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+
+        <!-- Gestión de Contratos -->
+        <div class="nav-card" routerLink="/contratos">
+          <div class="nav-card-icon">📄</div>
+          <div class="nav-card-content">
+            <h3>Gestión de Contratos</h3>
+            <p>Administra contratos, firmas digitales y seguimiento</p>
+            <div class="nav-card-features">
+              <span class="feature">📝 Contratos</span>
+              <span class="feature">✍️ Firmas</span>
+              <span class="feature">📊 Seguimiento</span>
+            </div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+
+        <!-- Crear Cotización -->
+        <div class="nav-card" routerLink="/cotizaciones/crear">
+          <div class="nav-card-icon">➕</div>
+          <div class="nav-card-content">
+            <h3>Crear Nueva Cotización</h3>
+            <p>Genera cotizaciones personalizadas para clientes</p>
+            <div class="nav-card-features">
+              <span class="feature">🎯 Personalizada</span>
+              <span class="feature">💰 Precios</span>
+              <span class="feature">📧 Envío</span>
+            </div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+
+        <!-- Configuración -->
+        <div class="nav-card">
+          <div class="nav-card-icon">⚙️</div>
+          <div class="nav-card-content">
+            <h3>Configuración</h3>
+            <p>Configura el sistema y gestiona usuarios</p>
+            <div class="nav-card-features">
+              <span class="feature">👥 Usuarios</span>
+              <span class="feature">🔧 Sistema</span>
+              <span class="feature">📊 Reportes</span>
+            </div>
+          </div>
+          <div class="nav-card-arrow">→</div>
+        </div>
+      </div>
+    </section>
+    
   </main>
+  
 </div>

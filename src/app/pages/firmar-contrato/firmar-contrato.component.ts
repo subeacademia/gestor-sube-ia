@@ -103,20 +103,7 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
     if (this.contrato.firmaRepresentanteBase64) {
       console.log('✅ Firma del representante encontrada');
       this.firmaRepresentanteGuardada = true;
-      
-      // Mostrar firma existente en el canvas
-      if (this.signaturePadRepresentante) {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = this.firmaRepresentanteCanvas.nativeElement;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            this.signaturePadRepresentante.fromDataURL(this.contrato.firmaRepresentanteBase64);
-          }
-        };
-        img.src = this.contrato.firmaRepresentanteBase64;
-      }
+      this.representanteSeleccionado = this.contrato.representanteLegal || '';
     } else {
       console.log('❌ Firma del representante no encontrada');
       this.firmaRepresentanteGuardada = false;
@@ -126,20 +113,6 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
     if (this.contrato.firmaClienteBase64) {
       console.log('✅ Firma del cliente encontrada');
       this.firmaClienteGuardada = true;
-      
-      // Mostrar firma existente en el canvas
-      if (this.signaturePadCliente) {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = this.firmaClienteCanvas.nativeElement;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            this.signaturePadCliente.fromDataURL(this.contrato.firmaClienteBase64);
-          }
-        };
-        img.src = this.contrato.firmaClienteBase64;
-      }
     } else {
       console.log('❌ Firma del cliente no encontrada');
       this.firmaClienteGuardada = false;
@@ -148,15 +121,16 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
 
   inicializarSignaturePads(): void {
     try {
-      // Verificar que SignaturePad esté disponible
+      // Cargar SignaturePad dinámicamente si no está disponible
       if (typeof SignaturePad === 'undefined') {
-        throw new Error('SignaturePad no está disponible');
+        this.cargarSignaturePad();
+        return;
       }
 
       console.log('🎨 Inicializando SignaturePads...');
 
       // Inicializar SignaturePad para representante
-      if (this.firmaRepresentanteCanvas) {
+      if (this.firmaRepresentanteCanvas && !this.firmaRepresentanteGuardada) {
         this.signaturePadRepresentante = new SignaturePad(this.firmaRepresentanteCanvas.nativeElement, {
           backgroundColor: 'rgb(250, 250, 250)',
           penColor: 'rgb(0, 0, 0)',
@@ -166,7 +140,7 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
       }
 
       // Inicializar SignaturePad para cliente
-      if (this.firmaClienteCanvas) {
+      if (this.firmaClienteCanvas && !this.firmaClienteGuardada) {
         this.signaturePadCliente = new SignaturePad(this.firmaClienteCanvas.nativeElement, {
           backgroundColor: 'rgb(250, 250, 250)',
           penColor: 'rgb(0, 0, 0)',
@@ -175,13 +149,57 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
         console.log('✅ SignaturePad cliente inicializado');
       }
 
-      // Verificar firmas existentes después de inicializar
-      this.verificarFirmasExistentes();
+      // Mostrar firmas existentes si las hay
+      this.mostrarFirmasExistentes();
 
     } catch (error: any) {
       console.error('❌ Error al inicializar SignaturePads:', error);
       this.error = true;
       this.errorMessage = 'Error al inicializar los pads de firma: ' + error.message;
+    }
+  }
+
+  cargarSignaturePad(): void {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js';
+    script.onload = () => {
+      console.log('✅ SignaturePad cargado dinámicamente');
+      setTimeout(() => {
+        this.inicializarSignaturePads();
+      }, 100);
+    };
+    script.onerror = () => {
+      console.error('❌ Error al cargar SignaturePad');
+      this.mostrarNotificacion('Error al cargar SignaturePad. La funcionalidad de firma no estará disponible.', 'error');
+    };
+    document.head.appendChild(script);
+  }
+
+  mostrarFirmasExistentes(): void {
+    // Mostrar firma del representante si existe
+    if (this.contrato.firmaRepresentanteBase64 && this.firmaRepresentanteCanvas) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = this.firmaRepresentanteCanvas.nativeElement;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        }
+      };
+      img.src = this.contrato.firmaRepresentanteBase64;
+    }
+
+    // Mostrar firma del cliente si existe
+    if (this.contrato.firmaClienteBase64 && this.firmaClienteCanvas) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = this.firmaClienteCanvas.nativeElement;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        }
+      };
+      img.src = this.contrato.firmaClienteBase64;
     }
   }
 
@@ -223,12 +241,11 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
       const firmaBase64 = this.signaturePadRepresentante.toDataURL('image/png');
 
       // Actualizar el contrato en Firestore
-      await this.firebaseService.updateContrato(this.contrato.id, {
-        firmaRepresentanteBase64: firmaBase64,
-        representanteLegal: this.representanteSeleccionado,
-        fechaFirmaRepresentante: new Date(),
-        estado: 'Pendiente de Firma Cliente'
-      });
+      await this.firebaseService.actualizarFirmaRepresentante(
+        this.contrato.id, 
+        firmaBase64, 
+        this.representanteSeleccionado
+      );
 
       // Actualizar estado local
       this.firmaRepresentanteGuardada = true;
@@ -281,10 +298,15 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
       const firmaBase64 = this.signaturePadCliente.toDataURL('image/png');
 
       // Actualizar el contrato en Firestore
+      await this.firebaseService.actualizarFirmaCliente(this.contrato.id, firmaBase64);
+
+      // Actualizar estado del contrato
       await this.firebaseService.updateContrato(this.contrato.id, {
-        firmaClienteBase64: firmaBase64,
+        estado: 'Completamente Firmado',
         fechaFirmaCliente: new Date(),
-        estado: 'Completamente Firmado'
+        fechaFirmaFinal: new Date(),
+        contratoValido: true,
+        ambasFirmasCompletadas: true
       });
 
       // Actualizar estado local
@@ -329,10 +351,7 @@ export class FirmarContratoComponent implements OnInit, AfterViewInit {
       console.log('✅ Finalizando contrato...');
 
       // Actualizar el contrato en Firestore
-      await this.firebaseService.updateContrato(this.contrato.id, {
-        estado: 'Finalizado',
-        fechaFinalizacion: new Date()
-      });
+      await this.firebaseService.finalizarContrato(this.contrato.id);
 
       // Actualizar estado local
       this.contrato.estado = 'Finalizado';

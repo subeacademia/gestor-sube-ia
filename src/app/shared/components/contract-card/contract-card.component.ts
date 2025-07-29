@@ -31,6 +31,8 @@ export class ContractCardComponent {
   @Output() contratoDeleted = new EventEmitter<string>();
   @Output() firmaRepresentante = new EventEmitter<{ contratoId: string }>();
   @Output() enviarCliente = new EventEmitter<{ contratoId: string }>();
+  @Output() verDetalles = new EventEmitter<{ contratoId: string }>();
+  @Output() editarContrato = new EventEmitter<{ contratoId: string }>();
 
   mostrarModal: boolean = false;
 
@@ -150,11 +152,11 @@ export class ContractCardComponent {
     this.firmaRepresentante.emit({ contratoId: this.contrato.id });
   }
 
-  editarContrato(event?: Event) {
+  editarContratoCard(event?: Event) {
     if (event) {
       event.stopPropagation();
     }
-    console.log('Editando contrato:', this.contrato.id);
+    this.editarContrato.emit({ contratoId: this.contrato.id });
   }
 
   eliminarContrato(event?: Event) {

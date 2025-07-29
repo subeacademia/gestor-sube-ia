@@ -107,7 +107,8 @@
               (estadoChanged)="onEstadoChanged($event)"
               (contratoDeleted)="onContratoDeleted($event)"
               (firmaRepresentante)="onFirmaRepresentante($event)"
-              (enviarCliente)="onEnviarCliente($event)">
+              (enviarCliente)="onEnviarCliente($event)"
+              (editarContrato)="editarContrato(contrato)">
             </app-contract-card>
             <div class="empty-state" *ngIf="getContratosPorEstado('Pendiente de Firma').length === 0">
               <div class="empty-icon">⏳</div>
@@ -137,7 +138,8 @@
               (estadoChanged)="onEstadoChanged($event)"
               (contratoDeleted)="onContratoDeleted($event)"
               (firmaRepresentante)="onFirmaRepresentante($event)"
-              (enviarCliente)="onEnviarCliente($event)">
+              (enviarCliente)="onEnviarCliente($event)"
+              (editarContrato)="editarContrato(contrato)">
             </app-contract-card>
             <div class="empty-state" *ngIf="getContratosPorEstado('Enviado').length === 0">
               <div class="empty-icon">📤</div>
@@ -167,7 +169,8 @@
               (estadoChanged)="onEstadoChanged($event)"
               (contratoDeleted)="onContratoDeleted($event)"
               (firmaRepresentante)="onFirmaRepresentante($event)"
-              (enviarCliente)="onEnviarCliente($event)">
+              (enviarCliente)="onEnviarCliente($event)"
+              (editarContrato)="editarContrato(contrato)">
             </app-contract-card>
             <div class="empty-state" *ngIf="getContratosPorEstado('Firmado').length === 0">
               <div class="empty-icon">✅</div>
@@ -197,7 +200,8 @@
               (estadoChanged)="onEstadoChanged($event)"
               (contratoDeleted)="onContratoDeleted($event)"
               (firmaRepresentante)="onFirmaRepresentante($event)"
-              (enviarCliente)="onEnviarCliente($event)">
+              (enviarCliente)="onEnviarCliente($event)"
+              (editarContrato)="editarContrato(contrato)">
             </app-contract-card>
             <div class="empty-state" *ngIf="getContratosPorEstado('Finalizado').length === 0">
               <div class="empty-icon">🎉</div>
@@ -227,7 +231,8 @@
               (estadoChanged)="onEstadoChanged($event)"
               (contratoDeleted)="onContratoDeleted($event)"
               (firmaRepresentante)="onFirmaRepresentante($event)"
-              (enviarCliente)="onEnviarCliente($event)">
+              (enviarCliente)="onEnviarCliente($event)"
+              (editarContrato)="editarContrato(contrato)">
             </app-contract-card>
             <div class="empty-state" *ngIf="getContratosPorEstado('Desconocido').length === 0">
               <div class="empty-icon">❓</div>
@@ -365,11 +370,11 @@
   </main>
 </div>
 
-<!-- Modal para crear contrato directo -->
+<!-- Modal para crear/editar contrato -->
 <div class="modal" [class]="{ 'modal-show': mostrarModal }" (click)="cerrarModal()">
   <div class="modal-content modal-contrato-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Crear Contrato Directo</h3>
+      <h3>{{ modoEdicion ? 'Editar Contrato' : 'Crear Contrato Directo' }}</h3>
       <span class="close" (click)="cerrarModal()">&times;</span>
     </div>
     <div class="modal-body">
@@ -428,7 +433,9 @@
     </div>
     <div class="modal-footer">
       <button (click)="cerrarModal()" class="btn btn-secondary">Cancelar</button>
-      <button (click)="guardarContratoDirecto()" class="btn btn-primary">Guardar Contrato</button>
+      <button (click)="guardarContratoDirecto()" class="btn btn-primary">
+        {{ modoEdicion ? 'Actualizar Contrato' : 'Guardar Contrato' }}
+      </button>
     </div>
   </div>
 </div>

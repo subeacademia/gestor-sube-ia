@@ -276,7 +276,14 @@ export class CotizacionesComponent implements OnInit {
       if (event.nuevoEstado === 'Aceptada') {
         const cotizacion = this.cotizaciones.find(c => c.id === event.cotizacionId);
         if (cotizacion) {
-          await this.firebaseService.createContratoFromCotizacion(cotizacion);
+          try {
+            await this.firebaseService.createContratoFromCotizacion(cotizacion);
+            this.mostrarNotificacion('Cotización enviada a Gestión de Contratos', 'success');
+            console.log('✅ CotizacionesComponent: Contrato creado automáticamente desde cotización aceptada');
+          } catch (error) {
+            console.error('❌ CotizacionesComponent: Error al crear contrato automáticamente:', error);
+            this.mostrarNotificacion('Error al crear contrato automáticamente', 'error');
+          }
         }
       }
       

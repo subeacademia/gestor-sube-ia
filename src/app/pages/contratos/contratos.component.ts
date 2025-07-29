@@ -48,6 +48,8 @@ export class ContratosComponent implements OnInit {
   
   // Modal
   mostrarModal: boolean = false;
+  modoEdicion: boolean = false;
+  contratoEditando: any = null;
   nuevoContrato: any = {
     titulo: '',
     fechaInicio: '',
@@ -403,10 +405,13 @@ export class ContratosComponent implements OnInit {
     this.onEnviarCliente({ contratoId: contrato.id });
   }
 
-  editarContrato(contrato: Contrato) {
-    // Implementar navegación a edición
-    console.log('Editando contrato:', contrato.id);
-  }
+  // Este método ya está implementado arriba
+  // editarContrato(contrato: Contrato) {
+  //   this.modoEdicion = true;
+  //   this.contratoEditando = contrato;
+  //   this.mostrarModal = true;
+  //   this.cargarDatosContrato(contrato);
+  // }
 
   eliminarContrato(contrato: Contrato) {
     if (confirm('¿Estás seguro de que quieres eliminar este contrato?')) {
@@ -415,12 +420,59 @@ export class ContratosComponent implements OnInit {
   }
 
   mostrarModalCrearContrato() {
+    this.modoEdicion = false;
+    this.contratoEditando = null;
     this.mostrarModal = true;
     this.resetearFormulario();
   }
 
+  editarContrato(contrato: Contrato) {
+    this.modoEdicion = true;
+    this.contratoEditando = contrato;
+    this.mostrarModal = true;
+    this.cargarDatosContrato(contrato);
+  }
+
+  cargarDatosContrato(contrato: Contrato) {
+    this.nuevoContrato = {
+      titulo: contrato.titulo || '',
+      fechaInicio: contrato['fechaInicio'] ? this.formatDateForInput(contrato['fechaInicio']) : '',
+      fechaFin: contrato['fechaFin'] ? this.formatDateForInput(contrato['fechaFin']) : '',
+      valorTotal: contrato.valorTotal || 0,
+      nombreCliente: contrato.nombreCliente || '',
+      emailCliente: contrato.emailCliente || '',
+      rutCliente: contrato.rutCliente || '',
+      empresa: contrato.empresa || '',
+      descripcionServicios: contrato['descripcionServicios'] || contrato['servicios'] || '',
+      terminosCondiciones: contrato['terminosCondiciones'] || ''
+    };
+  }
+
+  formatDateForInput(fecha: any): string {
+    if (!fecha) return '';
+    
+    try {
+      let date: Date;
+      if (fecha.toDate) {
+        date = fecha.toDate();
+      } else if (fecha instanceof Date) {
+        date = fecha;
+      } else if (typeof fecha === 'string') {
+        date = new Date(fecha);
+      } else {
+        return '';
+      }
+      
+      return date.toISOString().split('T')[0];
+    } catch (error) {
+      return '';
+    }
+  }
+
   cerrarModal() {
     this.mostrarModal = false;
+    this.modoEdicion = false;
+    this.contratoEditando = null;
     this.resetearFormulario();
   }
 
@@ -441,46 +493,66 @@ export class ContratosComponent implements OnInit {
 
   async guardarContratoDirecto() {
     try {
-      const contratoData = {
-        codigo: `CON-${Date.now()}`,
-        titulo: this.nuevoContrato.titulo,
-        fechaCreacionContrato: new Date(),
-        fechaInicio: this.nuevoContrato.fechaInicio ? new Date(this.nuevoContrato.fechaInicio) : new Date(),
-        fechaFin: this.nuevoContrato.fechaFin ? new Date(this.nuevoContrato.fechaFin) : null,
-        valorTotal: parseFloat(this.nuevoContrato.valorTotal) || 0,
-        nombreCliente: this.nuevoContrato.nombreCliente,
-        emailCliente: this.nuevoContrato.emailCliente,
-        rutCliente: this.nuevoContrato.rutCliente,
-        empresa: this.nuevoContrato.empresa,
-        servicios: this.nuevoContrato.descripcionServicios,
-        descripcionServicios: this.nuevoContrato.descripcionServicios,
-        terminosCondiciones: this.nuevoContrato.terminosCondiciones,
-        estado: 'Pendiente de Firma',
-        atendido: 'Sistema',
-        firmas: {
-          cliente: false,
-          representante: false
-        },
-        historialEstados: [
-          {
-            estado: 'Pendiente de Firma',
-            fecha: new Date(),
-            comentario: 'Contrato creado directamente'
-          }
-        ]
-      };
+      if (this.modoEdicion && this.contratoEditando) {
+        // Modo edición
+        const contratoData = {
+          titulo: this.nuevoContrato.titulo,
+          fechaInicio: this.nuevoContrato.fechaInicio ? new Date(this.nuevoContrato.fechaInicio) : new Date(),
+          fechaFin: this.nuevoContrato.fechaFin ? new Date(this.nuevoContrato.fechaFin) : null,
+          valorTotal: parseFloat(this.nuevoContrato.valorTotal) || 0,
+          nombreCliente: this.nuevoContrato.nombreCliente,
+          emailCliente: this.nuevoContrato.emailCliente,
+          rutCliente: this.nuevoContrato.rutCliente,
+          empresa: this.nuevoContrato.empresa,
+          servicios: this.nuevoContrato.descripcionServicios,
+          descripcionServicios: this.nuevoContrato.descripcionServicios,
+          terminosCondiciones: this.nuevoContrato.terminosCondiciones
+        };
 
-      // Usar el método createContratoFromCotizacion pero pasando los datos del contrato
-      await this.firebaseService.createContratoFromCotizacion(contratoData);
+        await this.firebaseService.updateContrato(this.contratoEditando.id, contratoData);
+        this.mostrarNotificacion('Contrato actualizado exitosamente', 'success');
+      } else {
+        // Modo creación
+        const contratoData = {
+          codigo: `CON-${Date.now()}`,
+          titulo: this.nuevoContrato.titulo,
+          fechaCreacionContrato: new Date(),
+          fechaInicio: this.nuevoContrato.fechaInicio ? new Date(this.nuevoContrato.fechaInicio) : new Date(),
+          fechaFin: this.nuevoContrato.fechaFin ? new Date(this.nuevoContrato.fechaFin) : null,
+          valorTotal: parseFloat(this.nuevoContrato.valorTotal) || 0,
+          nombreCliente: this.nuevoContrato.nombreCliente,
+          emailCliente: this.nuevoContrato.emailCliente,
+          rutCliente: this.nuevoContrato.rutCliente,
+          empresa: this.nuevoContrato.empresa,
+          servicios: this.nuevoContrato.descripcionServicios,
+          descripcionServicios: this.nuevoContrato.descripcionServicios,
+          terminosCondiciones: this.nuevoContrato.terminosCondiciones,
+          estado: 'Pendiente de Firma',
+          atendido: 'Sistema',
+          firmas: {
+            cliente: false,
+            representante: false
+          },
+          historialEstados: [
+            {
+              estado: 'Pendiente de Firma',
+              fecha: new Date(),
+              comentario: 'Contrato creado directamente'
+            }
+          ]
+        };
+
+        await this.firebaseService.createContrato(contratoData);
+        this.mostrarNotificacion('Contrato creado exitosamente', 'success');
+      }
       
       this.cerrarModal();
       await this.cargarContratos();
-      this.mostrarNotificacion('Contrato creado exitosamente', 'success');
       
-      console.log('Contrato creado exitosamente');
+      console.log(this.modoEdicion ? 'Contrato actualizado exitosamente' : 'Contrato creado exitosamente');
     } catch (error) {
-      console.error('Error al crear contrato:', error);
-      this.mostrarNotificacion('Error al crear contrato', 'error');
+      console.error('Error al guardar contrato:', error);
+      this.mostrarNotificacion('Error al guardar contrato', 'error');
     }
   }
 

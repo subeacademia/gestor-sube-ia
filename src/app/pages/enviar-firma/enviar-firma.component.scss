@@ -1,410 +1,526 @@
-// Variables CSS
-:root {
-  --color-bg-primary: #0f172a;
-  --color-bg-secondary: #1e293b;
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
-  --color-primary: #00d4ff;
-  --color-primary-dark: #0099cc;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #ff6b9d 100%);
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 12px;
-  --border-radius-xl: 16px;
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 48px;
-  --text-xs: 12px;
-  --text-sm: 14px;
-  --text-base: 16px;
-  --text-lg: 18px;
-  --text-xl: 20px;
-  --text-2xl: 24px;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --transition-normal: 0.3s ease;
+// Variables
+$primary-color: #00B8D9;
+$secondary-color: #FF4EFF;
+$success-color: #10B981;
+$warning-color: #F59E0B;
+$error-color: #EF4444;
+$text-color: #23263A;
+$light-gray: #F8FAFC;
+$border-color: #E2E8F0;
+$shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+// Mixins
+@mixin card-style {
+  background: white;
+  border-radius: 12px;
+  box-shadow: $shadow;
+  padding: 24px;
+  margin-bottom: 24px;
 }
 
-// Contenedor principal
-.enviar-firma-container {
+@mixin button-style($bg-color, $text-color: white) {
+  background: $bg-color;
+  color: $text-color;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+// Estilos principales
+.envio-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: var(--spacing-lg);
-  font-family: 'Inter', sans-serif;
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
+  padding: 24px;
+  background: $light-gray;
   min-height: 100vh;
 }
 
 // Loading
-.loading-enviar {
+.loading-envio {
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: var(--spacing-2xl);
-  color: var(--color-text-secondary);
-  font-size: var(--text-lg);
+  align-items: center;
+  min-height: 60vh;
+  
+  .loading-spinner {
+    text-align: center;
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid $border-color;
+      border-top: 4px solid $primary-color;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    p {
+      color: $text-color;
+      font-size: 18px;
+      font-weight: 500;
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 // Error
-.error-enviar {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid var(--color-danger);
-  color: var(--color-danger);
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-md);
-  margin-bottom: var(--spacing-lg);
+.error-envio {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  
+  .error-content {
+    text-align: center;
+    @include card-style;
+    max-width: 500px;
+    
+    .error-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+    }
+    
+    h3 {
+      color: $error-color;
+      margin-bottom: 12px;
+    }
+    
+    p {
+      color: $text-color;
+      margin-bottom: 24px;
+    }
+  }
+}
+
+// Header
+.envio-header {
   text-align: center;
-  font-size: var(--text-lg);
+  margin-bottom: 32px;
+  
+  h1 {
+    color: $text-color;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  
+  .subtitle {
+    color: #64748B;
+    font-size: 1.1rem;
+    margin: 0;
+  }
 }
 
 // Resumen del contrato
 .contrato-resumen {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
-  border-left: 4px solid var(--color-primary);
+  @include card-style;
+  
+  h2 {
+    color: $text-color;
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 24px;
+    border-bottom: 3px solid $primary-color;
+    padding-bottom: 12px;
+  }
+  
+  .resumen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+  
+  .detalle-seccion {
+    h4 {
+      color: $primary-color;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 16px;
+      border-bottom: 2px solid $primary-color;
+      padding-bottom: 8px;
+    }
+    
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid $border-color;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .label {
+        font-weight: 600;
+        color: $text-color;
+      }
+      
+      .value {
+        color: #64748B;
+        text-align: right;
+        
+        &.codigo {
+          font-family: monospace;
+          color: $primary-color;
+          font-weight: bold;
+        }
+      }
+    }
+  }
 }
 
-.contrato-resumen h2 {
-  color: var(--color-primary);
-  margin-bottom: var(--spacing-lg);
-  font-size: var(--text-2xl);
-  font-weight: 700;
-}
-
-.detalle-seccion {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-  border-left: 3px solid var(--color-primary);
-}
-
-.detalle-seccion h4 {
-  color: var(--color-primary);
-  margin-bottom: var(--spacing-sm);
-  font-size: var(--text-lg);
-  font-weight: 600;
-}
-
-.detalle-seccion p {
-  margin: var(--spacing-xs) 0;
-  color: var(--color-text-secondary);
-}
-
-.detalle-seccion strong {
-  color: var(--color-text-primary);
-}
-
+// Estado badge
 .estado-badge {
-  display: inline-block;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--text-xs);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
   font-weight: 600;
   text-transform: uppercase;
+  
+  &.estado-pendiente-de-firma {
+    background: #FEF3C7;
+    color: #92400E;
+  }
+  
+  &.estado-pendiente-de-firma-cliente {
+    background: #DBEAFE;
+    color: #1E40AF;
+  }
+  
+  &.estado-completamente-firmado {
+    background: #D1FAE5;
+    color: #065F46;
+  }
+  
+  &.estado-finalizado {
+    background: #E0E7FF;
+    color: #3730A3;
+  }
 }
 
-.estado-badge.estado-pendiente-de-firma {
-  background: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+// Generación de link
+.link-generacion {
+  @include card-style;
+  
+  h3 {
+    color: $text-color;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
+  
+  .info-text {
+    color: #64748B;
+    font-size: 1rem;
+    margin-bottom: 24px;
+  }
+  
+  .generacion-acciones {
+    margin-bottom: 24px;
+  }
+  
+  .link-generado {
+    background: #F0FDF4;
+    border: 2px solid $success-color;
+    border-radius: 8px;
+    padding: 20px;
+    
+    h4 {
+      color: $success-color;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+    
+    .link-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      
+      .link-input {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid $border-color;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 0.9rem;
+        background: white;
+        
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+        }
+      }
+      
+      .btn-copiar {
+        white-space: nowrap;
+      }
+    }
+    
+    .link-info {
+      color: #64748B;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+  }
 }
 
-.estado-badge.estado-firmado {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+// Envío de email
+.email-envio {
+  @include card-style;
+  
+  h3 {
+    color: $text-color;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
+  
+  .info-text {
+    color: #64748B;
+    font-size: 1rem;
+    margin-bottom: 24px;
+  }
+  
+  .email-form {
+    .form-group {
+      margin-bottom: 20px;
+      
+      label {
+        display: block;
+        font-weight: 600;
+        color: $text-color;
+        margin-bottom: 8px;
+      }
+      
+      .form-input,
+      .form-textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid $border-color;
+        border-radius: 8px;
+        font-size: 1rem;
+        background: white;
+        transition: border-color 0.3s ease;
+        
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+        }
+      }
+      
+      .form-textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+    }
+    
+    .email-acciones {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+  }
+  
+  .email-enviado {
+    margin-top: 24px;
+    
+    .mensaje-confirmacion {
+      background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+      border: 2px solid $success-color;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      
+      h4 {
+        color: $success-color;
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 12px;
+      }
+      
+      p {
+        color: $text-color;
+        margin-bottom: 20px;
+      }
+      
+      .acciones-post-envio {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+    }
+  }
 }
 
-.estado-badge.estado-finalizado {
-  background: rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+// Información adicional
+.info-adicional {
+  @include card-style;
+  
+  h3 {
+    color: $text-color;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  
+  .info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+    background: $light-gray;
+    border-radius: 8px;
+    border: 1px solid $border-color;
+    
+    .info-icon {
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+    
+    .info-content {
+      h4 {
+        color: $text-color;
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+      
+      p {
+        color: #64748B;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
+      }
+    }
+  }
 }
 
-.estado-badge.estado-enviado {
-  background: rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-// Formulario de envío
-.enviar-firma-form {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
-  box-shadow: var(--shadow-lg);
-}
-
-.enviar-firma-form h3 {
-  color: var(--color-primary);
-  margin-bottom: var(--spacing-lg);
-  font-size: var(--text-xl);
-  font-weight: 600;
+// Acciones finales
+.acciones-finales {
   text-align: center;
-}
-
-.form-group {
-  margin-bottom: var(--spacing-lg);
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: var(--spacing-sm);
-  color: var(--color-text-primary);
-  font-weight: 600;
-}
-
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: var(--spacing-md);
-  border: 2px solid rgba(0, 212, 255, 0.2);
-  border-radius: var(--border-radius-md);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  font-size: var(--text-sm);
-  transition: all var(--transition-normal);
-  font-family: 'Inter', sans-serif;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.form-group textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-// Link generado
-.link-generado {
-  background: rgba(16, 185, 129, 0.1);
-  border: 2px solid var(--color-success);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-}
-
-.link-generado h4 {
-  color: var(--color-success);
-  margin-bottom: var(--spacing-sm);
-  font-size: var(--text-lg);
-  font-weight: 600;
-}
-
-.link-input {
-  display: flex;
-  gap: var(--spacing-sm);
-  align-items: center;
-  margin-bottom: var(--spacing-sm);
-}
-
-.link-input input {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--color-text-primary);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: var(--text-xs);
-  padding: var(--spacing-sm);
-  border-radius: var(--border-radius-sm);
-}
-
-.btn-copy {
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-size: var(--text-xs);
-  transition: all var(--transition-normal);
-  font-weight: 600;
-}
-
-.btn-copy:hover {
-  background: var(--color-primary-dark);
-  transform: translateY(-1px);
-}
-
-.link-info {
-  margin: 0;
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
-
-// Acciones
-.enviar-acciones {
-  display: flex;
-  gap: var(--spacing-md);
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: var(--spacing-lg);
+  margin-top: 32px;
 }
 
 // Botones
 .btn {
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-radius: var(--border-radius-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  border: none;
-  font-size: var(--text-sm);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  justify-content: center;
-  min-width: 150px;
+  @include button-style($primary-color);
+  
+  &.btn-primary {
+    @include button-style($primary-color);
+  }
+  
+  &.btn-secondary {
+    @include button-style(#64748B);
+  }
+  
+  &.btn-success {
+    @include button-style($success-color);
+  }
+  
+  &.btn-warning {
+    @include button-style($warning-color);
+  }
+  
+  &.btn-danger {
+    @include button-style($error-color);
+  }
 }
 
-.btn-primary {
-  background: var(--gradient-primary);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  filter: brightness(1.1);
-  box-shadow: 0 6px 20px rgba(0, 212, 255, 0.25);
-  transform: translateY(-2px);
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: var(--color-primary);
-  transform: translateY(-2px);
-}
-
-.btn-success {
-  background: var(--gradient-primary);
-  color: white;
-}
-
-.btn-success:hover:not(:disabled) {
-  filter: brightness(1.1);
-  box-shadow: 0 6px 20px rgba(0, 255, 240, 0.25);
-  transform: translateY(-2px);
-}
-
-.btn-warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-  color: white;
-}
-
-.btn-warning:hover:not(:disabled) {
-  filter: brightness(1.1);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25);
-  transform: translateY(-2px);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-// Responsive design
+// Responsive
 @media (max-width: 768px) {
-  .enviar-firma-container {
-    padding: var(--spacing-md);
+  .envio-container {
+    padding: 16px;
   }
   
-  .enviar-firma-form {
-    padding: var(--spacing-lg);
+  .envio-header h1 {
+    font-size: 2rem;
   }
   
-  .enviar-acciones {
+  .resumen-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .email-acciones {
     flex-direction: column;
   }
   
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .link-input {
+  .link-container {
     flex-direction: column;
-    align-items: stretch;
   }
   
-  .btn-copy {
-    width: 100%;
-    justify-content: center;
+  .acciones-post-envio {
+    flex-direction: column;
   }
 }
 
 // Notificaciones
 .notificacion {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: white;
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-md);
-  box-shadow: var(--shadow-lg);
-  z-index: 1000;
-  transform: translateX(100%);
-  transition: transform var(--transition-normal);
-  max-width: 400px;
-}
-
-.notificacion-mostrar {
-  transform: translateX(0);
-}
-
-.notificacion-contenido {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.notificacion-icono {
-  font-size: var(--text-lg);
-}
-
-.notificacion-mensaje {
-  flex: 1;
-  color: #1e293b;
-}
-
-.notificacion-cerrar {
-  background: none;
-  border: none;
-  color: #64748b;
-  cursor: pointer;
-  font-size: var(--text-lg);
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.notificacion-cerrar:hover {
-  color: #1e293b;
+  .notificacion-contenido {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    .notificacion-icono {
+      font-size: 1.2rem;
+    }
+    
+    .notificacion-mensaje {
+      flex: 1;
+      color: $text-color;
+    }
+    
+    .notificacion-cerrar {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #64748B;
+      
+      &:hover {
+        color: $error-color;
+      }
+    }
+  }
+  
+  &.notificacion-success {
+    border-left: 4px solid $success-color;
+  }
+  
+  &.notificacion-error {
+    border-left: 4px solid $error-color;
+  }
 } 

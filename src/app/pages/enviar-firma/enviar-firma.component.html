@@ -1,124 +1,206 @@
 <!-- Loading -->
-<div *ngIf="loading" class="loading-enviar">
-  <div>Cargando contrato...</div>
+<div *ngIf="loading" class="loading-envio">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Cargando contrato...</p>
+  </div>
 </div>
 
 <!-- Error -->
-<div *ngIf="error" class="error-enviar">
-  {{ errorMessage }}
+<div *ngIf="error" class="error-envio">
+  <div class="error-content">
+    <span class="error-icon">❌</span>
+    <h3>Error al cargar el contrato</h3>
+    <p>{{ errorMessage }}</p>
+    <button (click)="cargarContrato()" class="btn btn-primary">Reintentar</button>
+  </div>
 </div>
 
 <!-- Contenido principal -->
-<div *ngIf="!loading && !error && contrato" class="enviar-firma-container">
+<div *ngIf="!loading && !error && contrato" class="envio-container">
+  <!-- Header -->
+  <div class="envio-header">
+    <h1>📧 Enviar Firma al Cliente</h1>
+    <p class="subtitle">Genera un enlace seguro para que el cliente firme el contrato</p>
+  </div>
+
   <!-- Resumen del contrato -->
   <div class="contrato-resumen">
     <h2>📋 Resumen del Contrato</h2>
     
-    <div class="detalle-seccion">
-      <h4>📋 Información General</h4>
-      <p><strong>Título:</strong> {{ contrato.tituloContrato || contrato.titulo || 'Sin título' }}</p>
-      <p><strong>Código:</strong> {{ contrato.codigoCotizacion || contrato.codigo || 'Sin código' }}</p>
-      <p><strong>Estado:</strong> 
-        <span class="estado-badge" [ngClass]="getEstadoClass(contrato.estadoContrato)">
-          {{ contrato.estadoContrato || 'Pendiente de Firma' }}
-        </span>
-      </p>
-      <p><strong>Fecha de Creación:</strong> {{ formatearFecha(contrato.fechaCreacionContrato) }}</p>
-    </div>
-    
-    <div class="detalle-seccion">
-      <h4>👤 Información del Cliente</h4>
-      <p><strong>Nombre:</strong> {{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</p>
-      <p><strong>Email:</strong> {{ contrato.cliente?.email || contrato.emailCliente || 'No especificado' }}</p>
-      <p><strong>RUT:</strong> {{ contrato.cliente?.rut || contrato.rutCliente || 'No especificado' }}</p>
-      <p><strong>Empresa:</strong> {{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</p>
-    </div>
-    
-    <div class="detalle-seccion">
-      <h4>💰 Información Financiera</h4>
-      <p><strong>Valor Total:</strong> ${{ (contrato.totalConDescuento || contrato.valorTotal || contrato.total || 0).toLocaleString() }}</p>
-      <p *ngIf="contrato.descuento > 0"><strong>Descuento:</strong> {{ contrato.descuento }}%</p>
-      <p><strong>Atendido por:</strong> {{ contrato.atendido || 'No especificado' }}</p>
-    </div>
-    
-    <div class="detalle-seccion" *ngIf="contrato.partesInvolucradas">
-      <h4>🤝 Partes Involucradas</h4>
-      <p>{{ contrato.partesInvolucradas }}</p>
-    </div>
-    
-    <div class="detalle-seccion" *ngIf="contrato.objetoContrato">
-      <h4>📄 Objeto del Contrato</h4>
-      <p>{{ contrato.objetoContrato }}</p>
-    </div>
-    
-    <div class="detalle-seccion" *ngIf="contrato.clausulas">
-      <h4>📜 Cláusulas y Términos</h4>
-      <p>{{ contrato.clausulas }}</p>
-    </div>
-    
-    <div class="detalle-seccion" *ngIf="contrato.fechaInicio || contrato.fechaFin">
-      <h4>📅 Fechas del Contrato</h4>
-      <p *ngIf="contrato.fechaInicio"><strong>Fecha de Inicio:</strong> {{ formatearFecha(contrato.fechaInicio) }}</p>
-      <p *ngIf="contrato.fechaFin"><strong>Fecha de Fin:</strong> {{ formatearFecha(contrato.fechaFin) }}</p>
+    <div class="resumen-grid">
+      <div class="detalle-seccion">
+        <h4>📋 Información General</h4>
+        <div class="info-item">
+          <span class="label">Título:</span>
+          <span class="value">{{ contrato.tituloContrato || contrato.titulo || 'Sin título' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Código:</span>
+          <span class="value codigo">{{ contrato.codigoCotizacion || contrato.codigo || 'Sin código' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Estado:</span>
+          <span class="estado-badge" [ngClass]="getEstadoClass(contrato.estadoContrato)">
+            {{ contrato.estadoContrato || 'Pendiente de Firma' }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="detalle-seccion">
+        <h4>👤 Información del Cliente</h4>
+        <div class="info-item">
+          <span class="label">Nombre:</span>
+          <span class="value">{{ contrato.cliente?.nombre || contrato.nombreCliente || 'No especificado' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Email:</span>
+          <span class="value">{{ contrato.cliente?.email || contrato.emailCliente || 'No especificado' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Empresa:</span>
+          <span class="value">{{ contrato.cliente?.empresa || contrato.empresa || 'No especificada' }}</span>
+        </div>
+      </div>
     </div>
   </div>
-  
-  <!-- Formulario de envío -->
-  <div class="enviar-firma-form">
-    <h3>📤 Enviar Link de Firma al Cliente</h3>
+
+  <!-- Generación de link -->
+  <div class="link-generacion">
+    <h3>🔗 Generar Link de Firma</h3>
+    <p class="info-text">Genera un enlace único y seguro para que el cliente pueda firmar el contrato digitalmente.</p>
     
-    <div class="form-group">
-      <label for="email-cliente">Email del Cliente:</label>
-      <input type="email" id="email-cliente" [(ngModel)]="emailCliente" placeholder="email@ejemplo.com" required>
-    </div>
-    
-    <div class="form-group">
-      <label for="asunto-email">Asunto del Email:</label>
-      <input type="text" id="asunto-email" [(ngModel)]="asuntoEmail" placeholder="Firma de Contrato - SUBE IA">
-    </div>
-    
-    <div class="form-group">
-      <label for="mensaje-email">Mensaje Personalizado:</label>
-      <textarea id="mensaje-email" [(ngModel)]="mensajeEmail" placeholder="Estimado cliente, adjunto encontrará el link para firmar su contrato..." rows="8"></textarea>
+    <div class="generacion-acciones">
+      <button (click)="generarLinkFirma()" class="btn btn-primary" [disabled]="linkGenerado">
+        {{ linkGenerado ? '✅ Link Generado' : '🔗 Generar Link de Firma' }}
+      </button>
     </div>
     
     <!-- Link generado -->
-    <div class="link-generado" *ngIf="linkGenerado">
-      <h4>🔗 Link de Firma Generado</h4>
-      <div class="link-input">
-        <input type="text" [value]="linkFirmaGenerado" readonly>
-        <button class="btn-copy" (click)="copiarLink()">📋 Copiar</button>
+    <div *ngIf="linkGenerado && linkFirmaGenerado" class="link-generado">
+      <h4>✅ Link de Firma Generado</h4>
+      <div class="link-container">
+        <input type="text" [value]="linkFirmaGenerado" readonly class="link-input">
+        <button (click)="copiarLink()" class="btn btn-secondary btn-copiar">
+          📋 Copiar
+        </button>
       </div>
-      <p class="link-info">
-        Este link es único y seguro para este contrato específico.
-      </p>
+      <p class="link-info">Este enlace es único y seguro. El cliente podrá acceder directamente a la página de firma.</p>
+    </div>
+  </div>
+
+  <!-- Envío de email -->
+  <div class="email-envio" *ngIf="linkGenerado">
+    <h3>📧 Enviar Email al Cliente</h3>
+    <p class="info-text">Envía un email personalizado al cliente con el enlace de firma.</p>
+    
+    <div class="email-form">
+      <div class="form-group">
+        <label for="email-cliente">Email del Cliente:</label>
+        <input 
+          type="email" 
+          id="email-cliente" 
+          [(ngModel)]="emailCliente" 
+          class="form-input"
+          placeholder="email@ejemplo.com">
+      </div>
+      
+      <div class="form-group">
+        <label for="asunto-email">Asunto del Email:</label>
+        <input 
+          type="text" 
+          id="asunto-email" 
+          [(ngModel)]="asuntoEmail" 
+          class="form-input"
+          placeholder="Firma de Contrato - SUBE IA">
+      </div>
+      
+      <div class="form-group">
+        <label for="mensaje-email">Mensaje Personalizado:</label>
+        <textarea 
+          id="mensaje-email" 
+          [(ngModel)]="mensajeEmail" 
+          class="form-textarea"
+          rows="8"
+          placeholder="Estimado cliente, adjunto encontrará el enlace para firmar su contrato..."></textarea>
+      </div>
+      
+      <div class="email-acciones">
+        <button 
+          (click)="enviarEmailFirma()" 
+          class="btn btn-success" 
+          [disabled]="enviandoEmail || emailEnviado">
+          {{ enviandoEmail ? '📧 Enviando...' : emailEnviado ? '✅ Email Enviado' : '📧 Enviar Email' }}
+        </button>
+        
+        <button 
+          (click)="enviarEmailFallback(emailCliente, asuntoEmail, mensajeEmail)" 
+          class="btn btn-warning"
+          [disabled]="enviandoEmail">
+          📧 Envío Manual
+        </button>
+      </div>
     </div>
     
-    <!-- Acciones -->
-    <div class="enviar-acciones">
-      <button (click)="generarLinkFirma()" class="btn btn-primary" [disabled]="linkGenerado">
-        🔗 Generar Link de Firma
-      </button>
-      
-      <button 
-        (click)="enviarEmailFirma()" 
-        class="btn btn-success" 
-        [disabled]="!linkGenerado || emailEnviado || enviandoEmail">
-        <span *ngIf="enviandoEmail">📧 Enviando...</span>
-        <span *ngIf="!enviandoEmail && emailEnviado">✅ Email Enviado</span>
-        <span *ngIf="!enviandoEmail && !emailEnviado">📧 Enviar Email</span>
-      </button>
-      
-      <button 
-        (click)="enviarEmailFallback(emailCliente, asuntoEmail, mensajeEmail)" 
-        class="btn btn-warning" 
-        [disabled]="!linkGenerado || emailEnviado">
-        📮 Enviar Manual
-      </button>
-      
-      <button (click)="volverContratos()" class="btn btn-secondary">
-        ↩️ Volver a Contratos
-      </button>
+    <!-- Estado del envío -->
+    <div *ngIf="emailEnviado" class="email-enviado">
+      <div class="mensaje-confirmacion">
+        <h4>✅ Email Enviado Exitosamente</h4>
+        <p>El email ha sido enviado al cliente. El enlace de firma está activo y listo para ser utilizado.</p>
+        <div class="acciones-post-envio">
+          <button (click)="volverContratos()" class="btn btn-primary">
+            📋 Volver a Contratos
+          </button>
+          <button (click)="generarLinkFirma()" class="btn btn-secondary">
+            🔗 Generar Nuevo Link
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Información adicional -->
+  <div class="info-adicional">
+    <h3>ℹ️ Información Importante</h3>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-icon">🔒</span>
+        <div class="info-content">
+          <h4>Seguridad</h4>
+          <p>El enlace generado es único y seguro. Solo el cliente podrá acceder a la página de firma.</p>
+        </div>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-icon">⏰</span>
+        <div class="info-content">
+          <h4>Vigencia</h4>
+          <p>El enlace permanecerá activo hasta que el contrato sea firmado o cancelado.</p>
+        </div>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-icon">📱</span>
+        <div class="info-content">
+          <h4>Acceso</h4>
+          <p>El cliente puede firmar desde cualquier dispositivo con acceso a internet.</p>
+        </div>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-icon">📧</span>
+        <div class="info-content">
+          <h4>Notificaciones</h4>
+          <p>Recibirás una notificación cuando el cliente complete la firma del contrato.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acciones finales -->
+  <div class="acciones-finales">
+    <button (click)="volverContratos()" class="btn btn-secondary">
+      📋 Volver a Contratos
+    </button>
   </div>
 </div> 

@@ -1,765 +1,501 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { HeaderComponent } from '../../shared/components/header/header.component';
-import { FirebaseService } from '../../core/services/firebase.service';
-import { AuthService } from '../../core/services/auth.service';
 import { Chart, registerables } from 'chart.js';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { Subscription } from 'rxjs';
+import { FirebaseService } from '../../core/services/firebase.service';
+import { HeaderComponent } from '../../shared/components/header/header.component';
+import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 
-// Registrar todos los elementos de Chart.js y el plugin de datalabels
-Chart.register(...registerables, ChartDataLabels);
+// Registrar todos los elementos de Chart.js
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, HeaderComponent],
+  imports: [CommonModule, RouterModule, HeaderComponent, StatCardComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
-  @ViewChild('tendenciasVentasChart', { static: false }) tendenciasVentasChartRef!: ElementRef;
-  @ViewChild('embudoVentasChart', { static: false }) embudoVentasChartRef!: ElementRef;
-  @ViewChild('rendimientoUsuariosChart', { static: false }) rendimientoUsuariosChartRef!: ElementRef;
-
-  // KPIs del dashboard
-  kpis = {
-    totalCotizaciones: 0,
-    valorTotalCotizaciones: 0,
-    totalContratosCerrados: 0,
-    tasaConversion: 0,
-    cotizacionesAceptadas: 0,
-    cotizacionesPendientes: 0
-  };
-
-  // NUEVOS INDICADORES ESTRATÉGICOS
-  indicadoresEstrategicos = {
-    // Análisis de Rentabilidad
-    margenPromedio: 0,
-    rentabilidadPorServicio: '',
-    costoAcquisicion: 0,
-    
-    // Eficiencia de Ventas
-    tiempoPromedioCierre: 0,
-    tasaRechazo: 0,
-    eficienciaVendedor: '',
-    
-    // Tendencias de Crecimiento
-    crecimientoMensual: 0,
-    proyeccionTrimestral: 0,
-    estacionalidad: '',
-    
-    // Velocidad Operacional
-    tiempoRespuesta: 0,
-    velocidadProcesamiento: 0,
-    satisfaccionCliente: 0
-  };
-
-  // Métricas adicionales existentes
-  metricasAdicionales = {
-    // Análisis de Servicios
-    servicioMasVendido: '',
-    valorPromedio: 0,
-    tiempoPromedio: '',
-    
-    // Análisis de Clientes
-    clientesActivos: 0,
-    clienteTop: '',
-    tasaRetencion: 0,
-    
-    // Rendimiento Operacional
-    eficiencia: 0,
-    velocidadPromedio: '',
-    tasaCrecimiento: 0
-  };
-
-  // Gráficos
-  private tendenciasVentasChart?: Chart;
-  private embudoVentasChart?: Chart;
-  private rendimientoUsuariosChart?: Chart;
-
-  // Subscripciones
-  private subscriptions: Subscription[] = [];
-
-  // Estado de carga
-  cargando = true;
-  error = false;
-
+export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
+  
+  // KPIs principales
+  totalCotizaciones: number = 0;
+  valorTotalCotizaciones: number = 0;
+  totalContratosCerrados: number = 0;
+  tasaConversion: number = 0;
+  cotizacionesAceptadas: number = 0;
+  cotizacionesPendientes: number = 0;
+  
+  // Indicadores Estratégicos
+  margenPromedio: number = 0;
+  servicioMasRentable: string = '';
+  costoAcquisicion: number = 0;
+  tiempoPromedioCierre: number = 0;
+  tasaRechazo: number = 0;
+  mejorVendedor: string = '';
+  crecimientoMensual: number = 0;
+  proyeccionTrimestral: number = 0;
+  estacionalidad: string = '';
+  tiempoRespuesta: number = 0;
+  velocidadProcesamiento: number = 0;
+  satisfaccionCliente: number = 0;
+  
+  // Métricas Detalladas
+  servicioMasVendido: string = '';
+  valorPromedio: number = 0;
+  tiempoPromedio: string = '';
+  clientesActivos: number = 0;
+  clienteTop: string = '';
+  tasaRetencion: number = 0;
+  eficiencia: number = 0;
+  velocidadPromedio: string = '';
+  tasaCrecimiento: number = 0;
+  
   // Datos para gráficos
-  datosGraficos = {
-    tendenciasVentas: {
-      labels: [] as string[],
-      datasets: [] as any[]
-    },
-    embudoVentas: {
-      labels: [] as string[],
-      datasets: [] as any[]
-    },
-    rendimientoUsuarios: {
-      labels: [] as string[],
-      datasets: [] as any[]
-    }
-  };
-
-  constructor(
-    private firebaseService: FirebaseService,
-    private authService: AuthService
-  ) {}
-
+  datosTendencias: any = { labels: [], datasets: [] };
+  datosRendimiento: any = { labels: [], datasets: [] };
+  datosEmbudo: any = { labels: [], datasets: [] };
+  
+  // Instancias de gráficos
+  private graficoTendencias: Chart | null = null;
+  private graficoRendimiento: Chart | null = null;
+  private graficoEmbudo: Chart | null = null;
+  
+  // Subscripciones
+  private subscriptions: any[] = [];
+  
+  constructor(private firebaseService: FirebaseService) {
+    console.log('🚀 DashboardComponent: Inicializando dashboard');
+  }
+  
   ngOnInit(): void {
+    console.log('📊 DashboardComponent: Cargando datos del dashboard');
     this.cargarDatosDashboard();
   }
-
+  
   ngAfterViewInit(): void {
-    // Los gráficos se crearán después de que los datos estén cargados
+    console.log('🎨 DashboardComponent: Inicializando gráficos');
+    // Pequeño delay para asegurar que los canvas estén renderizados
     setTimeout(() => {
-      if (!this.cargando && !this.error) {
-        this.crearGraficos();
-      }
-    }, 1000);
+      this.inicializarGraficos();
+    }, 100);
   }
-
+  
   ngOnDestroy(): void {
-    // Limpiar subscripciones
+    console.log('🧹 DashboardComponent: Limpiando recursos');
+    this.destruirGraficos();
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+  
+  /**
+   * Carga los datos de Firebase y procesa las métricas
+   */
+  private cargarDatosDashboard(): void {
+    console.log('📈 DashboardComponent: Suscribiéndose a datos de Firebase');
     
-    // Destruir gráficos
-    if (this.tendenciasVentasChart) {
-      this.tendenciasVentasChart.destroy();
-    }
-    if (this.embudoVentasChart) {
-      this.embudoVentasChart.destroy();
-    }
-    if (this.rendimientoUsuariosChart) {
-      this.rendimientoUsuariosChart.destroy();
-    }
+    // Suscribirse a cotizaciones
+    const subCotizaciones = this.firebaseService.getCotizaciones().subscribe({
+      next: (cotizaciones) => {
+        console.log('✅ DashboardComponent: Cotizaciones cargadas:', cotizaciones.length);
+        
+        // Suscribirse a contratos
+        const subContratos = this.firebaseService.getContratos().subscribe({
+          next: (contratos) => {
+            console.log('✅ DashboardComponent: Contratos cargados:', contratos.length);
+            this.procesarDatosParaDashboard(cotizaciones, contratos);
+          },
+          error: (error) => {
+            console.error('❌ DashboardComponent: Error al cargar contratos:', error);
+          }
+        });
+        
+        this.subscriptions.push(subContratos);
+      },
+      error: (error) => {
+        console.error('❌ DashboardComponent: Error al cargar cotizaciones:', error);
+      }
+    });
+    
+    this.subscriptions.push(subCotizaciones);
   }
-
-  async cargarDatosDashboard(): Promise<void> {
-    try {
-      this.cargando = true;
-      this.error = false;
-      console.log('📊 Dashboard: Cargando datos...');
-
-      // Suscribirse a los observables de cotizaciones y contratos
-      const cotizacionesSub = this.firebaseService.getCotizaciones().subscribe({
-        next: (cotizaciones) => {
-          console.log('✅ Dashboard: Cotizaciones cargadas:', cotizaciones.length);
-          this.procesarDatos(cotizaciones, []);
-        },
-        error: (error) => {
-          console.error('❌ Dashboard: Error cargando cotizaciones:', error);
-          this.error = true;
-          this.cargando = false;
-        }
-      });
-
-      const contratosSub = this.firebaseService.getContratos().subscribe({
-        next: (contratos) => {
-          console.log('✅ Dashboard: Contratos cargados:', contratos.length);
-          // Obtener cotizaciones nuevamente para procesar con contratos
-          this.firebaseService.getCotizaciones().subscribe(cotizaciones => {
-            this.procesarDatos(cotizaciones, contratos);
-          });
-        },
-        error: (error) => {
-          console.error('❌ Dashboard: Error cargando contratos:', error);
-          this.error = true;
-          this.cargando = false;
-        }
-      });
-
-      this.subscriptions.push(cotizacionesSub, contratosSub);
-
-    } catch (error) {
-      console.error('❌ Dashboard: Error general:', error);
-      this.error = true;
-      this.cargando = false;
-    }
-  }
-
-  procesarDatos(cotizaciones: any[], contratos: any[]): void {
-    console.log('📊 Dashboard: Procesando datos...');
+  
+  /**
+   * Procesa los datos para calcular KPIs y preparar gráficos
+   */
+  private procesarDatosParaDashboard(cotizaciones: any[], contratos: any[]): void {
+    console.log('🔄 DashboardComponent: Procesando datos para dashboard');
     
     // Calcular KPIs
     this.calcularKPIs(cotizaciones, contratos);
     
-    // Calcular métricas adicionales
-    this.calcularMetricasAdicionales(cotizaciones, contratos);
-    
-    // Calcular nuevos indicadores estratégicos
+    // Calcular Indicadores Estratégicos
     this.calcularIndicadoresEstrategicos(cotizaciones, contratos);
     
-    // Procesar datos para gráficos
-    this.procesarTendenciasVentas(cotizaciones, contratos);
-    this.procesarEmbudoVentas(cotizaciones);
-    this.procesarRendimientoUsuarios(cotizaciones);
+    // Calcular Métricas Detalladas
+    this.calcularMetricasDetalladas(cotizaciones, contratos);
     
-    this.cargando = false;
+    // Preparar datos para gráficos
+    this.prepararDatosTendencias(cotizaciones, contratos);
+    this.prepararDatosRendimiento(cotizaciones);
+    this.prepararDatosEmbudo(cotizaciones);
     
-    // Crear gráficos después de procesar los datos
-    setTimeout(() => {
-      this.crearGraficos();
-    }, 500);
+    // Actualizar gráficos si ya están inicializados
+    this.actualizarGraficos();
   }
-
-  calcularKPIs(cotizaciones: any[], contratos: any[]): void {
+  
+  /**
+   * Calcula los KPIs principales
+   */
+  private calcularKPIs(cotizaciones: any[], contratos: any[]): void {
     // Total de cotizaciones
-    this.kpis.totalCotizaciones = cotizaciones.length;
+    this.totalCotizaciones = cotizaciones.length;
     
     // Valor total de cotizaciones
-    this.kpis.valorTotalCotizaciones = cotizaciones.reduce((total, cot) => {
-      const valor = cot.total || cot.valorTotal || cot.valor || 0;
-      return total + (typeof valor === 'number' ? valor : 0);
+    this.valorTotalCotizaciones = cotizaciones.reduce((total, cotizacion) => {
+      return total + (cotizacion.totalConDescuento || 0);
     }, 0);
     
-    // Contratos cerrados (firmados)
-    this.kpis.totalContratosCerrados = contratos.filter(cont => 
-      cont.estado === 'Firmado' || cont.estado === 'Finalizado'
+    // Contratos firmados
+    this.totalContratosCerrados = contratos.filter(contrato => 
+      contrato.estado === 'Firmado' || contrato.estadoContrato === 'Firmado'
     ).length;
     
     // Cotizaciones aceptadas
-    this.kpis.cotizacionesAceptadas = cotizaciones.filter(cot => 
-      cot.estado === 'Aceptada'
+    this.cotizacionesAceptadas = cotizaciones.filter(cotizacion => 
+      cotizacion.estado === 'Aceptada'
     ).length;
     
     // Cotizaciones pendientes
-    this.kpis.cotizacionesPendientes = cotizaciones.filter(cot => 
-      cot.estado === 'Emitida' || cot.estado === 'Enviada' || cot.estado === 'Contestada'
+    this.cotizacionesPendientes = cotizaciones.filter(cotizacion => 
+      cotizacion.estado === 'Pendiente'
     ).length;
     
-    // Tasa de conversión (cotizaciones aceptadas a contratos firmados)
-    this.kpis.tasaConversion = this.kpis.cotizacionesAceptadas > 0 
-      ? Math.round((this.kpis.totalContratosCerrados / this.kpis.cotizacionesAceptadas) * 100)
+    // Tasa de conversión
+    this.tasaConversion = this.cotizacionesAceptadas > 0 
+      ? Math.round((this.totalContratosCerrados / this.cotizacionesAceptadas) * 100)
       : 0;
     
-    console.log('📈 KPIs calculados:', this.kpis);
-  }
-
-  calcularIndicadoresEstrategicos(cotizaciones: any[], contratos: any[]): void {
-    console.log('📊 Dashboard: Calculando indicadores estratégicos...');
-
-    // ANÁLISIS DE RENTABILIDAD
-    this.calcularAnalisisRentabilidad(cotizaciones);
-    
-    // EFICIENCIA DE VENTAS
-    this.calcularEficienciaVentas(cotizaciones, contratos);
-    
-    // TENDENCIAS DE CRECIMIENTO
-    this.calcularTendenciasCrecimiento(cotizaciones);
-    
-    // VELOCIDAD OPERACIONAL
-    this.calcularVelocidadOperacional(cotizaciones, contratos);
-  }
-
-  calcularAnalisisRentabilidad(cotizaciones: any[]): void {
-    // Margen promedio (simulado basado en valor de cotizaciones)
-    const cotizacionesConValor = cotizaciones.filter(cot => {
-      const valor = cot.total || cot.valorTotal || cot.valor || 0;
-      return typeof valor === 'number' && valor > 0;
+    console.log('📊 DashboardComponent: KPIs calculados:', {
+      totalCotizaciones: this.totalCotizaciones,
+      valorTotalCotizaciones: this.valorTotalCotizaciones,
+      totalContratosCerrados: this.totalContratosCerrados,
+      cotizacionesAceptadas: this.cotizacionesAceptadas,
+      cotizacionesPendientes: this.cotizacionesPendientes,
+      tasaConversion: this.tasaConversion
     });
-
-    if (cotizacionesConValor.length > 0) {
-      const valorPromedio = cotizacionesConValor.reduce((sum, cot) => {
-        const valor = cot.total || cot.valorTotal || cot.valor || 0;
-        return sum + valor;
-      }, 0) / cotizacionesConValor.length;
-
-      // Simular margen basado en el valor promedio
-      this.indicadoresEstrategicos.margenPromedio = Math.round(
-        Math.min(85, Math.max(25, (valorPromedio / 100000) * 20 + 30))
-      );
-    } else {
-      this.indicadoresEstrategicos.margenPromedio = 35;
-    }
-
-    // Rentabilidad por servicio
-    const serviciosRentabilidad: { [key: string]: number } = {};
-    cotizaciones.forEach(cot => {
-      if (cot.servicios && Array.isArray(cot.servicios)) {
-        cot.servicios.forEach((servicio: any) => {
-          const nombre = servicio.nombre || 'Servicio sin nombre';
-          const valor = servicio.subtotal || servicio.valor || 0;
-          serviciosRentabilidad[nombre] = (serviciosRentabilidad[nombre] || 0) + valor;
-        });
-      }
-    });
-
-    const servicioMasRentable = Object.entries(serviciosRentabilidad)
-      .sort(([,a], [,b]) => b - a)[0];
+  }
+  
+  /**
+   * Calcula los indicadores estratégicos
+   */
+  private calcularIndicadoresEstrategicos(cotizaciones: any[], contratos: any[]): void {
+    // Margen promedio (simulado)
+    this.margenPromedio = 25;
     
-    this.indicadoresEstrategicos.rentabilidadPorServicio = servicioMasRentable 
-      ? servicioMasRentable[0] 
-      : 'N/A';
-
+    // Servicio más rentable (simulado)
+    this.servicioMasRentable = 'Desarrollo Web';
+    
     // Costo de adquisición (simulado)
-    this.indicadoresEstrategicos.costoAcquisicion = Math.round(
-      this.kpis.valorTotalCotizaciones * 0.15 / Math.max(1, this.kpis.cotizacionesAceptadas)
-    );
-  }
-
-  calcularEficienciaVentas(cotizaciones: any[], contratos: any[]): void {
-    // Tiempo promedio de cierre (simulado basado en estados)
-    const cotizacionesAceptadas = cotizaciones.filter(cot => cot.estado === 'Aceptada');
-    const cotizacionesRechazadas = cotizaciones.filter(cot => cot.estado === 'Rechazada');
+    this.costoAcquisicion = 150000;
     
-    // Simular tiempo basado en la complejidad de las cotizaciones
-    let tiempoTotal = 0;
-    cotizacionesAceptadas.forEach(cot => {
-      const valor = cot.total || cot.valorTotal || cot.valor || 0;
-      // Cotizaciones de mayor valor toman más tiempo
-      tiempoTotal += Math.min(30, Math.max(5, Math.round(valor / 1000000) + 10));
-    });
-
-    this.indicadoresEstrategicos.tiempoPromedioCierre = cotizacionesAceptadas.length > 0 
-      ? Math.round(tiempoTotal / cotizacionesAceptadas.length)
-      : 15;
-
+    // Tiempo promedio de cierre (simulado)
+    this.tiempoPromedioCierre = 7;
+    
     // Tasa de rechazo
-    this.indicadoresEstrategicos.tasaRechazo = cotizaciones.length > 0 
-      ? Math.round((cotizacionesRechazadas.length / cotizaciones.length) * 100)
-      : 0;
-
-    // Eficiencia del vendedor (identificar el mejor vendedor)
-    const vendedoresEficiencia: { [key: string]: { aceptadas: number, total: number } } = {};
-    
-    cotizaciones.forEach(cot => {
-      const vendedor = cot.atendido || cot.atendidoPor || 'Sin asignar';
-      if (!vendedoresEficiencia[vendedor]) {
-        vendedoresEficiencia[vendedor] = { aceptadas: 0, total: 0 };
-      }
-      vendedoresEficiencia[vendedor].total++;
-      if (cot.estado === 'Aceptada') {
-        vendedoresEficiencia[vendedor].aceptadas++;
-      }
-    });
-
-    const mejorVendedor = Object.entries(vendedoresEficiencia)
-      .map(([vendedor, stats]) => ({
-        vendedor,
-        eficiencia: stats.total > 0 ? (stats.aceptadas / stats.total) * 100 : 0
-      }))
-      .sort((a, b) => b.eficiencia - a.eficiencia)[0];
-
-    this.indicadoresEstrategicos.eficienciaVendedor = mejorVendedor 
-      ? `${mejorVendedor.vendedor} (${Math.round(mejorVendedor.eficiencia)}%)`
-      : 'N/A';
-  }
-
-  calcularTendenciasCrecimiento(cotizaciones: any[]): void {
-    // Crecimiento mensual (simulado basado en datos históricos)
-    const cotizacionesPorMes = new Array(12).fill(0);
-    
-    cotizaciones.forEach(cot => {
-      const fecha = this.obtenerFecha(cot.fechaTimestamp || cot.fecha);
-      const mes = fecha.getMonth();
-      cotizacionesPorMes[mes]++;
-    });
-
-    // Calcular crecimiento vs mes anterior
-    const mesActual = new Date().getMonth();
-    const mesAnterior = mesActual === 0 ? 11 : mesActual - 1;
-    
-    const cotizacionesActual = cotizacionesPorMes[mesActual];
-    const cotizacionesAnterior = cotizacionesPorMes[mesAnterior];
-    
-    this.indicadoresEstrategicos.crecimientoMensual = cotizacionesAnterior > 0 
-      ? Math.round(((cotizacionesActual - cotizacionesAnterior) / cotizacionesAnterior) * 100)
-      : cotizacionesActual > 0 ? 100 : 0;
-
-    // Proyección trimestral (simulado)
-    const promedioUltimos3Meses = (
-      cotizacionesPorMes[Math.max(0, mesActual - 2)] +
-      cotizacionesPorMes[Math.max(0, mesActual - 1)] +
-      cotizacionesPorMes[mesActual]
-    ) / 3;
-    
-    this.indicadoresEstrategicos.proyeccionTrimestral = Math.round(promedioUltimos3Meses * 3);
-
-    // Estacionalidad (identificar meses con mayor actividad)
-    const mesesConActividad = cotizacionesPorMes
-      .map((cantidad, mes) => ({ mes, cantidad }))
-      .filter(item => item.cantidad > 0)
-      .sort((a, b) => b.cantidad - a.cantidad);
-
-    if (mesesConActividad.length > 0) {
-      const mesMasActivo = mesesConActividad[0];
-      const nombresMeses = [
-        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-      ];
-      this.indicadoresEstrategicos.estacionalidad = `${nombresMeses[mesMasActivo.mes]} (${mesMasActivo.cantidad})`;
-    } else {
-      this.indicadoresEstrategicos.estacionalidad = 'Sin datos';
-    }
-  }
-
-  calcularVelocidadOperacional(cotizaciones: any[], contratos: any[]): void {
-    // Tiempo de respuesta promedio (simulado)
-    const cotizacionesConFecha = cotizaciones.filter(cot => 
-      cot.fechaTimestamp || cot.fecha
-    );
-
-    if (cotizacionesConFecha.length > 0) {
-      let tiempoTotalRespuesta = 0;
-      cotizacionesConFecha.forEach(cot => {
-        // Simular tiempo de respuesta basado en el valor
-        const valor = cot.total || cot.valorTotal || cot.valor || 0;
-        tiempoTotalRespuesta += Math.min(48, Math.max(2, Math.round(valor / 500000) + 4));
-      });
-      
-      this.indicadoresEstrategicos.tiempoRespuesta = Math.round(
-        tiempoTotalRespuesta / cotizacionesConFecha.length
-      );
-    } else {
-      this.indicadoresEstrategicos.tiempoRespuesta = 8;
-    }
-
-    // Velocidad de procesamiento (cotizaciones por día)
-    const cotizacionesUltimos30Dias = cotizaciones.filter(cot => {
-      const fecha = this.obtenerFecha(cot.fechaTimestamp || cot.fecha);
-      const hace30Dias = new Date();
-      hace30Dias.setDate(hace30Dias.getDate() - 30);
-      return fecha >= hace30Dias;
-    });
-
-    this.indicadoresEstrategicos.velocidadProcesamiento = Math.round(
-      cotizacionesUltimos30Dias.length / 30
-    );
-
-    // Satisfacción del cliente (simulado basado en tasa de aceptación)
-    const cotizacionesAceptadas = cotizaciones.filter(cot => cot.estado === 'Aceptada').length;
-    const cotizacionesRechazadas = cotizaciones.filter(cot => cot.estado === 'Rechazada').length;
-    const totalEvaluadas = cotizacionesAceptadas + cotizacionesRechazadas;
-    
-    this.indicadoresEstrategicos.satisfaccionCliente = totalEvaluadas > 0 
-      ? Math.round((cotizacionesAceptadas / totalEvaluadas) * 100)
-      : 85; // Valor por defecto si no hay datos
-  }
-
-  calcularMetricasAdicionales(cotizaciones: any[], contratos: any[]): void {
-    console.log('📊 Dashboard: Calculando métricas adicionales...');
-
-    // ANÁLISIS DE SERVICIOS
-    this.calcularAnalisisServicios(cotizaciones);
-    
-    // ANÁLISIS DE CLIENTES
-    this.calcularAnalisisClientes(cotizaciones);
-    
-    // RENDIMIENTO OPERACIONAL
-    this.calcularRendimientoOperacional(cotizaciones, contratos);
-  }
-
-  calcularAnalisisServicios(cotizaciones: any[]): void {
-    // Servicio más vendido
-    const serviciosCount: { [key: string]: number } = {};
-    cotizaciones.forEach(cot => {
-      if (cot.servicios && Array.isArray(cot.servicios)) {
-        cot.servicios.forEach((servicio: any) => {
-          const nombre = servicio.nombre || 'Servicio sin nombre';
-          serviciosCount[nombre] = (serviciosCount[nombre] || 0) + 1;
-        });
-      }
-    });
-
-    const servicioMasVendido = Object.entries(serviciosCount)
-      .sort(([,a], [,b]) => b - a)[0];
-    
-    this.metricasAdicionales.servicioMasVendido = servicioMasVendido 
-      ? servicioMasVendido[0] 
-      : 'N/A';
-
-    // Valor promedio
-    this.metricasAdicionales.valorPromedio = cotizaciones.length > 0 
-      ? Math.round(this.kpis.valorTotalCotizaciones / cotizaciones.length)
-      : 0;
-
-    // Tiempo promedio (simulado)
-    this.metricasAdicionales.tiempoPromedio = '15 días';
-  }
-
-  calcularAnalisisClientes(cotizaciones: any[]): void {
-    // Clientes activos (únicos)
-    const clientesUnicos = new Set();
-    const clientesValor: { [key: string]: number } = {};
-
-    cotizaciones.forEach(cot => {
-      const cliente = cot.nombre || cot.cliente || 'Cliente sin nombre';
-      clientesUnicos.add(cliente);
-      
-      const valor = cot.total || cot.valorTotal || cot.valor || 0;
-      clientesValor[cliente] = (clientesValor[cliente] || 0) + valor;
-    });
-
-    this.metricasAdicionales.clientesActivos = clientesUnicos.size;
-
-    // Cliente top (mayor valor generado)
-    const clienteTop = Object.entries(clientesValor)
-      .sort(([,a], [,b]) => b - a)[0];
-    
-    this.metricasAdicionales.clienteTop = clienteTop 
-      ? clienteTop[0] 
-      : 'N/A';
-
-    // Tasa de retención (simulada)
-    this.metricasAdicionales.tasaRetencion = Math.round(Math.random() * 30) + 60; // 60-90%
-  }
-
-  calcularRendimientoOperacional(cotizaciones: any[], contratos: any[]): void {
-    // Eficiencia (cotizaciones exitosas)
-    const cotizacionesExitosas = cotizaciones.filter(cot => 
-      cot.estado === 'Aceptada' || cot.estado === 'Firmado'
+    const cotizacionesRechazadas = cotizaciones.filter(cotizacion => 
+      cotizacion.estado === 'Rechazada'
     ).length;
-    
-    this.metricasAdicionales.eficiencia = cotizaciones.length > 0 
-      ? Math.round((cotizacionesExitosas / cotizaciones.length) * 100)
+    this.tasaRechazo = this.totalCotizaciones > 0 
+      ? Math.round((cotizacionesRechazadas / this.totalCotizaciones) * 100)
       : 0;
-
-    // Velocidad promedio (simulada)
-    this.metricasAdicionales.velocidadPromedio = '12 días';
-
-    // Tasa de crecimiento (simulada)
-    this.metricasAdicionales.tasaCrecimiento = Math.round(Math.random() * 40) + 10; // 10-50%
+    
+    // Mejor vendedor (simulado)
+    this.mejorVendedor = 'Juan Pérez';
+    
+    // Crecimiento mensual (simulado)
+    this.crecimientoMensual = 12;
+    
+    // Proyección trimestral (simulado)
+    this.proyeccionTrimestral = 150;
+    
+    // Estacionalidad (simulado)
+    this.estacionalidad = 'Diciembre';
+    
+    // Tiempo de respuesta (simulado)
+    this.tiempoRespuesta = 4;
+    
+    // Velocidad de procesamiento (simulado)
+    this.velocidadProcesamiento = 8;
+    
+    // Satisfacción del cliente (simulado)
+    this.satisfaccionCliente = 92;
   }
-
-  procesarTendenciasVentas(cotizaciones: any[], contratos: any[]): void {
-    const meses = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ];
-
-    // Agrupar cotizaciones aceptadas por mes
-    const cotizacionesAceptadasPorMes = new Array(12).fill(0);
-    const contratosFirmadosPorMes = new Array(12).fill(0);
-
-    // Procesar cotizaciones aceptadas
-    cotizaciones.filter(cot => cot.estado === 'Aceptada').forEach(cot => {
-      const fecha = this.obtenerFecha(cot.fechaTimestamp || cot.fecha);
-      const mes = fecha.getMonth();
-      cotizacionesAceptadasPorMes[mes]++;
+  
+  /**
+   * Calcula las métricas detalladas
+   */
+  private calcularMetricasDetalladas(cotizaciones: any[], contratos: any[]): void {
+    // Servicio más vendido (simulado)
+    this.servicioMasVendido = 'Consultoría IT';
+    
+    // Valor promedio
+    this.valorPromedio = this.totalCotizaciones > 0 
+      ? this.valorTotalCotizaciones / this.totalCotizaciones
+      : 0;
+    
+    // Tiempo promedio (simulado)
+    this.tiempoPromedio = '5 días';
+    
+    // Clientes activos (simulado)
+    this.clientesActivos = 45;
+    
+    // Cliente top (simulado)
+    this.clienteTop = 'Empresa ABC';
+    
+    // Tasa de retención (simulado)
+    this.tasaRetencion = 78;
+    
+    // Eficiencia
+    this.eficiencia = this.totalCotizaciones > 0 
+      ? Math.round((this.cotizacionesAceptadas / this.totalCotizaciones) * 100)
+      : 0;
+    
+    // Velocidad promedio (simulado)
+    this.velocidadPromedio = '3.2 días';
+    
+    // Tasa de crecimiento (simulado)
+    this.tasaCrecimiento = 15;
+  }
+  
+  /**
+   * Prepara datos para el gráfico de tendencias de ventas
+   */
+  private prepararDatosTendencias(cotizaciones: any[], contratos: any[]): void {
+    const meses = this.obtenerUltimos6Meses();
+    const datosCotizaciones = new Array(6).fill(0);
+    const datosContratos = new Array(6).fill(0);
+    
+    // Procesar cotizaciones aceptadas por mes
+    cotizaciones.forEach(cotizacion => {
+      if (cotizacion.estado === 'Aceptada' && cotizacion.fechaCreacion) {
+        const fecha = new Date(cotizacion.fechaCreacion.seconds * 1000);
+        const mesIndex = this.obtenerIndiceMes(fecha, meses);
+        if (mesIndex >= 0) {
+          datosCotizaciones[mesIndex]++;
+        }
+      }
     });
-
-    // Procesar contratos firmados
-    contratos.filter(cont => cont.estado === 'Firmado' || cont.estado === 'Finalizado').forEach(cont => {
-      const fecha = this.obtenerFecha(cont.fechaCreacionContrato || cont.fecha);
-      const mes = fecha.getMonth();
-      contratosFirmadosPorMes[mes]++;
+    
+    // Procesar contratos firmados por mes
+    contratos.forEach(contrato => {
+      if ((contrato.estado === 'Firmado' || contrato.estadoContrato === 'Firmado') && contrato.fechaCreacionContrato) {
+        const fecha = new Date(contrato.fechaCreacionContrato.seconds * 1000);
+        const mesIndex = this.obtenerIndiceMes(fecha, meses);
+        if (mesIndex >= 0) {
+          datosContratos[mesIndex]++;
+        }
+      }
     });
-
-    this.datosGraficos.tendenciasVentas = {
-      labels: meses,
+    
+    this.datosTendencias = {
+      labels: meses.map(mes => this.formatearMes(mes)),
       datasets: [
         {
           label: 'Cotizaciones Aceptadas',
-          data: cotizacionesAceptadasPorMes,
-          borderColor: '#58A6FF',
-          backgroundColor: 'rgba(88, 166, 255, 0.1)',
+          data: datosCotizaciones,
+          borderColor: '#00d4ff',
+          backgroundColor: 'rgba(0, 212, 255, 0.1)',
           tension: 0.4,
-          fill: true,
-          yAxisID: 'y'
+          fill: true
         },
         {
           label: 'Contratos Firmados',
-          data: contratosFirmadosPorMes,
-          borderColor: '#F778BA',
-          backgroundColor: 'rgba(247, 120, 186, 0.1)',
+          data: datosContratos,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
           tension: 0.4,
-          fill: true,
-          yAxisID: 'y'
+          fill: true
         }
       ]
     };
   }
-
-  procesarEmbudoVentas(cotizaciones: any[]): void {
-    const estados = ['Emitida', 'Enviada', 'Contestada', 'En Negociación', 'Aceptada', 'Rechazada'];
-    const colores = ['#58A6FF', '#3FB950', '#F0883E', '#7c3aed', '#F778BA', '#F85149'];
-
-    const conteoEstados = estados.map(estado => 
-      cotizaciones.filter(cot => cot.estado === estado).length
-    );
-
-    this.datosGraficos.embudoVentas = {
-      labels: estados,
-      datasets: [{
-        data: conteoEstados,
-        backgroundColor: colores,
-        borderColor: colores.map(color => color + '80'),
-        borderWidth: 2,
-        hoverOffset: 4
-      }]
-    };
-  }
-
-  procesarRendimientoUsuarios(cotizaciones: any[]): void {
-    // Contar cotizaciones aceptadas por usuario
-    const rendimientoPorUsuario = new Map<string, number>();
-
-    cotizaciones.filter(cot => cot.estado === 'Aceptada').forEach(cot => {
-      const usuario = cot.atendido || cot.atendidoPor || 'Sin asignar';
-      rendimientoPorUsuario.set(usuario, (rendimientoPorUsuario.get(usuario) || 0) + 1);
+  
+  /**
+   * Prepara datos para el gráfico de rendimiento por usuario
+   */
+  private prepararDatosRendimiento(cotizaciones: any[]): void {
+    const rendimientoPorUsuario: { [key: string]: number } = {};
+    
+    // Contar cotizaciones aceptadas por atendedor
+    cotizaciones.forEach(cotizacion => {
+      if (cotizacion.estado === 'Aceptada' && cotizacion.atendedor) {
+        rendimientoPorUsuario[cotizacion.atendedor] = 
+          (rendimientoPorUsuario[cotizacion.atendedor] || 0) + 1;
+      }
     });
-
-    // Convertir a arrays para Chart.js
-    const usuarios = Array.from(rendimientoPorUsuario.keys());
-    const cantidades = Array.from(rendimientoPorUsuario.values());
-
-    this.datosGraficos.rendimientoUsuarios = {
+    
+    const usuarios = Object.keys(rendimientoPorUsuario);
+    const valores = Object.values(rendimientoPorUsuario);
+    
+    this.datosRendimiento = {
       labels: usuarios,
       datasets: [{
         label: 'Cotizaciones Aceptadas',
-        data: cantidades,
+        data: valores,
         backgroundColor: [
-          'rgba(88, 166, 255, 0.8)',
-          'rgba(247, 120, 186, 0.8)',
-          'rgba(124, 58, 237, 0.8)',
-          'rgba(63, 185, 80, 0.8)',
-          'rgba(240, 136, 62, 0.8)',
-          'rgba(248, 81, 73, 0.8)'
+          'rgba(0, 212, 255, 0.8)',
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(239, 68, 68, 0.8)'
         ],
         borderColor: [
-          '#58A6FF',
-          '#F778BA',
-          '#7c3aed',
-          '#3FB950',
-          '#F0883E',
-          '#F85149'
+          'rgba(0, 212, 255, 1)',
+          'rgba(16, 185, 129, 1)',
+          'rgba(59, 130, 246, 1)',
+          'rgba(245, 158, 11, 1)',
+          'rgba(239, 68, 68, 1)'
         ],
-        borderWidth: 2,
-        borderRadius: 8,
-        borderSkipped: false
+        borderWidth: 2
       }]
     };
   }
-
-  crearGraficos(): void {
-    console.log('📊 Dashboard: Creando gráficos...');
-
-    // Crear gráfico de tendencias de ventas
-    if (this.tendenciasVentasChartRef && this.datosGraficos.tendenciasVentas.datasets.length > 0) {
-      this.crearGraficoTendenciasVentas();
-    }
-
-    // Crear gráfico de embudo de ventas
-    if (this.embudoVentasChartRef && this.datosGraficos.embudoVentas.datasets.length > 0) {
-      this.crearGraficoEmbudoVentas();
-    }
-
-    // Crear gráfico de rendimiento por usuario
-    if (this.rendimientoUsuariosChartRef && this.datosGraficos.rendimientoUsuarios.datasets.length > 0) {
-      this.crearGraficoRendimientoUsuarios();
-    }
-  }
-
-  crearGraficoTendenciasVentas(): void {
-    const ctx = this.tendenciasVentasChartRef.nativeElement.getContext('2d');
+  
+  /**
+   * Prepara datos para el gráfico de embudo de ventas
+   */
+  private prepararDatosEmbudo(cotizaciones: any[]): void {
+    const estados = ['Pendiente', 'Enviada', 'Aceptada', 'Rechazada'];
+    const datos = estados.map(estado => {
+      return cotizaciones.filter(cotizacion => cotizacion.estado === estado).length;
+    });
     
-    this.tendenciasVentasChart = new Chart(ctx, {
+    this.datosEmbudo = {
+      labels: estados,
+      datasets: [{
+        data: datos,
+        backgroundColor: [
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(239, 68, 68, 0.8)'
+        ],
+        borderColor: [
+          'rgba(245, 158, 11, 1)',
+          'rgba(59, 130, 246, 1)',
+          'rgba(16, 185, 129, 1)',
+          'rgba(239, 68, 68, 1)'
+        ],
+        borderWidth: 2
+      }]
+    };
+  }
+  
+  /**
+   * Inicializa todos los gráficos
+   */
+  private inicializarGraficos(): void {
+    console.log('🎨 DashboardComponent: Creando gráficos');
+    this.crearGraficoTendencias();
+    this.crearGraficoRendimiento();
+    this.crearGraficoEmbudo();
+  }
+  
+  /**
+   * Crea el gráfico de tendencias de ventas
+   */
+  private crearGraficoTendencias(): void {
+    const canvas = document.getElementById('tendenciasVentasChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.error('❌ DashboardComponent: Canvas de tendencias no encontrado');
+      return;
+    }
+    
+    this.graficoTendencias = new Chart(canvas, {
       type: 'line',
-      data: this.datosGraficos.tendenciasVentas,
+      data: this.datosTendencias,
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
         plugins: {
           title: {
             display: true,
-            text: 'Tendencia de Ventas por Mes',
-            color: '#E6EDF3',
-            font: {
-              size: 16,
-              weight: 'bold' as const,
-              family: 'Poppins, sans-serif'
-            }
+            text: 'Tendencia de Ventas (Últimos 6 Meses)',
+            color: '#ffffff',
+            font: { size: 16, weight: 'bold' }
           },
           legend: {
-            position: 'top',
-            labels: {
-              usePointStyle: true,
-              padding: 15,
-              color: '#8B949E',
-              font: {
-                size: 11,
-                family: 'Inter, sans-serif'
-              }
-            }
-          },
-          datalabels: {
-            display: function(context) {
-              const value = context.dataset.data[context.dataIndex];
-              return typeof value === 'number' && value > 0;
-            },
-            color: '#E6EDF3',
-            font: {
-              weight: 'bold',
-              size: 10
-            },
-            formatter: function(value) {
-              return typeof value === 'number' && value > 0 ? value : '';
-            }
+            labels: { color: '#ffffff' }
           }
         },
         scales: {
           x: {
-            display: true,
-            title: {
-              display: true,
-              text: 'Mes',
-              color: '#8B949E',
-              font: {
-                size: 12,
-                weight: 'bold' as const
-              }
-            },
-            ticks: {
-              color: '#8B949E',
-              font: {
-                size: 10
-              }
-            },
-            grid: {
-              color: '#30363D'
-            }
+            ticks: { color: '#ffffff' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
           },
           y: {
-            display: true,
-            title: {
-              display: true,
-              text: 'Cantidad',
-              color: '#8B949E',
-              font: {
-                size: 12,
-                weight: 'bold' as const
-              }
-            },
-            ticks: {
-              color: '#8B949E',
-              font: {
-                size: 10
-              },
-              callback: function(value) {
-                return value;
-              }
-            },
-            grid: {
-              color: '#30363D'
-            }
+            ticks: { color: '#ffffff' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
           }
         }
       }
     });
   }
-
-  crearGraficoEmbudoVentas(): void {
-    const ctx = this.embudoVentasChartRef.nativeElement.getContext('2d');
+  
+  /**
+   * Crea el gráfico de rendimiento por usuario
+   */
+  private crearGraficoRendimiento(): void {
+    const canvas = document.getElementById('rendimientoUsuariosChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.error('❌ DashboardComponent: Canvas de rendimiento no encontrado');
+      return;
+    }
     
-    this.embudoVentasChart = new Chart(ctx, {
+    this.graficoRendimiento = new Chart(canvas, {
+      type: 'bar',
+      data: this.datosRendimiento,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Rendimiento por Usuario',
+            color: '#ffffff',
+            font: { size: 16, weight: 'bold' }
+          },
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#ffffff' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          y: {
+            ticks: { color: '#ffffff' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+  }
+  
+  /**
+   * Crea el gráfico de embudo de ventas
+   */
+  private crearGraficoEmbudo(): void {
+    const canvas = document.getElementById('embudoVentasChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.error('❌ DashboardComponent: Canvas de embudo no encontrado');
+      return;
+    }
+    
+    this.graficoEmbudo = new Chart(canvas, {
       type: 'doughnut',
-      data: this.datosGraficos.embudoVentas,
+      data: this.datosEmbudo,
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -767,172 +503,100 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           title: {
             display: true,
             text: 'Embudo de Ventas',
-            color: '#E6EDF3',
-            font: {
-              size: 16,
-              weight: 'bold' as const,
-              family: 'Poppins, sans-serif'
-            }
+            color: '#ffffff',
+            font: { size: 16, weight: 'bold' }
           },
           legend: {
             position: 'bottom',
-            labels: {
-              usePointStyle: true,
-              padding: 15,
-              color: '#8B949E',
-              font: {
-                size: 11,
-                family: 'Inter, sans-serif'
-              }
-            }
-          },
-          datalabels: {
-            display: function(context) {
-              const value = context.dataset.data[context.dataIndex];
-              return typeof value === 'number' && value > 0;
-            },
-            color: '#E6EDF3',
-            font: {
-              weight: 'bold',
-              size: 12
-            },
-            formatter: function(value, context) {
-              if (typeof value !== 'number') return '';
-              const data = context.dataset.data as number[];
-              const total = data.reduce((sum, val) => sum + (typeof val === 'number' ? val : 0), 0);
-              const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-              return `${value}\n(${percentage}%)`;
-            }
+            labels: { color: '#ffffff' }
           }
         }
       }
     });
   }
-
-  crearGraficoRendimientoUsuarios(): void {
-    const ctx = this.rendimientoUsuariosChartRef.nativeElement.getContext('2d');
+  
+  /**
+   * Actualiza los gráficos con nuevos datos
+   */
+  private actualizarGraficos(): void {
+    if (this.graficoTendencias) {
+      this.graficoTendencias.data = this.datosTendencias;
+      this.graficoTendencias.update();
+    }
     
-    this.rendimientoUsuariosChart = new Chart(ctx, {
-      type: 'bar',
-      data: this.datosGraficos.rendimientoUsuarios,
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Rendimiento por Usuario',
-            color: '#E6EDF3',
-            font: {
-              size: 16,
-              weight: 'bold' as const,
-              family: 'Poppins, sans-serif'
-            }
-          },
-          legend: {
-            display: false
-          },
-          datalabels: {
-            display: function(context) {
-              const value = context.dataset.data[context.dataIndex];
-              return typeof value === 'number' && value > 0;
-            },
-            color: '#E6EDF3',
-            font: {
-              weight: 'bold',
-              size: 11
-            },
-            anchor: 'end',
-            align: 'right',
-            offset: 4,
-            formatter: function(value) {
-              return typeof value === 'number' && value > 0 ? value : '';
-            }
-          }
-        },
-        scales: {
-          x: {
-            display: true,
-            title: {
-              display: true,
-              text: 'Cotizaciones Aceptadas',
-              color: '#8B949E',
-              font: {
-                size: 12,
-                weight: 'bold' as const
-              }
-            },
-            ticks: {
-              color: '#8B949E',
-              font: {
-                size: 10
-              },
-              callback: function(value) {
-                return value;
-              }
-            },
-            grid: {
-              color: '#30363D'
-            }
-          },
-          y: {
-            display: true,
-            title: {
-              display: true,
-              text: 'Usuario',
-              color: '#8B949E',
-              font: {
-                size: 12,
-                weight: 'bold' as const
-              }
-            },
-            ticks: {
-              color: '#8B949E',
-              font: {
-                size: 10
-              }
-            },
-            grid: {
-              color: '#30363D'
-            }
-          }
-        }
-      }
-    });
-  }
-
-  // Método auxiliar para obtener fecha
-  private obtenerFecha(fecha: any): Date {
-    if (fecha?.toDate) {
-      return fecha.toDate();
+    if (this.graficoRendimiento) {
+      this.graficoRendimiento.data = this.datosRendimiento;
+      this.graficoRendimiento.update();
     }
-    if (fecha instanceof Date) {
-      return fecha;
+    
+    if (this.graficoEmbudo) {
+      this.graficoEmbudo.data = this.datosEmbudo;
+      this.graficoEmbudo.update();
     }
-    if (typeof fecha === 'string') {
-      return new Date(fecha);
+  }
+  
+  /**
+   * Destruye los gráficos para liberar memoria
+   */
+  private destruirGraficos(): void {
+    if (this.graficoTendencias) {
+      this.graficoTendencias.destroy();
+      this.graficoTendencias = null;
     }
-    return new Date();
+    if (this.graficoRendimiento) {
+      this.graficoRendimiento.destroy();
+      this.graficoRendimiento = null;
+    }
+    if (this.graficoEmbudo) {
+      this.graficoEmbudo.destroy();
+      this.graficoEmbudo = null;
+    }
   }
-
-  onLogout() {
-    this.authService.logout();
+  
+  /**
+   * Obtiene los últimos 6 meses
+   */
+  private obtenerUltimos6Meses(): Date[] {
+    const meses: Date[] = [];
+    const hoy = new Date();
+    
+    for (let i = 5; i >= 0; i--) {
+      const mes = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      meses.push(mes);
+    }
+    
+    return meses;
   }
-
-  // Método para formatear números como moneda
+  
+  /**
+   * Obtiene el índice del mes en el array de meses
+   */
+  private obtenerIndiceMes(fecha: Date, meses: Date[]): number {
+    return meses.findIndex(mes => 
+      mes.getFullYear() === fecha.getFullYear() && 
+      mes.getMonth() === fecha.getMonth()
+    );
+  }
+  
+  /**
+   * Formatea el mes para mostrar en el gráfico
+   */
+  private formatearMes(fecha: Date): string {
+    const opciones: Intl.DateTimeFormatOptions = { 
+      month: 'short', 
+      year: '2-digit' 
+    };
+    return fecha.toLocaleDateString('es-ES', opciones);
+  }
+  
+  /**
+   * Formatea el valor monetario
+   */
   formatearMoneda(valor: number): string {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP',
       minimumFractionDigits: 0
     }).format(valor);
-  }
-
-  // Método para recargar datos
-  recargarDatos(): void {
-    this.cargando = true;
-    this.error = false;
-    this.cargarDatosDashboard();
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { collection, doc, updateDoc, deleteDoc, addDoc, query, where, orderBy, setDoc, getDocs, onSnapshot, collectionData } from '@angular/fire/firestore';
+import { collection, doc, updateDoc, deleteDoc, addDoc, query, where, orderBy, setDoc, getDocs, onSnapshot, collectionData, DocumentReference } from '@angular/fire/firestore';
 import { Firestore } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
@@ -291,6 +291,20 @@ export class FirebaseService {
   deleteContrato(id: string): Promise<void> {
     const contratoRef = doc(this.firestore, 'contratos', id);
     return deleteDoc(contratoRef);
+  }
+
+  // Método para crear contrato directo (no desde cotización)
+  async createContrato(data: any): Promise<DocumentReference> {
+    console.log('🔧 FirebaseService: Creando contrato directo:', data);
+    try {
+      const contratosCollection = collection(this.firestore, 'contratos');
+      const docRef = await addDoc(contratosCollection, data);
+      console.log('✅ FirebaseService: Contrato creado con ID:', docRef.id);
+      return docRef;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al crear contrato:', error);
+      throw error;
+    }
   }
 
   createContratoFromCotizacion(cotizacion: any): Promise<any> {

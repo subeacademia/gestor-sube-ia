@@ -92,7 +92,7 @@
         <span class="btn-icon">✍️</span>
       </button>
       
-      <button class="btn-action btn-warning" (click)="editarContrato($event)" title="Editar">
+      <button class="btn-action btn-warning" (click)="editarContratoCard($event)" title="Editar">
         <span class="btn-icon">✏️</span>
       </button>
       
@@ -214,7 +214,7 @@
       <button class="btn btn-info" (click)="verPDF($event)">📄 Ver PDF</button>
       <button class="btn btn-success" (click)="enviarFirma($event)" *ngIf="contrato.estado === 'Pendiente de Firma'">📧 Enviar</button>
       <button class="btn btn-primary" (click)="firmarRepresentante($event)" *ngIf="contrato.estado === 'Pendiente de Firma' && !contrato.firmas?.representante">✍️ Firmar</button>
-      <button class="btn btn-warning" (click)="editarContrato($event)">✏️ Editar</button>
+      <button class="btn btn-warning" (click)="editarContratoCard($event)">✏️ Editar</button>
       <button class="btn btn-danger" (click)="eliminarContrato($event)">🗑️ Eliminar</button>
     </div>
   </div>

@@ -1,4 +1,4 @@
-// Plantilla para generar el HTML de los contratos
+// Plantilla para generar el HTML de los contratos con firmas
 export function renderContract(contratoData) {
   const {
     tituloContrato = 'Contrato de Servicios',
@@ -13,7 +13,17 @@ export function renderContract(contratoData) {
     total,
     descuento = 0,
     descripcionServicios,
-    terminosCondiciones
+    terminosCondiciones,
+    // Firmas
+    firmaRepresentanteBase64,
+    firmaClienteBase64,
+    representanteLegal,
+    fechaFirmaRepresentante,
+    fechaFirmaCliente,
+    // Información adicional
+    partesInvolucradas,
+    objetoContrato,
+    clausulas
   } = contratoData;
 
   const { nombre = 'No especificado', email = 'No especificado', rut = 'No especificado', empresa = 'No especificada' } = cliente;
@@ -26,6 +36,13 @@ export function renderContract(contratoData) {
   const formatearFecha = (fecha) => {
     if (!fecha) return 'No especificada';
     try {
+      if (fecha && typeof fecha === 'object' && fecha.toDate) {
+        return fecha.toDate().toLocaleDateString('es-CL', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
       return new Date(fecha).toLocaleDateString('es-CL', {
         year: 'numeric',
         month: 'long',
@@ -35,6 +52,79 @@ export function renderContract(contratoData) {
       return fecha;
     }
   };
+
+  // Sección de firmas
+  const seccionFirmas = `
+    <div class="seccion-firmas" style="margin-top: 40px; page-break-before: always;">
+      <h3 style="font-weight:bold;color:#00B8D9;border-bottom: 2px solid #00B8D9;padding-bottom: 8px;margin-bottom: 20px;">✍️ Firmas Digitales</h3>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+        <!-- Firma del Representante Legal -->
+        <div class="firma-representante" style="border: 2px solid #E2E8F0; border-radius: 8px; padding: 20px; background: #F8FAFC;">
+          <h4 style="color:#00B8D9;font-weight:bold;margin-bottom: 15px;text-align:center;">👤 Firma del Representante Legal</h4>
+          
+          ${representanteLegal ? `
+            <div style="margin-bottom: 15px;">
+              <strong>Representante:</strong> ${representanteLegal}
+            </div>
+          ` : ''}
+          
+          ${fechaFirmaRepresentante ? `
+            <div style="margin-bottom: 15px;">
+              <strong>Fecha de Firma:</strong> ${formatearFecha(fechaFirmaRepresentante)}
+            </div>
+          ` : ''}
+          
+          ${firmaRepresentanteBase64 ? `
+            <div style="text-align: center; margin-top: 20px;">
+              <img src="${firmaRepresentanteBase64}" alt="Firma del Representante" style="max-width: 200px; max-height: 100px; border: 1px solid #E2E8F0; border-radius: 4px;">
+            </div>
+          ` : `
+            <div style="text-align: center; color: #64748B; font-style: italic; margin-top: 20px;">
+              Firma pendiente
+            </div>
+          `}
+        </div>
+        
+        <!-- Firma del Cliente -->
+        <div class="firma-cliente" style="border: 2px solid #E2E8F0; border-radius: 8px; padding: 20px; background: #F8FAFC;">
+          <h4 style="color:#00B8D9;font-weight:bold;margin-bottom: 15px;text-align:center;">👤 Firma del Cliente</h4>
+          
+          <div style="margin-bottom: 15px;">
+            <strong>Cliente:</strong> ${nombre}
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <strong>Empresa:</strong> ${empresa}
+          </div>
+          
+          ${fechaFirmaCliente ? `
+            <div style="margin-bottom: 15px;">
+              <strong>Fecha de Firma:</strong> ${formatearFecha(fechaFirmaCliente)}
+            </div>
+          ` : ''}
+          
+          ${firmaClienteBase64 ? `
+            <div style="text-align: center; margin-top: 20px;">
+              <img src="${firmaClienteBase64}" alt="Firma del Cliente" style="max-width: 200px; max-height: 100px; border: 1px solid #E2E8F0; border-radius: 4px;">
+            </div>
+          ` : `
+            <div style="text-align: center; color: #64748B; font-style: italic; margin-top: 20px;">
+              Firma pendiente
+            </div>
+          `}
+        </div>
+      </div>
+      
+      <!-- Estado del contrato -->
+      <div style="background: #F0FDF4; border: 2px solid #10B981; border-radius: 8px; padding: 15px; text-align: center; margin-top: 20px;">
+        <strong style="color: #065F46;">Estado del Contrato: ${estadoContrato}</strong>
+        ${firmaRepresentanteBase64 && firmaClienteBase64 ? `
+          <br><span style="color: #10B981; font-weight: bold;">✅ Contrato Completamente Firmado</span>
+        ` : ''}
+      </div>
+    </div>
+  `;
 
   return `
   <div class="pdf-header" style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #00B8D9; padding-bottom: 20px;">
@@ -109,11 +199,38 @@ export function renderContract(contratoData) {
       </div>
     </div>
 
+    ${partesInvolucradas ? `
+    <div class="seccion" style="margin-bottom: 25px;">
+      <h3 style="font-weight:bold;color:#00B8D9;border-bottom: 2px solid #00B8D9;padding-bottom: 8px;margin-bottom: 15px;">🤝 Partes Involucradas</h3>
+      <div class="partes-involucradas" style="background:#f8fafc;padding:15px;border-radius:8px;border:2px solid #e2e8f0;white-space:pre-wrap;">
+        ${partesInvolucradas}
+      </div>
+    </div>
+    ` : ''}
+
+    ${objetoContrato ? `
+    <div class="seccion" style="margin-bottom: 25px;">
+      <h3 style="font-weight:bold;color:#00B8D9;border-bottom: 2px solid #00B8D9;padding-bottom: 8px;margin-bottom: 15px;">📄 Objeto del Contrato</h3>
+      <div class="objeto-contrato" style="background:#f8fafc;padding:15px;border-radius:8px;border:2px solid #e2e8f0;white-space:pre-wrap;">
+        ${objetoContrato}
+      </div>
+    </div>
+    ` : ''}
+
     ${descripcionServicios ? `
     <div class="seccion" style="margin-bottom: 25px;">
       <h3 style="font-weight:bold;color:#00B8D9;border-bottom: 2px solid #00B8D9;padding-bottom: 8px;margin-bottom: 15px;">📝 Descripción de Servicios</h3>
       <div class="descripcion-servicios" style="background:#f8fafc;padding:15px;border-radius:8px;border:2px solid #e2e8f0;white-space:pre-wrap;">
         ${descripcionServicios}
+      </div>
+    </div>
+    ` : ''}
+
+    ${clausulas ? `
+    <div class="seccion" style="margin-bottom: 25px;">
+      <h3 style="font-weight:bold;color:#00B8D9;border-bottom: 2px solid #00B8D9;padding-bottom: 8px;margin-bottom: 15px;">📜 Cláusulas y Términos</h3>
+      <div class="clausulas-terminos" style="background:#f8fafc;padding:15px;border-radius:8px;border:2px solid #e2e8f0;white-space:pre-wrap;">
+        ${clausulas}
       </div>
     </div>
     ` : ''}
@@ -128,6 +245,8 @@ export function renderContract(contratoData) {
     ` : ''}
 
   </div>
+
+  ${seccionFirmas}
 
   <div class="footer" style="margin-top: 40px;text-align: center;border-top: 3px solid #00B8D9;padding-top: 20px;color:#23263A;">
     <div style="font-weight:bold;margin-bottom: 10px;">Sube IA Tech Ltda.</div>
