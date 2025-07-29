@@ -86,21 +86,21 @@
       <!-- Vista Kanban -->
       <div class="kanban-board" *ngIf="viewMode === 'kanban'">
         
-        <!-- Columna: Pendiente de Firma -->
+        <!-- Columna: Pendiente de Firma Interna -->
         <div class="kanban-column" 
-             [class.column-pendiente]="true"
+             [class.column-pendiente-interna]="true"
              (dragover)="onDragOver($event)"
-             (drop)="onDrop($event, 'Pendiente de Firma')">
+             (drop)="onDrop($event, 'Pendiente de Firma Interna')">
           <div class="kanban-column-header">
             <div class="column-icon">⏳</div>
             <div class="column-info">
-              <h3>Pendiente de Firma</h3>
-              <span class="column-count">{{ getContratosPorEstado('Pendiente de Firma').length }}</span>
+              <h3>Pendiente de Firma Interna</h3>
+              <span class="column-count">{{ contratosPendienteFirmaInterna.length }}</span>
             </div>
           </div>
           <div class="kanban-column-content">
             <app-contract-card 
-              *ngFor="let contrato of getContratosPorEstado('Pendiente de Firma')"
+              *ngFor="let contrato of contratosPendienteFirmaInterna"
               [contrato]="contrato"
               [draggable]="true"
               (dragstart)="onDragStart($event, contrato)"
@@ -110,28 +110,28 @@
               (enviarCliente)="onEnviarCliente($event)"
               (editarContrato)="editarContrato(contrato)">
             </app-contract-card>
-            <div class="empty-state" *ngIf="getContratosPorEstado('Pendiente de Firma').length === 0">
+            <div class="empty-state" *ngIf="contratosPendienteFirmaInterna.length === 0">
               <div class="empty-icon">⏳</div>
-              <p>Sin contratos pendientes</p>
+              <p>Sin contratos pendientes de firma interna</p>
             </div>
           </div>
         </div>
         
-        <!-- Columna: Enviado -->
+        <!-- Columna: Pendiente de Firma Cliente -->
         <div class="kanban-column" 
-             [class.column-enviado]="true"
+             [class.column-pendiente-cliente]="true"
              (dragover)="onDragOver($event)"
-             (drop)="onDrop($event, 'Enviado')">
+             (drop)="onDrop($event, 'Pendiente de Firma Cliente')">
           <div class="kanban-column-header">
             <div class="column-icon">📤</div>
             <div class="column-info">
-              <h3>Enviado</h3>
-              <span class="column-count">{{ getContratosPorEstado('Enviado').length }}</span>
+              <h3>Pendiente de Firma Cliente</h3>
+              <span class="column-count">{{ contratosPendienteFirmaCliente.length }}</span>
             </div>
           </div>
           <div class="kanban-column-content">
             <app-contract-card 
-              *ngFor="let contrato of getContratosPorEstado('Enviado')"
+              *ngFor="let contrato of contratosPendienteFirmaCliente"
               [contrato]="contrato"
               [draggable]="true"
               (dragstart)="onDragStart($event, contrato)"
@@ -141,28 +141,28 @@
               (enviarCliente)="onEnviarCliente($event)"
               (editarContrato)="editarContrato(contrato)">
             </app-contract-card>
-            <div class="empty-state" *ngIf="getContratosPorEstado('Enviado').length === 0">
+            <div class="empty-state" *ngIf="contratosPendienteFirmaCliente.length === 0">
               <div class="empty-icon">📤</div>
-              <p>Sin contratos enviados</p>
+              <p>Sin contratos pendientes de firma del cliente</p>
             </div>
           </div>
         </div>
         
-        <!-- Columna: Firmado -->
+        <!-- Columna: Firmado por Cliente -->
         <div class="kanban-column" 
-             [class.column-firmado]="true"
+             [class.column-firmado-cliente]="true"
              (dragover)="onDragOver($event)"
-             (drop)="onDrop($event, 'Firmado')">
+             (drop)="onDrop($event, 'Firmado por Cliente')">
           <div class="kanban-column-header">
             <div class="column-icon">✅</div>
             <div class="column-info">
-              <h3>Firmado</h3>
-              <span class="column-count">{{ getContratosPorEstado('Firmado').length }}</span>
+              <h3>Firmado por Cliente</h3>
+              <span class="column-count">{{ contratosFirmadoCliente.length }}</span>
             </div>
           </div>
           <div class="kanban-column-content">
             <app-contract-card 
-              *ngFor="let contrato of getContratosPorEstado('Firmado')"
+              *ngFor="let contrato of contratosFirmadoCliente"
               [contrato]="contrato"
               [draggable]="true"
               (dragstart)="onDragStart($event, contrato)"
@@ -172,9 +172,9 @@
               (enviarCliente)="onEnviarCliente($event)"
               (editarContrato)="editarContrato(contrato)">
             </app-contract-card>
-            <div class="empty-state" *ngIf="getContratosPorEstado('Firmado').length === 0">
+            <div class="empty-state" *ngIf="contratosFirmadoCliente.length === 0">
               <div class="empty-icon">✅</div>
-              <p>Sin contratos firmados</p>
+              <p>Sin contratos firmados por cliente</p>
             </div>
           </div>
         </div>
@@ -188,12 +188,12 @@
             <div class="column-icon">🎉</div>
             <div class="column-info">
               <h3>Finalizado</h3>
-              <span class="column-count">{{ getContratosPorEstado('Finalizado').length }}</span>
+              <span class="column-count">{{ contratosFinalizados.length }}</span>
             </div>
           </div>
           <div class="kanban-column-content">
             <app-contract-card 
-              *ngFor="let contrato of getContratosPorEstado('Finalizado')"
+              *ngFor="let contrato of contratosFinalizados"
               [contrato]="contrato"
               [draggable]="true"
               (dragstart)="onDragStart($event, contrato)"
@@ -203,40 +203,9 @@
               (enviarCliente)="onEnviarCliente($event)"
               (editarContrato)="editarContrato(contrato)">
             </app-contract-card>
-            <div class="empty-state" *ngIf="getContratosPorEstado('Finalizado').length === 0">
+            <div class="empty-state" *ngIf="contratosFinalizados.length === 0">
               <div class="empty-icon">🎉</div>
               <p>Sin contratos finalizados</p>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Columna: Estados Desconocidos -->
-        <div class="kanban-column" 
-             [class.column-desconocido]="true"
-             (dragover)="onDragOver($event)"
-             (drop)="onDrop($event, 'Pendiente de Firma')">
-          <div class="kanban-column-header">
-            <div class="column-icon">❓</div>
-            <div class="column-info">
-              <h3>Estados Desconocidos</h3>
-              <span class="column-count">{{ getContratosPorEstado('Desconocido').length }}</span>
-            </div>
-          </div>
-          <div class="kanban-column-content">
-            <app-contract-card 
-              *ngFor="let contrato of getContratosPorEstado('Desconocido')"
-              [contrato]="contrato"
-              [draggable]="true"
-              (dragstart)="onDragStart($event, contrato)"
-              (estadoChanged)="onEstadoChanged($event)"
-              (contratoDeleted)="onContratoDeleted($event)"
-              (firmaRepresentante)="onFirmaRepresentante($event)"
-              (enviarCliente)="onEnviarCliente($event)"
-              (editarContrato)="editarContrato(contrato)">
-            </app-contract-card>
-            <div class="empty-state" *ngIf="getContratosPorEstado('Desconocido').length === 0">
-              <div class="empty-icon">❓</div>
-              <p>Sin contratos con estados desconocidos</p>
             </div>
           </div>
         </div>
@@ -450,6 +419,75 @@
       <button (click)="cerrarModal()" class="btn btn-secondary">Cancelar</button>
       <button (click)="guardarContratoDirecto()" class="btn btn-primary">
         {{ modoEdicion ? 'Actualizar Contrato' : 'Guardar Contrato' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de envío a cliente -->
+<div class="modal" [class]="{ 'modal-show': mostrarModalEnvio }" (click)="cerrarModalEnvio()">
+  <div class="modal-content modal-envio-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📧 Enviar Contrato para Firma</h3>
+      <span class="close" (click)="cerrarModalEnvio()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="envio-info">
+        <h4>📋 Información del Contrato</h4>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Código:</span>
+            <span class="value">{{ contratoSeleccionado?.codigo || contratoSeleccionado?.id }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Cliente:</span>
+            <span class="value">{{ contratoSeleccionado?.nombreCliente }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Empresa:</span>
+            <span class="value">{{ contratoSeleccionado?.empresa }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="email-destino">Para:</label>
+        <input 
+          type="email" 
+          id="email-destino" 
+          [(ngModel)]="emailEnvio.para" 
+          class="form-input" 
+          placeholder="email@ejemplo.com">
+      </div>
+      
+      <div class="form-group">
+        <label for="asunto-email">Asunto:</label>
+        <input 
+          type="text" 
+          id="asunto-email" 
+          [(ngModel)]="emailEnvio.asunto" 
+          class="form-input" 
+          placeholder="Firma de contrato - [Código del Contrato]">
+      </div>
+      
+      <div class="form-group">
+        <label for="mensaje-email">Mensaje:</label>
+        <textarea 
+          id="mensaje-email" 
+          [(ngModel)]="emailEnvio.mensaje" 
+          class="form-textarea" 
+          rows="6" 
+          placeholder="Estimado [Nombre Cliente], adjunto el enlace para la firma de su contrato. Saludos."></textarea>
+      </div>
+      
+      <div class="envio-actions">
+        <p class="envio-note">Se generará un enlace seguro y se enviará por email al cliente.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button (click)="cerrarModalEnvio()" class="btn btn-secondary">Cancelar</button>
+      <button (click)="enviarEmailCliente()" class="btn btn-success">
+        📧 Enviar para Firma
       </button>
     </div>
   </div>

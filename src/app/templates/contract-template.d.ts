@@ -46,4 +46,10 @@ export interface InvoiceData {
 }
 
 export function renderContract(contratoData: ContractData): string;
-export function renderInvoice(invoiceData: InvoiceData): string; 
+export function renderInvoice(invoiceData: InvoiceData): string;
+
+declare module '*/contract-template.js' {
+  export function renderContract(data: any): string;
+}
+
+export {}; 

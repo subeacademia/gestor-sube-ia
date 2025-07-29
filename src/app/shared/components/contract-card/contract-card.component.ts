@@ -126,6 +126,17 @@ export class ContractCardComponent {
               this.contrato['firmaClienteBase64']);
   }
 
+  // Verificar si tiene firma interna (representante)
+  tieneFirmaInterna(): boolean {
+    return !!(this.contrato['firmaInternaBase64'] || 
+              this.contrato['firmaRepresentanteBase64']);
+  }
+
+  // Verificar si tiene firma del cliente
+  tieneFirmaCliente(): boolean {
+    return !!(this.contrato['firmaClienteBase64']);
+  }
+
   onDragStart(event: DragEvent) {
     if (this.draggable && event.dataTransfer) {
       event.dataTransfer.setData('text/plain', this.contrato.id);

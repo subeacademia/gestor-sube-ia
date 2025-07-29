@@ -1,16 +1,18 @@
 <div class="contrato-card" 
      [class]="'card-estado-' + getEstadoClass()"
      [draggable]="draggable"
-     (dragstart)="onDragStart($event)"
-     (click)="abrirModal()">
+     (dragstart)="onDragStart($event)">
   
-  <!-- Header ultra compacto -->
+  <!-- Header con ID y cliente -->
   <div class="contrato-header">
-    <div class="codigo-section">
-      <div class="codigo-icon">📋</div>
-      <div class="codigo-info">
-        <h3>{{ contrato.codigo || contrato.id }}</h3>
-        <span class="fecha">{{ formatDate(contrato.fechaCreacionContrato) }}</span>
+    <div class="header-main">
+      <div class="contrato-id">
+        <span class="id-icon">📋</span>
+        <span class="id-text">{{ contrato.codigo || contrato.id }}</span>
+      </div>
+      <div class="cliente-info">
+        <span class="cliente-nombre">{{ contrato.nombreCliente }}</span>
+        <span class="cliente-empresa" *ngIf="contrato.empresa">{{ contrato.empresa }}</span>
       </div>
     </div>
     <div class="estado-badge" [class]="'estado-' + getEstadoClass()">
@@ -19,115 +21,63 @@
     </div>
   </div>
   
-  <!-- Información ultra compacta -->
+  <!-- Cuerpo con valor y estado -->
   <div class="contrato-body">
-    <div class="titulo-section">
-      <p class="titulo-text">{{ contrato.titulo }}</p>
+    <div class="valor-section">
+      <span class="valor-label">Valor Total:</span>
+      <span class="valor-amount">{{ formatCurrency(contrato.valorTotal) }}</span>
     </div>
     
-    <div class="cliente-section">
-      <div class="cliente-info">
-        <p class="cliente-nombre">{{ contrato.nombreCliente }}</p>
-        <p class="cliente-empresa">{{ contrato.empresa }}</p>
-        <p class="cliente-email">{{ contrato.emailCliente }}</p>
+    <!-- Indicadores de firma -->
+    <div class="firmas-indicators">
+      <div class="firma-indicator" [class.firmado]="tieneFirmaInterna()">
+        <span class="firma-icon">{{ tieneFirmaInterna() ? '✅' : '⏳' }}</span>
+        <span class="firma-label">Firma Interna</span>
       </div>
-    </div>
-    
-    <div class="info-row">
-      <div class="total-info">
-        <span class="info-icon">💰</span>
-        <span class="info-label">Total:</span>
-        <span class="info-value">{{ formatCurrency(contrato.valorTotal) }}</span>
-      </div>
-    </div>
-
-    <!-- Estado de firmas ultra compacto -->
-    <div class="firmas-section" *ngIf="contrato.firmas">
-      <div class="firmas-status">
-        <div class="firma-item" [class.firmado]="contrato.firmas.representante">
-          <span class="firma-icon">{{ contrato.firmas.representante ? '✅' : '⏳' }}</span>
-          <span class="firma-text">Rep.</span>
-        </div>
-        <div class="firma-item" [class.firmado]="contrato.firmas.cliente">
-          <span class="firma-icon">{{ contrato.firmas.cliente ? '✅' : '⏳' }}</span>
-          <span class="firma-text">Cli.</span>
-        </div>
+      <div class="firma-indicator" [class.firmado]="tieneFirmaCliente()">
+        <span class="firma-icon">{{ tieneFirmaCliente() ? '✅' : '⏳' }}</span>
+        <span class="firma-label">Firma Cliente</span>
       </div>
     </div>
   </div>
   
-  <!-- Acciones ultra compactas -->
+  <!-- Pie con botones de acción -->
   <div class="contrato-actions">
-    <div class="estado-selector">
-      <select 
-        class="estado-select" 
-        [value]="contrato.estado"
-        (change)="onEstadoChange($event)"
-        (click)="$event.stopPropagation()">
-        <option value="Pendiente de Firma">⏳ Pendiente</option>
-        <option value="Enviado">📤 Enviado</option>
-        <option value="Firmado">✅ Firmado</option>
-        <option value="Finalizado">🎉 Finalizado</option>
-      </select>
-    </div>
+    <!-- Botón: Firmar como Representante (solo si no hay firma interna) -->
+    <button 
+      class="btn-action btn-primary" 
+      (click)="firmarRepresentante($event)" 
+      title="Firmar como Representante"
+      *ngIf="!tieneFirmaInterna()">
+      <span class="btn-icon">✍️</span>
+      <span class="btn-text">Firmar como Representante</span>
+    </button>
     
-    <div class="action-buttons">
-      <!-- Botón de descarga de PDF (solo si está firmado) -->
-      <button 
-        class="btn-action btn-info" 
-        (click)="verPDF($event)" 
-        title="Descargar PDF Firmado"
-        *ngIf="isContratoFirmado() || tieneFirmas()">
-        <span class="btn-icon">📄</span>
-      </button>
-      
-      <!-- Botón de ver PDF (si no está firmado) -->
-      <button 
-        class="btn-action btn-info" 
-        (click)="verPDF($event)" 
-        title="Ver PDF"
-        *ngIf="!isContratoFirmado() && !tieneFirmas()">
-        <span class="btn-icon">👁️</span>
-      </button>
-      
-      <button 
-        class="btn-action btn-success" 
-        (click)="enviarFirma($event)" 
-        title="Enviar para Firma"
-        *ngIf="contrato.estado === 'Pendiente de Firma'">
-        <span class="btn-icon">📧</span>
-      </button>
-      
-      <button 
-        class="btn-action btn-primary" 
-        (click)="firmarRepresentante($event)" 
-        title="Firmar como Representante"
-        *ngIf="contrato.estado === 'Pendiente de Firma' && !contrato.firmas?.representante">
-        <span class="btn-icon">✍️</span>
-      </button>
-      
-      <!-- Botón para eliminar firma del representante -->
-      <button 
-        class="btn-action btn-danger" 
-        (click)="eliminarFirmaRepresentante($event)" 
-        title="Eliminar Firma del Representante"
-        *ngIf="contrato['firmaInternaBase64'] || contrato['firmaRepresentanteBase64']">
-        <span class="btn-icon">🗑️</span>
-      </button>
-      
-      <!-- Botón para eliminar firma del cliente -->
-      <button 
-        class="btn-action btn-danger" 
-        (click)="eliminarFirmaCliente($event)" 
-        title="Eliminar Firma del Cliente"
-        *ngIf="contrato['firmaClienteBase64']">
-        <span class="btn-icon">🗑️</span>
-      </button>
-      
+    <!-- Botón: Enviar a Cliente (solo si hay firma interna pero no cliente) -->
+    <button 
+      class="btn-action btn-success" 
+      (click)="enviarFirma($event)" 
+      title="Enviar a Cliente"
+      *ngIf="tieneFirmaInterna() && !tieneFirmaCliente()">
+      <span class="btn-icon">📧</span>
+      <span class="btn-text">Enviar a Cliente</span>
+    </button>
+    
+    <!-- Botón: Ver Contrato Final (solo si ambas firmas existen) -->
+    <button 
+      class="btn-action btn-info" 
+      (click)="verPDF($event)" 
+      title="Ver Contrato Final"
+      *ngIf="tieneFirmaInterna() && tieneFirmaCliente()">
+      <span class="btn-icon">📄</span>
+      <span class="btn-text">Ver Contrato Final</span>
+    </button>
+    
+    <!-- Botones adicionales -->
+    <div class="actions-secondary">
       <button class="btn-action btn-warning" (click)="editarContratoCard($event)" title="Editar">
         <span class="btn-icon">✏️</span>
       </button>
-      
       <button class="btn-action btn-danger" (click)="eliminarContrato($event)" title="Eliminar">
         <span class="btn-icon">🗑️</span>
       </button>
@@ -135,7 +85,7 @@
   </div>
   
   <!-- Indicador de drag -->
-  <div class="drag-indicator">
+  <div class="drag-indicator" *ngIf="draggable">
     <span class="drag-icon">↕️</span>
   </div>
 </div>
@@ -211,19 +161,19 @@
         </div>
       </div>
       
-      <div class="detail-section" *ngIf="contrato.firmas">
+      <div class="detail-section">
         <h4>✍️ Estado de Firmas</h4>
         <div class="detail-grid">
           <div class="detail-item">
-            <span class="detail-label">Representante Legal:</span>
-            <span class="detail-value" [class.firmado]="contrato.firmas.representante">
-              {{ contrato.firmas.representante ? '✅ Firmado' : '⏳ Pendiente' }}
+            <span class="detail-label">Firma Interna:</span>
+            <span class="detail-value" [class.firmado]="tieneFirmaInterna()">
+              {{ tieneFirmaInterna() ? '✅ Firmado' : '⏳ Pendiente' }}
             </span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Cliente:</span>
-            <span class="detail-value" [class.firmado]="contrato.firmas.cliente">
-              {{ contrato.firmas.cliente ? '✅ Firmado' : '⏳ Pendiente' }}
+            <span class="detail-label">Firma Cliente:</span>
+            <span class="detail-value" [class.firmado]="tieneFirmaCliente()">
+              {{ tieneFirmaCliente() ? '✅ Firmado' : '⏳ Pendiente' }}
             </span>
           </div>
         </div>
@@ -244,24 +194,24 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="cerrarModal()">Cerrar</button>
       
-      <!-- Botón de descarga de PDF (solo si está firmado) -->
+      <!-- Botón de descarga de PDF (solo si ambas firmas existen) -->
       <button 
         class="btn btn-info" 
         (click)="verPDF($event)" 
-        *ngIf="isContratoFirmado() || tieneFirmas()">
+        *ngIf="tieneFirmaInterna() && tieneFirmaCliente()">
         📄 Descargar PDF Firmado
       </button>
       
-      <!-- Botón de ver PDF (si no está firmado) -->
+      <!-- Botón de ver PDF (si no está completamente firmado) -->
       <button 
         class="btn btn-info" 
         (click)="verPDF($event)" 
-        *ngIf="!isContratoFirmado() && !tieneFirmas()">
+        *ngIf="!tieneFirmaInterna() || !tieneFirmaCliente()">
         👁️ Ver PDF
       </button>
       
-      <button class="btn btn-success" (click)="enviarFirma($event)" *ngIf="contrato.estado === 'Pendiente de Firma'">📧 Enviar</button>
-      <button class="btn btn-primary" (click)="firmarRepresentante($event)" *ngIf="contrato.estado === 'Pendiente de Firma' && !contrato.firmas?.representante">✍️ Firmar</button>
+      <button class="btn btn-success" (click)="enviarFirma($event)" *ngIf="tieneFirmaInterna() && !tieneFirmaCliente()">📧 Enviar</button>
+      <button class="btn btn-primary" (click)="firmarRepresentante($event)" *ngIf="!tieneFirmaInterna()">✍️ Firmar</button>
       <button class="btn btn-warning" (click)="editarContratoCard($event)">✏️ Editar</button>
       <button class="btn btn-danger" (click)="eliminarContrato($event)">🗑️ Eliminar</button>
     </div>

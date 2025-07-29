@@ -5,6 +5,7 @@ import { HeaderComponent } from '../../shared/components/header/header.component
 import { ContractCardComponent } from '../../shared/components/contract-card/contract-card.component';
 import { FirebaseService } from '../../core/services/firebase.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { EmailService } from '../../core/services/email.service';
 import { Router } from '@angular/router';
 
 declare var html2pdf: any;
@@ -39,6 +40,12 @@ export class ContratosComponent implements OnInit {
   contratos: Contrato[] = [];
   contratosFiltrados: Contrato[] = [];
   
+  // Arrays para el Kanban basado en firmas
+  contratosPendienteFirmaInterna: Contrato[] = [];
+  contratosPendienteFirmaCliente: Contrato[] = [];
+  contratosFirmadoCliente: Contrato[] = [];
+  contratosFinalizados: Contrato[] = [];
+  
   // Estadísticas
   totalContratos: number = 0;
   contratosPendientes: number = 0;
@@ -66,6 +73,15 @@ export class ContratosComponent implements OnInit {
     terminosCondiciones: ''
   };
 
+  // Modal de envío
+  mostrarModalEnvio: boolean = false;
+  contratoSeleccionado: Contrato | null = null;
+  emailEnvio: any = {
+    para: '',
+    asunto: '',
+    mensaje: ''
+  };
+
   // Modo de vista
   viewMode: 'kanban' | 'list' = 'kanban';
   
@@ -75,6 +91,7 @@ export class ContratosComponent implements OnInit {
   constructor(
     private firebaseService: FirebaseService,
     private notificationService: NotificationService,
+    private emailService: EmailService,
     private router: Router
   ) {}
 
@@ -89,23 +106,69 @@ export class ContratosComponent implements OnInit {
       console.log('📋 ContratosComponent: Estados de contratos:', this.contratos.map(c => ({ id: c.id, estado: c.estado, codigo: c.codigo })));
       
       this.contratosFiltrados = [...this.contratos];
+      this.categorizarContratosPorFirmas();
       this.calcularEstadisticas();
       
-      // Debug: Verificar contratos por estado
-      console.log('🔍 ContratosComponent: Contratos por estado:');
-      console.log('Pendiente de Firma:', this.getContratosPorEstado('Pendiente de Firma').length);
-      console.log('Enviado:', this.getContratosPorEstado('Enviado').length);
-      console.log('Firmado:', this.getContratosPorEstado('Firmado').length);
-      console.log('Finalizado:', this.getContratosPorEstado('Finalizado').length);
-      
-      // Debug: Verificar estados únicos
-      const estadosUnicos = [...new Set(this.contratos.map(c => c.estado))];
-      console.log('🔍 ContratosComponent: Estados únicos encontrados:', estadosUnicos);
+      // Debug: Verificar contratos por categoría
+      console.log('🔍 ContratosComponent: Contratos por categoría:');
+      console.log('Pendiente Firma Interna:', this.contratosPendienteFirmaInterna.length);
+      console.log('Pendiente Firma Cliente:', this.contratosPendienteFirmaCliente.length);
+      console.log('Firmado por Cliente:', this.contratosFirmadoCliente.length);
+      console.log('Finalizados:', this.contratosFinalizados.length);
       
     } catch (error) {
       console.error('❌ ContratosComponent: Error al cargar contratos:', error);
       this.notificationService.showError('Error al cargar los contratos');
     }
+  }
+
+  // Método para categorizar contratos según el estado de las firmas
+  categorizarContratosPorFirmas() {
+    this.contratosPendienteFirmaInterna = [];
+    this.contratosPendienteFirmaCliente = [];
+    this.contratosFirmadoCliente = [];
+    this.contratosFinalizados = [];
+
+    console.log('🔍 Categorizando contratos...');
+    console.log('📋 Total de contratos:', this.contratos.length);
+
+    this.contratos.forEach((contrato, index) => {
+      const tieneFirmaInterna = !!(contrato['firmaInternaBase64'] || contrato['firmaRepresentanteBase64']);
+      const tieneFirmaCliente = !!contrato['firmaClienteBase64'];
+      const esFinalizado = contrato.estado === 'Finalizado';
+
+      console.log(`📋 Contrato ${index + 1}:`, {
+        id: contrato.id,
+        codigo: contrato.codigo,
+        estado: contrato.estado,
+        firmaInternaBase64: !!contrato['firmaInternaBase64'],
+        firmaRepresentanteBase64: !!contrato['firmaRepresentanteBase64'],
+        firmaClienteBase64: !!contrato['firmaClienteBase64'],
+        tieneFirmaInterna,
+        tieneFirmaCliente,
+        esFinalizado
+      });
+
+      if (esFinalizado) {
+        this.contratosFinalizados.push(contrato);
+        console.log(`✅ ${contrato.codigo} → Finalizados`);
+      } else if (tieneFirmaInterna && tieneFirmaCliente) {
+        this.contratosFirmadoCliente.push(contrato);
+        console.log(`✅ ${contrato.codigo} → Firmado por Cliente`);
+      } else if (tieneFirmaInterna && !tieneFirmaCliente) {
+        this.contratosPendienteFirmaCliente.push(contrato);
+        console.log(`✅ ${contrato.codigo} → Pendiente Firma Cliente`);
+      } else {
+        this.contratosPendienteFirmaInterna.push(contrato);
+        console.log(`✅ ${contrato.codigo} → Pendiente Firma Interna`);
+      }
+    });
+
+    console.log('📊 Resumen de categorización:');
+    console.log('Pendiente Firma Interna:', this.contratosPendienteFirmaInterna.length);
+    console.log('Pendiente Firma Cliente:', this.contratosPendienteFirmaCliente.length);
+    console.log('Firmado por Cliente:', this.contratosFirmadoCliente.length);
+    console.log('Finalizados:', this.contratosFinalizados.length);
   }
 
   calcularEstadisticas() {
@@ -229,6 +292,7 @@ export class ContratosComponent implements OnInit {
       const contrato = this.contratos.find(c => c.id === event.contratoId);
       if (contrato) {
         contrato.estado = event.nuevoEstado;
+        this.categorizarContratosPorFirmas();
         this.calcularEstadisticas();
       }
       
@@ -250,6 +314,7 @@ export class ContratosComponent implements OnInit {
       // Remover de la lista local
       this.contratos = this.contratos.filter(c => c.id !== contratoId);
       this.contratosFiltrados = this.contratosFiltrados.filter(c => c.id !== contratoId);
+      this.categorizarContratosPorFirmas();
       this.calcularEstadisticas();
       
       console.log('✅ Contrato eliminado exitosamente');
@@ -276,14 +341,87 @@ export class ContratosComponent implements OnInit {
 
   async onEnviarCliente(event: { contratoId: string }) {
     try {
-      console.log(`📧 Navegando a envío de firma para contrato ${event.contratoId}`);
+      console.log(`📧 Abriendo modal de envío para contrato ${event.contratoId}`);
       
-      // Navegar a la página de envío de firma
-      this.router.navigate(['/enviar-firma', event.contratoId]);
+      // Buscar el contrato seleccionado
+      this.contratoSeleccionado = this.contratos.find(c => c.id === event.contratoId) || null;
+      
+      if (!this.contratoSeleccionado) {
+        this.notificationService.showError('No se encontró el contrato seleccionado');
+        return;
+      }
+      
+      // Pre-llenar el formulario de envío
+      this.emailEnvio = {
+        para: this.contratoSeleccionado.emailCliente || '',
+        asunto: `Firma de contrato - ${this.contratoSeleccionado.codigo || this.contratoSeleccionado.id}`,
+        mensaje: `Estimado ${this.contratoSeleccionado.nombreCliente}, adjunto el enlace para la firma de su contrato. Saludos.`
+      };
+      
+      // Abrir el modal
+      this.mostrarModalEnvio = true;
       
     } catch (error) {
-      console.error('❌ Error al navegar a envío de firma:', error);
-      this.notificationService.showError('Error al abrir la página de envío de firma');
+      console.error('❌ Error al abrir modal de envío:', error);
+      this.notificationService.showError('Error al abrir el modal de envío');
+    }
+  }
+
+  cerrarModalEnvio() {
+    this.mostrarModalEnvio = false;
+    this.contratoSeleccionado = null;
+    this.emailEnvio = {
+      para: '',
+      asunto: '',
+      mensaje: ''
+    };
+  }
+
+  async enviarEmailCliente() {
+    try {
+      if (!this.contratoSeleccionado) {
+        this.notificationService.showError('No hay contrato seleccionado');
+        return;
+      }
+
+      if (!this.emailEnvio.para || !this.emailEnvio.asunto || !this.emailEnvio.mensaje) {
+        this.notificationService.showError('Por favor complete todos los campos del email');
+        return;
+      }
+
+      console.log('📧 Enviando email para firma...');
+      
+      // Generar link de firma
+      const linkFirma = `${window.location.origin}/firmar-contrato-cliente/${this.contratoSeleccionado.id}`;
+      
+      // Enviar email
+      await this.emailService.enviarEmail({
+        para: this.emailEnvio.para,
+        asunto: this.emailEnvio.asunto,
+        mensaje: this.emailEnvio.mensaje + `\n\nEnlace para firma: ${linkFirma}`,
+        contratoId: this.contratoSeleccionado.id
+      });
+
+      // Actualizar estado del contrato
+      await this.firebaseService.updateContrato(this.contratoSeleccionado.id, {
+        estado: 'Pendiente de Firma Cliente',
+        fechaEnvioCliente: new Date(),
+        emailEnviado: true
+      });
+
+      // Recategorizar contratos
+      this.categorizarContratosPorFirmas();
+      this.calcularEstadisticas();
+      
+      console.log('✅ Email enviado exitosamente');
+      this.notificationService.showSuccess('Email enviado exitosamente al cliente');
+      
+      // Cerrar modal
+      this.cerrarModalEnvio();
+      
+    } catch (error) {
+      console.error('❌ Error al enviar email:', error);
+      this.notificationService.showError('Error al enviar el email: ' + error);
     }
   }
 
