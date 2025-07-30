@@ -1,0 +1,242 @@
+<div class="cliente-detalle-container">
+  <!-- Header -->
+  <app-header></app-header>
+
+  <!-- Contenido Principal -->
+  <main class="main-content">
+    <!-- Estado de carga -->
+    <div class="loading-state" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Cargando información del cliente...</p>
+    </div>
+
+    <!-- Estado de error -->
+    <div class="error-state" *ngIf="error && !loading">
+      <div class="error-icon">❌</div>
+      <h3>Error al cargar el cliente</h3>
+      <p>{{ errorMessage }}</p>
+      <button class="btn-primary" (click)="navegarAtras()">
+        ← Volver a Clientes
+      </button>
+    </div>
+
+    <!-- Contenido del cliente -->
+    <div class="cliente-content" *ngIf="!loading && !error && cliente">
+      <!-- Header del cliente -->
+      <div class="cliente-header">
+        <div class="header-info">
+          <button class="btn-back" (click)="navegarAtras()">
+            ← Volver
+          </button>
+          <div class="cliente-title">
+            <h1>{{ cliente.empresa }}</h1>
+            <span class="rut">{{ cliente.rut }}</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-secondary" (click)="editarCliente()">
+            ✏️ Editar Cliente
+          </button>
+        </div>
+      </div>
+
+      <!-- Información del cliente -->
+      <div class="cliente-info">
+        <div class="info-card">
+          <h3>📋 Información de Contacto</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Contacto Principal:</label>
+              <span>{{ cliente.nombre }}</span>
+            </div>
+            <div class="info-item">
+              <label>Cargo:</label>
+              <span>{{ cliente.cargo || 'No especificado' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Email:</label>
+              <a href="mailto:{{ cliente.email }}" class="email-link">
+                {{ cliente.email }}
+              </a>
+            </div>
+            <div class="info-item">
+              <label>Teléfono:</label>
+              <a href="tel:{{ cliente.telefono }}" class="phone-link">
+                {{ cliente.telefono }}
+              </a>
+            </div>
+            <div class="info-item">
+              <label>Dirección:</label>
+              <span>{{ cliente.direccion || 'No especificada' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Ciudad:</label>
+              <span>{{ cliente.ciudad || 'No especificada' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <h3>💰 Información Comercial</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Valor Total Facturado:</label>
+              <span class="valor-facturado">{{ formatearMoneda(cliente.valorTotalFacturado || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <label>Fecha de Registro:</label>
+              <span>{{ formatearFecha(cliente.fechaCreacion) }}</span>
+            </div>
+            <div class="info-item">
+              <label>Última Actualización:</label>
+              <span>{{ formatearFecha(cliente.fechaActualizacion) }}</span>
+            </div>
+            <div class="info-item" *ngIf="cliente.contratosRelacionados && cliente.contratosRelacionados.length > 0">
+              <label>Contratos Relacionados:</label>
+              <span>{{ cliente.contratosRelacionados.length }} contrato(s)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-card" *ngIf="cliente.notas">
+          <h3>📝 Notas</h3>
+          <p class="notas">{{ cliente.notas }}</p>
+        </div>
+      </div>
+
+      <!-- Sistema de pestañas -->
+      <div class="tabs-container">
+        <div class="tabs-header">
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab === 'cotizaciones'"
+            (click)="cambiarTab('cotizaciones')">
+            📄 Cotizaciones
+          </button>
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab === 'contratos'"
+            (click)="cambiarTab('contratos')">
+            📋 Contratos
+          </button>
+        </div>
+
+        <!-- Contenido de las pestañas -->
+        <div class="tab-content">
+          <!-- Pestaña de Cotizaciones -->
+          <div class="tab-pane" *ngIf="activeTab === 'cotizaciones'">
+            <div class="loading-state" *ngIf="(cotizaciones$ | async) === null">
+              <div class="spinner"></div>
+              <p>Cargando cotizaciones...</p>
+            </div>
+
+            <div class="empty-state" *ngIf="(cotizaciones$ | async) && (cotizaciones$ | async)!.length === 0">
+              <div class="empty-icon">📄</div>
+              <h3>No hay cotizaciones</h3>
+              <p>Este cliente aún no tiene cotizaciones registradas.</p>
+            </div>
+
+            <div class="table-container" *ngIf="(cotizaciones$ | async) && (cotizaciones$ | async)!.length > 0">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Cliente</th>
+                    <th>Valor Total</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th>Atendido Por</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let cotizacion of cotizaciones$ | async">
+                    <td>
+                      <strong>{{ cotizacion.codigo }}</strong>
+                    </td>
+                    <td>
+                      <div class="cliente-info">
+                        <strong>{{ cotizacion.nombre }}</strong>
+                        <span class="empresa">{{ cotizacion.empresa }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="valor">{{ formatearMoneda(cotizacion.valorTotal) }}</span>
+                    </td>
+                    <td>
+                      <span class="estado" [class]="'estado-' + obtenerEstadoColor(cotizacion.estado)">
+                        {{ obtenerIconoEstado(cotizacion.estado) }} {{ cotizacion.estado }}
+                      </span>
+                    </td>
+                    <td>{{ formatearFecha(cotizacion.fechaCreacion) }}</td>
+                    <td>{{ cotizacion.atendido }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Pestaña de Contratos -->
+          <div class="tab-pane" *ngIf="activeTab === 'contratos'">
+            <div class="loading-state" *ngIf="(contratos$ | async) === null">
+              <div class="spinner"></div>
+              <p>Cargando contratos...</p>
+            </div>
+
+            <div class="empty-state" *ngIf="(contratos$ | async) && (contratos$ | async)!.length === 0">
+              <div class="empty-icon">📋</div>
+              <h3>No hay contratos</h3>
+              <p>Este cliente aún no tiene contratos registrados.</p>
+            </div>
+
+            <div class="table-container" *ngIf="(contratos$ | async) && (contratos$ | async)!.length > 0">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Título</th>
+                    <th>Valor Total</th>
+                    <th>Estado</th>
+                    <th>Fecha Creación</th>
+                    <th>Firmas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let contrato of contratos$ | async">
+                    <td>
+                      <strong>{{ contrato.codigo }}</strong>
+                    </td>
+                    <td>
+                      <div class="contrato-info">
+                        <strong>{{ contrato.titulo }}</strong>
+                        <span class="cliente">{{ contrato.nombreCliente }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="valor">{{ formatearMoneda(contrato.valorTotal) }}</span>
+                    </td>
+                    <td>
+                      <span class="estado" [class]="'estado-' + obtenerEstadoColor(contrato.estado)">
+                        {{ obtenerIconoEstado(contrato.estado) }} {{ contrato.estado }}
+                      </span>
+                    </td>
+                    <td>{{ formatearFecha(contrato.fechaCreacionContrato) }}</td>
+                    <td>
+                      <div class="firmas-status">
+                        <span class="firma" [class.completada]="contrato.firmas?.representante">
+                          {{ contrato.firmas?.representante ? '✅' : '⏳' }} Rep.
+                        </span>
+                        <span class="firma" [class.completada]="contrato.firmas?.cliente">
+                          {{ contrato.firmas?.cliente ? '✅' : '⏳' }} Cliente
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

@@ -47,8 +47,10 @@
           <tr *ngFor="let cliente of (clientes$ | async) || []">
             <td>
               <div class="empresa-info">
-                <strong>{{ cliente.empresa }}</strong>
-                <span class="rut">{{ cliente.rut }}</span>
+                <a [routerLink]="['/clientes', cliente.id]" class="empresa-link">
+                  <strong>{{ cliente.empresa }}</strong>
+                  <span class="rut">{{ cliente.rut }}</span>
+                </a>
               </div>
             </td>
             <td>

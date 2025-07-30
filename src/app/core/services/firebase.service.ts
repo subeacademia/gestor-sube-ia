@@ -1304,4 +1304,94 @@ export class FirebaseService {
       return `COT-${new Date().getFullYear()}${String(timestamp % 1000000).padStart(6, '0')}`;
     }
   }
+
+  // Método para obtener cotizaciones por cliente
+  getCotizacionesByCliente(clienteId: string): Observable<any[]> {
+    console.log('🔍 FirebaseService: Obteniendo cotizaciones para cliente:', clienteId);
+    try {
+      const cotizacionesCollection = collection(this.firestore, 'cotizaciones');
+      const q = query(
+        cotizacionesCollection,
+        where('clienteId', '==', clienteId),
+        orderBy('fechaCreacion', 'desc')
+      );
+      return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener cotizaciones por cliente:', error);
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+  }
+
+  // Método para obtener contratos por cliente
+  getContratosByCliente(clienteId: string): Observable<any[]> {
+    console.log('🔍 FirebaseService: Obteniendo contratos para cliente:', clienteId);
+    try {
+      const contratosCollection = collection(this.firestore, 'contratos');
+      const q = query(
+        contratosCollection,
+        where('clienteId', '==', clienteId),
+        orderBy('fechaCreacionContrato', 'desc')
+      );
+      return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener contratos por cliente:', error);
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+  }
+
+  // Método para obtener cotizaciones por cliente (versión async)
+  async getCotizacionesByClienteAsync(clienteId: string): Promise<any[]> {
+    console.log('🔍 FirebaseService: Obteniendo cotizaciones para cliente (async):', clienteId);
+    try {
+      const cotizacionesCollection = collection(this.firestore, 'cotizaciones');
+      const q = query(
+        cotizacionesCollection,
+        where('clienteId', '==', clienteId),
+        orderBy('fechaCreacion', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      
+      const cotizaciones = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      console.log('✅ FirebaseService: Cotizaciones obtenidas:', cotizaciones.length);
+      return cotizaciones;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error en getCotizacionesByClienteAsync:', error);
+      return [];
+    }
+  }
+
+  // Método para obtener contratos por cliente (versión async)
+  async getContratosByClienteAsync(clienteId: string): Promise<any[]> {
+    console.log('🔍 FirebaseService: Obteniendo contratos para cliente (async):', clienteId);
+    try {
+      const contratosCollection = collection(this.firestore, 'contratos');
+      const q = query(
+        contratosCollection,
+        where('clienteId', '==', clienteId),
+        orderBy('fechaCreacionContrato', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      
+      const contratos = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      console.log('✅ FirebaseService: Contratos obtenidos:', contratos.length);
+      return contratos;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error en getContratosByClienteAsync:', error);
+      return [];
+    }
+  }
 }

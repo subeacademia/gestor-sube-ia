@@ -200,6 +200,26 @@ $text-secondary: #64748b;
   flex-direction: column;
   gap: 0.25rem;
 
+  .empresa-link {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $primary-color;
+    }
+
+    strong {
+      color: inherit;
+      font-weight: 600;
+    }
+
+    .rut {
+      color: $text-secondary;
+      font-size: 0.75rem;
+    }
+  }
+
   strong {
     color: $text-primary;
     font-weight: 600;

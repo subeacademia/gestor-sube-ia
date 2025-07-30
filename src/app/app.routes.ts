@@ -54,6 +54,19 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/clientes/clientes.component').then(c => c.ClientesComponent),
     canActivate: [authGuard]
   },
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-  { path: '**', redirectTo: 'dashboard' }
+  {
+    path: 'cliente/:id',
+    loadComponent: () => import('./pages/cliente-detalle/cliente-detalle.component').then(c => c.ClienteDetalleComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'test-theme',
+    loadComponent: () => import('./pages/test-theme/test-theme.component').then(c => c.TestThemeComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: '',
+    redirectTo: '/dashboard',
+    pathMatch: 'full'
+  }
 ];

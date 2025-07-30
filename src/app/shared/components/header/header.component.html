@@ -44,6 +44,14 @@
       
       <!-- Acciones de Usuario -->
       <div class="user-actions">
+        <!-- Botón de cambio de tema -->
+        <button (click)="toggleTheme()" 
+                class="btn-theme-toggle"
+                [title]="currentTheme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
+          <span *ngIf="currentTheme === 'dark'">☀️</span>
+          <span *ngIf="currentTheme === 'light'">🌙</span>
+        </button>
+        
         <div class="user-info" *ngIf="userInfo">
           <span class="user-email">{{ userInfo.email }}</span>
         </div>

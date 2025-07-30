@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ThemeService, Theme } from '../../../core/services/theme.service';
 import { User } from '@angular/fire/auth';
 import { filter } from 'rxjs/operators';
 
@@ -15,8 +16,13 @@ import { filter } from 'rxjs/operators';
 export class HeaderComponent implements OnInit {
   userInfo: User | null = null;
   currentRoute: string = '';
+  currentTheme: Theme = 'dark';
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private themeService: ThemeService
+  ) {}
 
   ngOnInit() {
     this.authService.currentUser$.subscribe((user: User | null) => {
@@ -29,6 +35,11 @@ export class HeaderComponent implements OnInit {
     ).subscribe((event: any) => {
       this.currentRoute = event.url;
     });
+
+    // Suscribirse a cambios de tema
+    this.themeService.currentTheme$.subscribe((theme: Theme) => {
+      this.currentTheme = theme;
+    });
   }
 
   async cerrarSesion() {
@@ -38,5 +49,9 @@ export class HeaderComponent implements OnInit {
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }

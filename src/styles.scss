@@ -98,6 +98,7 @@ body {
   overflow-x: hidden;
   min-height: 100vh;
   padding-top: 140px; /* Compensar header fijo */
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 /* ===== TIPOGRAFÍA GLOBAL ===== */
@@ -107,6 +108,7 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--texto-principal);
   line-height: 1.2;
   margin-bottom: var(--spacing-md);
+  transition: color var(--transition-normal);
 }
 
 h1 {
@@ -161,6 +163,7 @@ h3 {
   top: 0;
   z-index: 100;
   box-shadow: var(--shadow-lg);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
 .header-content {
@@ -428,6 +431,7 @@ h3 {
   align-items: end;
   gap: var(--spacing-lg);
   flex-wrap: wrap;
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
 .search-group {
@@ -585,6 +589,7 @@ h3 {
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
   box-shadow: var(--shadow-lg);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
 .form-section h2 {
@@ -710,6 +715,7 @@ h3 {
   animation: modalSlideIn 0.3s ease;
   border: 1px solid var(--borde-color);
   overflow: hidden;
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
 .modal-header {
