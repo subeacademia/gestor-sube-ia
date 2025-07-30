@@ -6,6 +6,7 @@ import { CdkDragDrop, CdkDropList, CdkDrag, moveItemInArray, transferArrayItem }
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { ProyectoCardComponent } from '../../shared/components/proyecto-card/proyecto-card.component';
 import { FirebaseService } from '../../core/services/firebase.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { Subscription } from 'rxjs';
 
 interface Proyecto {
@@ -65,6 +66,7 @@ export class ProyectosComponent implements OnInit, OnDestroy {
 
   constructor(
     private firebaseService: FirebaseService,
+    private notificationService: NotificationService,
     private fb: FormBuilder,
     private router: Router
   ) {
@@ -158,33 +160,53 @@ export class ProyectosComponent implements OnInit, OnDestroy {
 
   // Guardar proyecto (crear o actualizar)
   async guardarProyecto(): Promise<void> {
+    console.log('🔄 ProyectosComponent: Iniciando guardado de proyecto...');
+    console.log('📋 Estado del formulario:', this.proyectoForm.valid);
+    console.log('📋 Errores del formulario:', this.proyectoForm.errors);
+    
     if (this.proyectoForm.invalid) {
+      console.log('❌ ProyectosComponent: Formulario inválido, no se puede guardar');
+      this.mostrarNotificacion('Por favor, completa todos los campos requeridos', 'error');
       return;
     }
 
-    const formData = this.proyectoForm.value;
-    const proyectoData: Proyecto = {
-      ...formData,
-      fechaEntregaEstimada: new Date(formData.fechaEntregaEstimada),
-      fechaInicio: formData.fechaInicio ? new Date(formData.fechaInicio) : undefined,
-      fechaFin: formData.fechaFin ? new Date(formData.fechaFin) : undefined,
-      fechaCreacion: this.proyectoActual?.fechaCreacion || new Date(),
-      fechaActualizacion: new Date()
-    };
+    this.actualizandoProyecto = true;
 
     try {
+      const formData = this.proyectoForm.value;
+      console.log('📋 Datos del formulario:', formData);
+      
+      const proyectoData: Proyecto = {
+        ...formData,
+        fechaEntregaEstimada: new Date(formData.fechaEntregaEstimada),
+        fechaInicio: formData.fechaInicio ? new Date(formData.fechaInicio) : undefined,
+        fechaFin: formData.fechaFin ? new Date(formData.fechaFin) : undefined,
+        fechaCreacion: this.proyectoActual?.fechaCreacion || new Date(),
+        fechaActualizacion: new Date()
+      };
+
+      console.log('📋 Datos del proyecto a guardar:', proyectoData);
+
       if (this.editando && this.proyectoActual?.id) {
+        console.log('📝 ProyectosComponent: Actualizando proyecto existente:', this.proyectoActual.id);
         await this.firebaseService.updateProyecto(this.proyectoActual.id, proyectoData);
-        console.log('Proyecto actualizado correctamente');
+        console.log('✅ ProyectosComponent: Proyecto actualizado correctamente');
+        this.mostrarNotificacion('Proyecto actualizado exitosamente', 'success');
       } else {
+        console.log('📝 ProyectosComponent: Creando nuevo proyecto');
         await this.firebaseService.createProyecto(proyectoData);
-        console.log('Proyecto creado correctamente');
+        console.log('✅ ProyectosComponent: Proyecto creado correctamente');
+        this.mostrarNotificacion('Proyecto creado exitosamente', 'success');
       }
       
       this.cerrarModal();
       this.cargarProyectos(); // Recargar la lista
-    } catch (error) {
-      console.error('Error al guardar proyecto:', error);
+    } catch (error: any) {
+      console.error('❌ ProyectosComponent: Error al guardar proyecto:', error);
+      const mensajeError = error.message || 'Error desconocido al guardar el proyecto';
+      this.mostrarNotificacion(mensajeError, 'error');
+    } finally {
+      this.actualizandoProyecto = false;
     }
   }
 
@@ -317,40 +339,11 @@ export class ProyectosComponent implements OnInit, OnDestroy {
 
   // Método para mostrar notificaciones
   private mostrarNotificacion(mensaje: string, tipo: 'success' | 'error'): void {
-    // Crear elemento de notificación
-    const notificacion = document.createElement('div');
-    notificacion.className = `notificacion notificacion-${tipo}`;
-    notificacion.textContent = mensaje;
-    
-    // Agregar estilos
-    notificacion.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      color: white;
-      font-weight: 600;
-      z-index: 10000;
-      transform: translateX(100%);
-      transition: transform 0.3s ease;
-      ${tipo === 'success' ? 'background: var(--color-success);' : 'background: var(--color-danger);'}
-    `;
-    
-    document.body.appendChild(notificacion);
-    
-    // Animar entrada
-    setTimeout(() => {
-      notificacion.style.transform = 'translateX(0)';
-    }, 100);
-    
-    // Remover después de 3 segundos
-    setTimeout(() => {
-      notificacion.style.transform = 'translateX(100%)';
-      setTimeout(() => {
-        document.body.removeChild(notificacion);
-      }, 300);
-    }, 3000);
+    if (tipo === 'success') {
+      this.notificationService.showSuccess(mensaje);
+    } else {
+      this.notificationService.showError(mensaje);
+    }
   }
 
   // Método para obtener texto del estado

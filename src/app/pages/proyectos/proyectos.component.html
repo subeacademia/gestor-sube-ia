@@ -328,11 +328,12 @@
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="cerrarModal()">
+          <button type="button" class="btn-secondary" (click)="cerrarModal()" [disabled]="actualizandoProyecto">
             Cancelar
           </button>
-          <button type="submit" class="btn-primary" [disabled]="proyectoForm.invalid">
-            {{ textoBotonGuardar }}
+          <button type="submit" class="btn-primary" [disabled]="proyectoForm.invalid || actualizandoProyecto">
+            <span *ngIf="actualizandoProyecto" class="loading-spinner"></span>
+            {{ actualizandoProyecto ? 'Guardando...' : textoBotonGuardar }}
           </button>
         </div>
       </form>

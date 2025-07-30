@@ -555,28 +555,45 @@
   border-top: 1px solid var(--border-color);
 }
 
-.btn-primary, .btn-secondary {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  .btn-primary, .btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
-}
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
   }
 }
 

@@ -66,6 +66,36 @@ export class ThemeService {
       root.style.setProperty('--texto-secundario', '#8B949E');
       root.style.setProperty('--texto-muted', '#6E7681');
       root.style.setProperty('--color-text-dark', '#1f2937');
+      
+      // Variables de colores
+      root.style.setProperty('--color-primary', '#2563eb');
+      root.style.setProperty('--color-secondary', '#64748b');
+      root.style.setProperty('--color-success', '#10b981');
+      root.style.setProperty('--color-warning', '#f59e0b');
+      root.style.setProperty('--color-danger', '#ef4444');
+      root.style.setProperty('--color-info', '#3b82f6');
+      
+      // Variables de tipografía
+      root.style.setProperty('--text-xs', '0.75rem');
+      root.style.setProperty('--text-sm', '0.875rem');
+      root.style.setProperty('--text-base', '1rem');
+      root.style.setProperty('--text-lg', '1.125rem');
+      root.style.setProperty('--text-xl', '1.25rem');
+      root.style.setProperty('--text-2xl', '1.5rem');
+      
+      // Variables de border-radius
+      root.style.setProperty('--border-radius-sm', '0.375rem');
+      root.style.setProperty('--border-radius-md', '0.5rem');
+      root.style.setProperty('--border-radius-lg', '0.75rem');
+      root.style.setProperty('--border-radius-xl', '1rem');
+      root.style.setProperty('--border-radius-2xl', '1.5rem');
+      
+      // Variables de transiciones
+      root.style.setProperty('--transition-fast', '0.15s ease');
+      root.style.setProperty('--transition-normal', '0.3s ease');
+      root.style.setProperty('--transition-slow', '0.5s ease');
+      
+      // Variables de sombras
       root.style.setProperty('--shadow-sm', '0 1px 2px 0 rgba(0, 0, 0, 0.05)');
       root.style.setProperty('--shadow-md', '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)');
       root.style.setProperty('--shadow-lg', '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)');
@@ -80,6 +110,36 @@ export class ThemeService {
       root.style.setProperty('--texto-secundario', '#64748b');
       root.style.setProperty('--texto-muted', '#94a3b8');
       root.style.setProperty('--color-text-dark', '#1f2937');
+      
+      // Variables de colores
+      root.style.setProperty('--color-primary', '#2563eb');
+      root.style.setProperty('--color-secondary', '#64748b');
+      root.style.setProperty('--color-success', '#10b981');
+      root.style.setProperty('--color-warning', '#f59e0b');
+      root.style.setProperty('--color-danger', '#ef4444');
+      root.style.setProperty('--color-info', '#3b82f6');
+      
+      // Variables de tipografía
+      root.style.setProperty('--text-xs', '0.75rem');
+      root.style.setProperty('--text-sm', '0.875rem');
+      root.style.setProperty('--text-base', '1rem');
+      root.style.setProperty('--text-lg', '1.125rem');
+      root.style.setProperty('--text-xl', '1.25rem');
+      root.style.setProperty('--text-2xl', '1.5rem');
+      
+      // Variables de border-radius
+      root.style.setProperty('--border-radius-sm', '0.375rem');
+      root.style.setProperty('--border-radius-md', '0.5rem');
+      root.style.setProperty('--border-radius-lg', '0.75rem');
+      root.style.setProperty('--border-radius-xl', '1rem');
+      root.style.setProperty('--border-radius-2xl', '1.5rem');
+      
+      // Variables de transiciones
+      root.style.setProperty('--transition-fast', '0.15s ease');
+      root.style.setProperty('--transition-normal', '0.3s ease');
+      root.style.setProperty('--transition-slow', '0.5s ease');
+      
+      // Variables de sombras
       root.style.setProperty('--shadow-sm', '0 1px 2px 0 rgba(0, 0, 0, 0.05)');
       root.style.setProperty('--shadow-md', '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)');
       root.style.setProperty('--shadow-lg', '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)');
