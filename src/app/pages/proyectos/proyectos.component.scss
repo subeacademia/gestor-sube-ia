@@ -146,29 +146,139 @@
   }
 }
 
+// Estilos para Drag and Drop
 .column-content {
   padding: 1rem;
   min-height: 400px;
   max-height: 600px;
   overflow-y: auto;
+  
+  // Estilo para cuando se está arrastrando sobre la columna
+  &.cdk-drop-list-dragging {
+    background: rgba(var(--primary-color-rgb), 0.05);
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+  }
+  
+  // Estilo para el área de drop válida
+  &.cdk-drop-list-receiving {
+    background: rgba(var(--primary-color-rgb), 0.1);
+    border: 2px dashed var(--primary-color);
+    border-radius: 8px;
+  }
 }
 
 .project-card {
   margin-bottom: 1rem;
+  cursor: grab;
+  transition: all 0.2s ease;
 
   &:last-child {
     margin-bottom: 0;
   }
+  
+  // Estilo cuando se está arrastrando
+  &.cdk-drag-preview {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    transform: rotate(5deg);
+    opacity: 0.9;
+    border-radius: 12px;
+    background: var(--bg-secondary);
+  }
+  
+  // Estilo para el placeholder cuando se arrastra
+  &.cdk-drag-placeholder {
+    opacity: 0.3;
+    background: var(--border-color);
+    border: 2px dashed var(--text-secondary);
+    border-radius: 12px;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &::after {
+      content: "Soltar aquí";
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+  }
+  
+  // Estilo cuando se está arrastrando
+  &.cdk-drag-animating {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+  }
+  
+  // Efecto hover mejorado
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  // Cursor cuando se está arrastrando
+  &:active {
+    cursor: grabbing;
+  }
 }
 
-.empty-state {
-  text-align: center;
-  padding: 2rem 1rem;
-  color: var(--text-secondary);
-  font-style: italic;
+// Animaciones para el drag and drop
+.cdk-drop-list-dragging .project-card:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
 
-  p {
-    margin: 0;
+// Indicador visual de que se puede arrastrar
+.project-card::before {
+  content: "⋮⋮";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.project-card:hover::before {
+  opacity: 0.6;
+}
+
+// Mejoras visuales para las columnas durante el drag
+.kanban-column {
+  &.drag-over {
+    transform: scale(1.02);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Indicador de actualización
+.updating-indicator {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 1000;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  
+  .updating-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  span {
+    color: var(--text-primary);
+    font-weight: 600;
   }
 }
 
@@ -194,6 +304,34 @@
   p {
     color: var(--text-secondary);
     font-size: 1.1rem;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Estilos para el estado vacío mejorado
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  margin: 1rem 0;
+  transition: all 0.2s ease;
+
+  p {
+    margin: 0;
+  }
+  
+  // Efecto cuando se arrastra sobre área vacía
+  &.drag-over {
+    background: rgba(var(--primary-color-rgb), 0.05);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
   }
 }
 

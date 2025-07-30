@@ -35,11 +35,18 @@ export class ContractCardComponent {
   @Output() contratoDeleted = new EventEmitter<string>();
   @Output() firmaRepresentante = new EventEmitter<{ contratoId: string }>();
   @Output() enviarCliente = new EventEmitter<{ contratoId: string }>();
-  @Output() verDetalles = new EventEmitter<{ contratoId: string }>();
+  @Output() verDetalles = new EventEmitter<Contrato>();
   @Output() editarContrato = new EventEmitter<{ contratoId: string }>();
+  @Output() eliminarFirmaCliente = new EventEmitter<string>();
 
-  mostrarModal: boolean = false;
-  mostrarModalEnvio: boolean = false;
+  // Modal de detalles
+  mostrarModal = false;
+  mostrarModalEnvio = false;
+  
+  // Modal de PDF
+  mostrarModalPDF = false;
+  pdfUrl: string | null = null;
+  generandoPDF = false;
 
   constructor(
     private notificationService: NotificationService,
@@ -223,7 +230,7 @@ export class ContractCardComponent {
   }
 
   // Método para eliminar firma del cliente
-  eliminarFirmaCliente(event?: Event) {
+  onEliminarFirmaCliente(event?: Event) {
     if (event) {
       event.stopPropagation();
     }
@@ -333,6 +340,178 @@ export class ContractCardComponent {
     } catch (error: any) {
       console.error('❌ Error al generar PDF:', error);
       this.notificationService.showError('Error al generar el PDF: ' + error.message);
+    }
+  }
+
+  // Método para abrir modal de PDF
+  async abrirModalPDF(event?: Event): Promise<void> {
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    this.mostrarModalPDF = true;
+    this.generandoPDF = true;
+    
+    try {
+      await this.generarPDFParaModal();
+    } catch (error) {
+      console.error('Error al generar PDF para modal:', error);
+      this.notificationService.showError('Error al generar el PDF');
+    } finally {
+      this.generandoPDF = false;
+    }
+  }
+
+  // Método para generar PDF para la modal
+  private async generarPDFParaModal(): Promise<void> {
+    try {
+      // Verificar si el contrato tiene firmas
+      const tieneFirmas = this.contrato['firmaInternaBase64'] || 
+                         this.contrato['firmaRepresentanteBase64'] || 
+                         this.contrato['firmaClienteBase64'];
+      if (!tieneFirmas) {
+        this.notificationService.showError('Este contrato no tiene firmas. Solo se puede visualizar contratos firmados.');
+        return;
+      }
+
+      // Cargar html2pdf si no está disponible
+      if (typeof html2pdf === 'undefined') {
+        await this.cargarHtml2Pdf();
+      }
+
+      // Importar el template dinámicamente
+      const templateModule = await import('../../../templates/contract-template.js');
+      const { renderContract } = templateModule as any;
+
+      // Preparar datos del contrato
+      const datosContrato = {
+        ...this.contrato,
+        tituloContrato: this.contrato.titulo,
+        codigoCotizacion: this.contrato.codigo,
+        estadoContrato: this.contrato.estado,
+        fechaCreacionContrato: this.contrato.fechaCreacionContrato,
+        cliente: {
+          nombre: this.contrato.nombreCliente,
+          email: this.contrato.emailCliente,
+          rut: this.contrato.rutCliente,
+          empresa: this.contrato.empresa
+        },
+        totalConDescuento: this.contrato.valorTotal,
+        total: this.contrato.valorTotal,
+        descuento: this.contrato['descuento'] || 0,
+        atendido: this.contrato['atendido'],
+        // Firmas
+        firmaRepresentanteBase64: this.contrato['firmaRepresentanteBase64'],
+        firmaClienteBase64: this.contrato['firmaClienteBase64'],
+        representanteLegal: this.contrato['representanteLegal'],
+        fechaFirmaRepresentante: this.contrato['fechaFirmaRepresentante'],
+        fechaFirmaCliente: this.contrato['fechaFirmaCliente']
+      };
+
+      // Generar HTML del contrato
+      const htmlContrato = renderContract(datosContrato);
+
+      // Crear elemento temporal
+      const elemento = document.createElement('div');
+      elemento.innerHTML = htmlContrato;
+      elemento.style.position = 'absolute';
+      elemento.style.left = '-9999px';
+      elemento.style.top = '-9999px';
+      elemento.style.width = '210mm'; // A4 width
+      elemento.style.padding = '20px';
+      elemento.style.backgroundColor = 'white';
+      document.body.appendChild(elemento);
+
+      // Configuración de html2pdf para generar blob
+      const opt = {
+        margin: [10, 10, 10, 10],
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        }
+      };
+
+      // Generar PDF como blob
+      const pdfBlob = await html2pdf().set(opt).from(elemento).outputPdf('blob');
+      
+      // Crear URL del blob
+      this.pdfUrl = URL.createObjectURL(pdfBlob);
+
+      // Limpiar elemento temporal
+      document.body.removeChild(elemento);
+
+      console.log('✅ PDF generado para modal exitosamente');
+
+    } catch (error: any) {
+      console.error('❌ Error al generar PDF para modal:', error);
+      throw error;
+    }
+  }
+
+  // Método para descargar PDF desde la modal
+  async descargarPDFDesdeModal(): Promise<void> {
+    if (!this.pdfUrl) {
+      this.notificationService.showError('No hay PDF disponible para descargar');
+      return;
+    }
+
+    try {
+      // Crear enlace de descarga
+      const link = document.createElement('a');
+      link.href = this.pdfUrl;
+      link.download = `contrato-firmado-${this.contrato.codigo || this.contrato.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      this.notificationService.showSuccess('PDF descargado exitosamente');
+    } catch (error) {
+      console.error('Error al descargar PDF:', error);
+      this.notificationService.showError('Error al descargar el PDF');
+    }
+  }
+
+  // Método para imprimir PDF desde la modal
+  imprimirPDFDesdeModal(): void {
+    if (!this.pdfUrl) {
+      this.notificationService.showError('No hay PDF disponible para imprimir');
+      return;
+    }
+
+    try {
+      const printWindow = window.open(this.pdfUrl, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+    } catch (error) {
+      console.error('Error al imprimir PDF:', error);
+      this.notificationService.showError('Error al imprimir el PDF');
+    }
+  }
+
+  // Método para cerrar modal de PDF
+  cerrarModalPDF(): void {
+    this.mostrarModalPDF = false;
+    if (this.pdfUrl) {
+      URL.revokeObjectURL(this.pdfUrl);
+      this.pdfUrl = null;
+    }
+  }
+
+  // Método para abrir PDF en nueva pestaña
+  abrirEnNuevaPestana(): void {
+    if (this.pdfUrl) {
+      window.open(this.pdfUrl, '_blank');
     }
   }
 

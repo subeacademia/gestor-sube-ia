@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CdkDragDrop, CdkDropList, CdkDrag, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { ProyectoCardComponent } from '../../shared/components/proyecto-card/proyecto-card.component';
 import { FirebaseService } from '../../core/services/firebase.service';
@@ -34,6 +35,8 @@ interface Proyecto {
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
+    CdkDropList,
+    CdkDrag,
     HeaderComponent,
     ProyectoCardComponent
   ],
@@ -43,6 +46,7 @@ interface Proyecto {
 export class ProyectosComponent implements OnInit, OnDestroy {
   // Propiedades del componente
   cargando = true;
+  actualizandoProyecto = false;
   proyectos: Proyecto[] = [];
   proyectosEnPlanificacion: Proyecto[] = [];
   proyectosEnProgreso: Proyecto[] = [];
@@ -226,5 +230,137 @@ export class ProyectosComponent implements OnInit, OnDestroy {
   // Navegar a la vista de detalle del proyecto
   navegarADetalleProyecto(proyectoId: string): void {
     this.router.navigate(['/proyectos', proyectoId]);
+  }
+
+  // Método para manejar el drop de drag and drop
+  onDrop(event: CdkDragDrop<Proyecto[]>): void {
+    if (event.previousContainer === event.container) {
+      // Mover dentro de la misma columna
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+    } else {
+      // Mover entre columnas
+      transferArrayItem(
+        event.previousContainer.data,
+        event.container.data,
+        event.previousIndex,
+        event.currentIndex
+      );
+      
+      // Obtener el proyecto movido
+      const proyectoMovido = event.container.data[event.currentIndex];
+      
+      // Determinar el nuevo estado basado en la columna de destino
+      let nuevoEstado: 'planificacion' | 'en-progreso' | 'en-revision' | 'completado';
+      
+      if (event.container.id === 'planificacion') {
+        nuevoEstado = 'planificacion';
+      } else if (event.container.id === 'en-progreso') {
+        nuevoEstado = 'en-progreso';
+      } else if (event.container.id === 'en-revision') {
+        nuevoEstado = 'en-revision';
+      } else if (event.container.id === 'completado') {
+        nuevoEstado = 'completado';
+      } else {
+        return; // Estado no válido
+      }
+      
+      // Actualizar el estado del proyecto en Firebase
+      this.actualizarEstadoProyecto(proyectoMovido, nuevoEstado);
+    }
+  }
+
+  // Método para actualizar el estado del proyecto en Firebase
+  private async actualizarEstadoProyecto(proyecto: Proyecto, nuevoEstado: string): Promise<void> {
+    if (!proyecto.id) {
+      console.error('El proyecto no tiene ID');
+      return;
+    }
+
+    this.actualizandoProyecto = true;
+
+    try {
+      const proyectoActualizado = {
+        ...proyecto,
+        estadoProyecto: nuevoEstado,
+        fechaActualizacion: new Date()
+      };
+
+      // Ajustar el progreso automáticamente según el estado
+      if (nuevoEstado === 'planificacion') {
+        proyectoActualizado.progreso = Math.min(proyecto.progreso, 10);
+      } else if (nuevoEstado === 'en-progreso') {
+        proyectoActualizado.progreso = Math.max(proyecto.progreso, 20);
+      } else if (nuevoEstado === 'en-revision') {
+        proyectoActualizado.progreso = Math.max(proyecto.progreso, 80);
+      } else if (nuevoEstado === 'completado') {
+        proyectoActualizado.progreso = 100;
+      }
+
+      await this.firebaseService.updateProyecto(proyecto.id, proyectoActualizado);
+      console.log(`Proyecto ${proyecto.nombreProyecto} movido a ${nuevoEstado}`);
+      
+      // Mostrar notificación de éxito
+      this.mostrarNotificacion(`Proyecto "${proyecto.nombreProyecto}" movido a ${this.getEstadoText(nuevoEstado)}`, 'success');
+      
+      // Recargar los proyectos para reflejar los cambios
+      this.cargarProyectos();
+    } catch (error) {
+      console.error('Error al actualizar el estado del proyecto:', error);
+      // Mostrar notificación de error
+      this.mostrarNotificacion('Error al actualizar el estado del proyecto', 'error');
+      // Revertir el cambio visual si falla la actualización
+      this.cargarProyectos();
+    } finally {
+      this.actualizandoProyecto = false;
+    }
+  }
+
+  // Método para mostrar notificaciones
+  private mostrarNotificacion(mensaje: string, tipo: 'success' | 'error'): void {
+    // Crear elemento de notificación
+    const notificacion = document.createElement('div');
+    notificacion.className = `notificacion notificacion-${tipo}`;
+    notificacion.textContent = mensaje;
+    
+    // Agregar estilos
+    notificacion.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      z-index: 10000;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      ${tipo === 'success' ? 'background: var(--color-success);' : 'background: var(--color-danger);'}
+    `;
+    
+    document.body.appendChild(notificacion);
+    
+    // Animar entrada
+    setTimeout(() => {
+      notificacion.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+      notificacion.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        document.body.removeChild(notificacion);
+      }, 300);
+    }, 3000);
+  }
+
+  // Método para obtener texto del estado
+  private getEstadoText(estado: string): string {
+    const estados = {
+      'planificacion': 'Planificación',
+      'en-progreso': 'En Progreso',
+      'en-revision': 'En Revisión',
+      'completado': 'Completado'
+    };
+    return estados[estado as keyof typeof estados] || estado;
   }
 }

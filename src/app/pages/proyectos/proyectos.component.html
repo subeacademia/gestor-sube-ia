@@ -16,6 +16,12 @@
       </button>
     </div>
 
+    <!-- Indicador de actualización -->
+    <div class="updating-indicator" *ngIf="actualizandoProyecto">
+      <div class="updating-spinner"></div>
+      <span>Actualizando proyecto...</span>
+    </div>
+
     <!-- Tablero Kanban -->
     <div class="kanban-board" *ngIf="!cargando">
       <!-- Columna: Planificación -->
@@ -24,8 +30,15 @@
           <h3>📋 Planificación</h3>
           <span class="project-count">{{ proyectosEnPlanificacion.length }}</span>
         </div>
-        <div class="column-content">
-          <div class="project-card" *ngFor="let proyecto of proyectosEnPlanificacion">
+        <div class="column-content" 
+             cdkDropList 
+             id="planificacion"
+             [cdkDropListData]="proyectosEnPlanificacion"
+             [cdkDropListConnectedTo]="['en-progreso', 'en-revision', 'completado']"
+             (cdkDropListDropped)="onDrop($event)">
+          <div class="project-card" 
+               *ngFor="let proyecto of proyectosEnPlanificacion"
+               cdkDrag>
             <app-proyecto-card 
               [proyecto]="proyecto"
               (verDetalles)="verDetallesProyecto($event)"
@@ -45,8 +58,15 @@
           <h3>⚡ En Progreso</h3>
           <span class="project-count">{{ proyectosEnProgreso.length }}</span>
         </div>
-        <div class="column-content">
-          <div class="project-card" *ngFor="let proyecto of proyectosEnProgreso">
+        <div class="column-content" 
+             cdkDropList 
+             id="en-progreso"
+             [cdkDropListData]="proyectosEnProgreso"
+             [cdkDropListConnectedTo]="['planificacion', 'en-revision', 'completado']"
+             (cdkDropListDropped)="onDrop($event)">
+          <div class="project-card" 
+               *ngFor="let proyecto of proyectosEnProgreso"
+               cdkDrag>
             <app-proyecto-card 
               [proyecto]="proyecto"
               (verDetalles)="verDetallesProyecto($event)"
@@ -66,8 +86,15 @@
           <h3>🔍 En Revisión</h3>
           <span class="project-count">{{ proyectosEnRevision.length }}</span>
         </div>
-        <div class="column-content">
-          <div class="project-card" *ngFor="let proyecto of proyectosEnRevision">
+        <div class="column-content" 
+             cdkDropList 
+             id="en-revision"
+             [cdkDropListData]="proyectosEnRevision"
+             [cdkDropListConnectedTo]="['planificacion', 'en-progreso', 'completado']"
+             (cdkDropListDropped)="onDrop($event)">
+          <div class="project-card" 
+               *ngFor="let proyecto of proyectosEnRevision"
+               cdkDrag>
             <app-proyecto-card 
               [proyecto]="proyecto"
               (verDetalles)="verDetallesProyecto($event)"
@@ -87,8 +114,15 @@
           <h3>✅ Completado</h3>
           <span class="project-count">{{ proyectosCompletados.length }}</span>
         </div>
-        <div class="column-content">
-          <div class="project-card" *ngFor="let proyecto of proyectosCompletados">
+        <div class="column-content" 
+             cdkDropList 
+             id="completado"
+             [cdkDropListData]="proyectosCompletados"
+             [cdkDropListConnectedTo]="['planificacion', 'en-progreso', 'en-revision']"
+             (cdkDropListDropped)="onDrop($event)">
+          <div class="project-card" 
+               *ngFor="let proyecto of proyectosCompletados"
+               cdkDrag>
             <app-proyecto-card 
               [proyecto]="proyecto"
               (verDetalles)="verDetallesProyecto($event)"

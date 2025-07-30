@@ -77,6 +77,17 @@
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s ease;
   --transition-slow: 0.5s ease;
+  
+  /* Variables para drag and drop */
+  --primary-color: var(--acento-cian);
+  --secondary-color: var(--acento-magenta);
+  --accent-color: var(--color-accent);
+  --bg-primary: var(--bg-principal);
+  --bg-secondary: var(--bg-secundario);
+  --border-color: var(--borde-color);
+  --text-primary: var(--texto-principal);
+  --text-secondary: var(--texto-secundario);
+  --primary-color-rgb: 88, 166, 255;
 }
 
 /* ===== RESET Y BASE ===== */

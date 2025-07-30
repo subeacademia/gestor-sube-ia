@@ -59,11 +59,11 @@
 
   <!-- Acciones -->
   <div class="card-actions">
-    <button class="btn-action btn-details" (click)="onVerDetalles()">
+    <button class="btn-action btn-details" (click)="onVerDetalles(); $event.stopPropagation()">
       <span class="btn-icon">👁️</span>
       Ver Detalles
     </button>
-    <button class="btn-action btn-edit" (click)="onEditar()">
+    <button class="btn-action btn-edit" (click)="onEditar(); $event.stopPropagation()">
       <span class="btn-icon">✏️</span>
       Editar
     </button>

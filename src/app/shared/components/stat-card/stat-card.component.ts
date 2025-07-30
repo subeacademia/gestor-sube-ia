@@ -13,4 +13,7 @@ export class StatCardComponent {
   @Input() value: string = '';
   @Input() icon: string = '';
   @Input() color: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'accent' = 'primary';
+  @Input() trend?: 'up' | 'down';
+  @Input() trendValue?: string;
+  @Input() description?: string;
 }

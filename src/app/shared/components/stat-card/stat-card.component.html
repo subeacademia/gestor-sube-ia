@@ -1,7 +1,14 @@
 <div class="stat-card" [ngClass]="'stat-card-' + color">
-  <div class="stat-card-icon" *ngIf="icon">{{ icon }}</div>
+  <div class="stat-card-header">
+    <div class="stat-card-icon" *ngIf="icon">{{ icon }}</div>
+    <div class="stat-card-trend" *ngIf="trend">
+      <span class="trend-icon" [ngClass]="'trend-' + trend">{{ trend === 'up' ? '↗' : '↘' }}</span>
+      <span class="trend-value">{{ trendValue }}</span>
+    </div>
+  </div>
   <div class="stat-card-content">
-    <h3>{{ title }}</h3>
+    <h3 class="stat-title">{{ title }}</h3>
     <p class="stat-value">{{ value }}</p>
+    <p class="stat-description" *ngIf="description">{{ description }}</p>
   </div>
 </div>
