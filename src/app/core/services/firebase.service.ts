@@ -1394,4 +1394,255 @@ export class FirebaseService {
       return [];
     }
   }
+
+  // ===== MÉTODOS PARA GESTIÓN DE PROYECTOS =====
+
+  // Obtener todos los proyectos
+  getProyectos(): Observable<any[]> {
+    console.log('🔍 FirebaseService: Obteniendo proyectos...');
+    try {
+      const proyectosCollection = collection(this.firestore, 'proyectos');
+      const q = query(proyectosCollection, orderBy('fechaCreacion', 'desc'));
+      return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener proyectos:', error);
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+  }
+
+  // Crear nuevo proyecto
+  async createProyecto(data: any): Promise<DocumentReference> {
+    console.log('📝 FirebaseService: Creando nuevo proyecto...', data);
+    try {
+      const proyectosCollection = collection(this.firestore, 'proyectos');
+      const proyectoData = {
+        ...data,
+        fechaCreacion: new Date(),
+        fechaActualizacion: new Date()
+      };
+      
+      const docRef = await addDoc(proyectosCollection, proyectoData);
+      console.log('✅ FirebaseService: Proyecto creado con ID:', docRef.id);
+      return docRef;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al crear proyecto:', error);
+      throw error;
+    }
+  }
+
+  // Actualizar proyecto existente
+  async updateProyecto(id: string, data: any): Promise<void> {
+    console.log('📝 FirebaseService: Actualizando proyecto:', id);
+    try {
+      const proyectoDoc = doc(this.firestore, 'proyectos', id);
+      const proyectoData = {
+        ...data,
+        fechaActualizacion: new Date()
+      };
+      
+      await updateDoc(proyectoDoc, proyectoData);
+      console.log('✅ FirebaseService: Proyecto actualizado correctamente');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al actualizar proyecto:', error);
+      throw error;
+    }
+  }
+
+  // Eliminar proyecto
+  async deleteProyecto(id: string): Promise<void> {
+    console.log('🗑️ FirebaseService: Eliminando proyecto:', id);
+    try {
+      const proyectoDoc = doc(this.firestore, 'proyectos', id);
+      await deleteDoc(proyectoDoc);
+      console.log('✅ FirebaseService: Proyecto eliminado correctamente');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al eliminar proyecto:', error);
+      throw error;
+    }
+  }
+
+
+
+  // Obtener proyectos por cliente
+  getProyectosByCliente(clienteId: string): Observable<any[]> {
+    console.log('🔍 FirebaseService: Obteniendo proyectos para cliente:', clienteId);
+    try {
+      const proyectosCollection = collection(this.firestore, 'proyectos');
+      const q = query(
+        proyectosCollection,
+        where('clienteId', '==', clienteId),
+        orderBy('fechaCreacion', 'desc')
+      );
+      return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener proyectos por cliente:', error);
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+  }
+
+  // Obtener proyectos por estado
+  getProyectosByEstado(estado: string): Observable<any[]> {
+    console.log('🔍 FirebaseService: Obteniendo proyectos por estado:', estado);
+    try {
+      const proyectosCollection = collection(this.firestore, 'proyectos');
+      const q = query(
+        proyectosCollection,
+        where('estadoProyecto', '==', estado),
+        orderBy('fechaCreacion', 'desc')
+      );
+      return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener proyectos por estado:', error);
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+  }
+
+  // ===== MÉTODOS PARA GESTIÓN DE TAREAS (SUB-COLECCIONES) =====
+
+  // Obtener proyecto por ID (versión Observable)
+  getProyectoById(id: string): Observable<any> {
+    console.log('🔍 FirebaseService: Obteniendo proyecto por ID:', id);
+    try {
+      const proyectoDoc = doc(this.firestore, 'proyectos', id);
+      return new Observable(observer => {
+        const unsubscribe = onSnapshot(proyectoDoc, (doc) => {
+          if (doc.exists()) {
+            const proyecto = { id: doc.id, ...doc.data() };
+            console.log('✅ FirebaseService: Proyecto encontrado:', proyecto);
+            observer.next(proyecto);
+          } else {
+            console.log('❌ FirebaseService: Proyecto no encontrado');
+            observer.next(null);
+          }
+        }, (error) => {
+          console.error('❌ FirebaseService: Error al obtener proyecto:', error);
+          observer.error(error);
+        });
+
+        return () => unsubscribe();
+      });
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener proyecto por ID:', error);
+      return new Observable(observer => {
+        observer.error(error);
+      });
+    }
+  }
+
+  // Obtener tareas de un proyecto
+  getTareasForProyecto(proyectoId: string): Observable<any[]> {
+    console.log('🔍 FirebaseService: Obteniendo tareas para proyecto:', proyectoId);
+    try {
+      const tareasCollection = collection(this.firestore, 'proyectos', proyectoId, 'tareas');
+      const q = query(tareasCollection, orderBy('fechaCreacion', 'desc'));
+      return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener tareas:', error);
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+  }
+
+  // Agregar tarea a un proyecto
+  async addTareaToProyecto(proyectoId: string, tareaData: any): Promise<DocumentReference> {
+    console.log('📝 FirebaseService: Agregando tarea al proyecto:', proyectoId, tareaData);
+    try {
+      const tareasCollection = collection(this.firestore, 'proyectos', proyectoId, 'tareas');
+      const tareaCompleta = {
+        ...tareaData,
+        fechaCreacion: new Date(),
+        fechaActualizacion: new Date()
+      };
+      
+      const docRef = await addDoc(tareasCollection, tareaCompleta);
+      console.log('✅ FirebaseService: Tarea agregada con ID:', docRef.id);
+      return docRef;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al agregar tarea:', error);
+      throw error;
+    }
+  }
+
+  // Actualizar tarea en un proyecto
+  async updateTareaInProyecto(proyectoId: string, tareaId: string, dataToUpdate: any): Promise<void> {
+    console.log('📝 FirebaseService: Actualizando tarea:', proyectoId, tareaId, dataToUpdate);
+    try {
+      const tareaDoc = doc(this.firestore, 'proyectos', proyectoId, 'tareas', tareaId);
+      const datosActualizados = {
+        ...dataToUpdate,
+        fechaActualizacion: new Date()
+      };
+      
+      await updateDoc(tareaDoc, datosActualizados);
+      console.log('✅ FirebaseService: Tarea actualizada correctamente');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al actualizar tarea:', error);
+      throw error;
+    }
+  }
+
+  // Eliminar tarea de un proyecto
+  async deleteTareaFromProyecto(proyectoId: string, tareaId: string): Promise<void> {
+    console.log('🗑️ FirebaseService: Eliminando tarea:', proyectoId, tareaId);
+    try {
+      const tareaDoc = doc(this.firestore, 'proyectos', proyectoId, 'tareas', tareaId);
+      await deleteDoc(tareaDoc);
+      console.log('✅ FirebaseService: Tarea eliminada correctamente');
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al eliminar tarea:', error);
+      throw error;
+    }
+  }
+
+  // Obtener tarea específica por ID
+  async getTareaById(proyectoId: string, tareaId: string): Promise<any> {
+    console.log('🔍 FirebaseService: Obteniendo tarea por ID:', proyectoId, tareaId);
+    try {
+      const tareaDoc = doc(this.firestore, 'proyectos', proyectoId, 'tareas', tareaId);
+      const docSnap = await getDocs(collection(this.firestore, 'proyectos', proyectoId, 'tareas'));
+      
+      const tarea = docSnap.docs.find(doc => doc.id === tareaId);
+      if (tarea) {
+        console.log('✅ FirebaseService: Tarea encontrada');
+        return { id: tarea.id, ...tarea.data() };
+      } else {
+        console.log('❌ FirebaseService: Tarea no encontrada');
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener tarea por ID:', error);
+      return null;
+    }
+  }
+
+  // Obtener tareas por estado (completadas/pendientes)
+  getTareasByEstado(proyectoId: string, completada: boolean): Observable<any[]> {
+    console.log('🔍 FirebaseService: Obteniendo tareas por estado:', proyectoId, completada);
+    try {
+      const tareasCollection = collection(this.firestore, 'proyectos', proyectoId, 'tareas');
+      const q = query(
+        tareasCollection,
+        where('completada', '==', completada),
+        orderBy('fechaCreacion', 'desc')
+      );
+      return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+    } catch (error) {
+      console.error('❌ FirebaseService: Error al obtener tareas por estado:', error);
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+  }
 }

@@ -1,0 +1,77 @@
+<div class="proyecto-card" (click)="onNavegarADetalle()">
+  <!-- Header de la tarjeta -->
+  <div class="card-header">
+    <div class="project-info">
+      <h4 class="project-name">{{ proyecto.nombreProyecto }}</h4>
+      <span class="client-name">{{ proyecto.nombreCliente }}</span>
+    </div>
+    <div class="project-status" [class]="'status-' + proyecto.estadoProyecto">
+      {{ getEstadoText(proyecto.estadoProyecto) }}
+    </div>
+  </div>
+
+  <!-- Contenido principal -->
+  <div class="card-content">
+    <!-- Barra de progreso -->
+    <div class="progress-section">
+      <div class="progress-header">
+        <span class="progress-label">Progreso</span>
+        <span class="progress-percentage">{{ proyecto.progreso }}%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="proyecto.progreso"></div>
+      </div>
+    </div>
+
+    <!-- Información del proyecto -->
+    <div class="project-details">
+      <div class="detail-item">
+        <span class="detail-icon">👤</span>
+        <span class="detail-label">Responsable:</span>
+        <span class="detail-value">{{ proyecto.responsable }}</span>
+      </div>
+      
+      <div class="detail-item">
+        <span class="detail-icon">📅</span>
+        <span class="detail-label">Entrega:</span>
+        <span class="detail-value">{{ proyecto.fechaEntregaEstimada | date:'dd/MM/yyyy' }}</span>
+      </div>
+      
+      <div class="detail-item">
+        <span class="detail-icon">🏷️</span>
+        <span class="detail-label">Servicio:</span>
+        <span class="detail-value">{{ proyecto.tipoServicio }}</span>
+      </div>
+    </div>
+
+    <!-- Fechas importantes -->
+    <div class="dates-section" *ngIf="proyecto.fechaInicio || proyecto.fechaFin">
+      <div class="date-item" *ngIf="proyecto.fechaInicio">
+        <span class="date-label">Inicio:</span>
+        <span class="date-value">{{ proyecto.fechaInicio | date:'dd/MM/yyyy' }}</span>
+      </div>
+      <div class="date-item" *ngIf="proyecto.fechaFin">
+        <span class="date-label">Finalización:</span>
+        <span class="date-value">{{ proyecto.fechaFin | date:'dd/MM/yyyy' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acciones -->
+  <div class="card-actions">
+    <button class="btn-action btn-details" (click)="onVerDetalles()">
+      <span class="btn-icon">👁️</span>
+      Ver Detalles
+    </button>
+    <button class="btn-action btn-edit" (click)="onEditar()">
+      <span class="btn-icon">✏️</span>
+      Editar
+    </button>
+  </div>
+
+  <!-- Indicador de urgencia -->
+  <div class="urgency-indicator" *ngIf="esUrgente()">
+    <span class="urgency-icon">⚠️</span>
+    <span class="urgency-text">Urgente</span>
+  </div>
+</div>

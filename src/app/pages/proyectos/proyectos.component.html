@@ -1,0 +1,307 @@
+<div class="proyectos-container">
+  <!-- Header de la página -->
+  <app-header></app-header>
+  
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <!-- Header de la sección -->
+    <div class="section-header">
+      <div class="header-content">
+        <h1 class="page-title">Gestión de Proyectos y Entregas</h1>
+        <p class="page-subtitle">Organiza y gestiona todos tus proyectos en un tablero visual</p>
+      </div>
+      <button class="btn-create-project" (click)="abrirModalCrearProyecto()">
+        <span class="btn-icon">➕</span>
+        Crear Nuevo Proyecto
+      </button>
+    </div>
+
+    <!-- Tablero Kanban -->
+    <div class="kanban-board" *ngIf="!cargando">
+      <!-- Columna: Planificación -->
+      <div class="kanban-column">
+        <div class="column-header planificacion">
+          <h3>📋 Planificación</h3>
+          <span class="project-count">{{ proyectosEnPlanificacion.length }}</span>
+        </div>
+        <div class="column-content">
+          <div class="project-card" *ngFor="let proyecto of proyectosEnPlanificacion">
+            <app-proyecto-card 
+              [proyecto]="proyecto"
+              (verDetalles)="verDetallesProyecto($event)"
+              (editar)="editarProyecto($event)"
+              (navegarADetalle)="navegarADetalleProyecto($event)">
+            </app-proyecto-card>
+          </div>
+          <div class="empty-state" *ngIf="proyectosEnPlanificacion.length === 0">
+            <p>No hay proyectos en planificación</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna: En Progreso -->
+      <div class="kanban-column">
+        <div class="column-header en-progreso">
+          <h3>⚡ En Progreso</h3>
+          <span class="project-count">{{ proyectosEnProgreso.length }}</span>
+        </div>
+        <div class="column-content">
+          <div class="project-card" *ngFor="let proyecto of proyectosEnProgreso">
+            <app-proyecto-card 
+              [proyecto]="proyecto"
+              (verDetalles)="verDetallesProyecto($event)"
+              (editar)="editarProyecto($event)"
+              (navegarADetalle)="navegarADetalleProyecto($event)">
+            </app-proyecto-card>
+          </div>
+          <div class="empty-state" *ngIf="proyectosEnProgreso.length === 0">
+            <p>No hay proyectos en progreso</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna: En Revisión -->
+      <div class="kanban-column">
+        <div class="column-header en-revision">
+          <h3>🔍 En Revisión</h3>
+          <span class="project-count">{{ proyectosEnRevision.length }}</span>
+        </div>
+        <div class="column-content">
+          <div class="project-card" *ngFor="let proyecto of proyectosEnRevision">
+            <app-proyecto-card 
+              [proyecto]="proyecto"
+              (verDetalles)="verDetallesProyecto($event)"
+              (editar)="editarProyecto($event)"
+              (navegarADetalle)="navegarADetalleProyecto($event)">
+            </app-proyecto-card>
+          </div>
+          <div class="empty-state" *ngIf="proyectosEnRevision.length === 0">
+            <p>No hay proyectos en revisión</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna: Completado -->
+      <div class="kanban-column">
+        <div class="column-header completado">
+          <h3>✅ Completado</h3>
+          <span class="project-count">{{ proyectosCompletados.length }}</span>
+        </div>
+        <div class="column-content">
+          <div class="project-card" *ngFor="let proyecto of proyectosCompletados">
+            <app-proyecto-card 
+              [proyecto]="proyecto"
+              (verDetalles)="verDetallesProyecto($event)"
+              (editar)="editarProyecto($event)"
+              (navegarADetalle)="navegarADetalleProyecto($event)">
+            </app-proyecto-card>
+          </div>
+          <div class="empty-state" *ngIf="proyectosCompletados.length === 0">
+            <p>No hay proyectos completados</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado de carga -->
+    <div class="loading-state" *ngIf="cargando">
+      <div class="loading-spinner"></div>
+      <p>Cargando proyectos...</p>
+    </div>
+
+    <!-- Estado vacío -->
+    <div class="empty-board" *ngIf="!cargando && totalProyectos === 0">
+      <div class="empty-content">
+        <div class="empty-icon">📋</div>
+        <h3>No hay proyectos creados</h3>
+        <p>Comienza creando tu primer proyecto para organizar tus entregas</p>
+        <button class="btn-create-first" (click)="abrirModalCrearProyecto()">
+          Crear Primer Proyecto
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para crear/editar proyecto -->
+  <div class="modal-overlay" *ngIf="mostrarModal" (click)="cerrarModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ tituloModal }}</h2>
+        <button class="btn-close" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <form [formGroup]="proyectoForm" (ngSubmit)="guardarProyecto()" class="modal-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nombreProyecto">Nombre del Proyecto *</label>
+            <input 
+              type="text" 
+              id="nombreProyecto" 
+              formControlName="nombreProyecto"
+              placeholder="Ingresa el nombre del proyecto">
+            <div class="error-message" *ngIf="proyectoForm.get('nombreProyecto')?.invalid && proyectoForm.get('nombreProyecto')?.touched">
+              El nombre del proyecto es requerido y debe tener al menos 3 caracteres
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="clienteId">Cliente *</label>
+            <input 
+              type="text" 
+              id="clienteId" 
+              formControlName="clienteId"
+              placeholder="ID del cliente">
+            <div class="error-message" *ngIf="proyectoForm.get('clienteId')?.invalid && proyectoForm.get('clienteId')?.touched">
+              El cliente es requerido
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="nombreCliente">Nombre del Cliente *</label>
+            <input 
+              type="text" 
+              id="nombreCliente" 
+              formControlName="nombreCliente"
+              placeholder="Nombre de la empresa cliente">
+            <div class="error-message" *ngIf="proyectoForm.get('nombreCliente')?.invalid && proyectoForm.get('nombreCliente')?.touched">
+              El nombre del cliente es requerido
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tipoServicio">Tipo de Servicio *</label>
+            <select id="tipoServicio" formControlName="tipoServicio">
+              <option value="">Selecciona un servicio</option>
+              <option value="Desarrollo Web">Desarrollo Web</option>
+              <option value="Aplicación Móvil">Aplicación Móvil</option>
+              <option value="Consultoría IT">Consultoría IT</option>
+              <option value="Capacitación">Capacitación</option>
+              <option value="Soporte Técnico">Soporte Técnico</option>
+              <option value="Otro">Otro</option>
+            </select>
+            <div class="error-message" *ngIf="proyectoForm.get('tipoServicio')?.invalid && proyectoForm.get('tipoServicio')?.touched">
+              El tipo de servicio es requerido
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="responsable">Responsable *</label>
+            <input 
+              type="text" 
+              id="responsable" 
+              formControlName="responsable"
+              placeholder="Nombre del responsable">
+            <div class="error-message" *ngIf="proyectoForm.get('responsable')?.invalid && proyectoForm.get('responsable')?.touched">
+              El responsable es requerido
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fechaEntregaEstimada">Fecha de Entrega Estimada *</label>
+            <input 
+              type="date" 
+              id="fechaEntregaEstimada" 
+              formControlName="fechaEntregaEstimada">
+            <div class="error-message" *ngIf="proyectoForm.get('fechaEntregaEstimada')?.invalid && proyectoForm.get('fechaEntregaEstimada')?.touched">
+              La fecha de entrega es requerida
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="estadoProyecto">Estado del Proyecto *</label>
+            <select id="estadoProyecto" formControlName="estadoProyecto">
+              <option value="planificacion">Planificación</option>
+              <option value="en-progreso">En Progreso</option>
+              <option value="en-revision">En Revisión</option>
+              <option value="completado">Completado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="progreso">Progreso (%)</label>
+            <input 
+              type="number" 
+              id="progreso" 
+              formControlName="progreso"
+              min="0" 
+              max="100"
+              placeholder="0">
+            <div class="error-message" *ngIf="proyectoForm.get('progreso')?.invalid && proyectoForm.get('progreso')?.touched">
+              El progreso debe estar entre 0 y 100
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="prioridad">Prioridad</label>
+            <select id="prioridad" formControlName="prioridad">
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fechaInicio">Fecha de Inicio</label>
+            <input 
+              type="date" 
+              id="fechaInicio" 
+              formControlName="fechaInicio">
+          </div>
+          <div class="form-group">
+            <label for="fechaFin">Fecha de Finalización</label>
+            <input 
+              type="date" 
+              id="fechaFin" 
+              formControlName="fechaFin">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="descripcion">Descripción</label>
+            <textarea 
+              id="descripcion" 
+              formControlName="descripcion"
+              rows="3"
+              placeholder="Descripción detallada del proyecto"></textarea>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="presupuesto">Presupuesto</label>
+            <input 
+              type="number" 
+              id="presupuesto" 
+              formControlName="presupuesto"
+              min="0"
+              placeholder="0">
+          </div>
+          <div class="form-group">
+            <label for="contratoId">ID del Contrato</label>
+            <input 
+              type="text" 
+              id="contratoId" 
+              formControlName="contratoId"
+              placeholder="ID del contrato asociado">
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="cerrarModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="proyectoForm.invalid">
+            {{ textoBotonGuardar }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

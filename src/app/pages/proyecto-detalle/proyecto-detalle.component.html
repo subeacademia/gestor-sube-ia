@@ -1,0 +1,251 @@
+<div class="proyecto-detalle-container">
+  <!-- Header de la página -->
+  <app-header></app-header>
+  
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <!-- Botón de regreso -->
+    <div class="back-button">
+      <button class="btn-back" (click)="volverAProyectos()">
+        <span class="btn-icon">←</span>
+        Volver a Proyectos
+      </button>
+    </div>
+
+    <!-- Estado de carga -->
+    <div class="loading-state" *ngIf="cargando">
+      <div class="loading-spinner"></div>
+      <p>Cargando proyecto...</p>
+    </div>
+
+    <!-- Estado de error -->
+    <div class="error-state" *ngIf="error">
+      <div class="error-content">
+        <div class="error-icon">❌</div>
+        <h3>Error al cargar el proyecto</h3>
+        <p>No se pudo cargar la información del proyecto solicitado.</p>
+        <button class="btn-retry" (click)="volverAProyectos()">
+          Volver a Proyectos
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido del proyecto -->
+    <div class="project-content" *ngIf="!cargando && !error && proyecto">
+      <!-- Header del proyecto -->
+      <div class="project-header">
+        <div class="project-info">
+          <h1 class="project-title">{{ proyecto.nombreProyecto }}</h1>
+          <div class="project-meta">
+            <span class="client-name">{{ proyecto.nombreCliente }}</span>
+            <span class="separator">•</span>
+            <span class="service-type">{{ proyecto.tipoServicio }}</span>
+            <span class="separator">•</span>
+            <span class="project-status" [class]="'status-' + proyecto.estadoProyecto">
+              {{ getEstadoText(proyecto.estadoProyecto) }}
+            </span>
+          </div>
+        </div>
+        <div class="project-actions">
+          <button class="btn-edit-project">
+            <span class="btn-icon">✏️</span>
+            Editar Proyecto
+          </button>
+        </div>
+      </div>
+
+      <!-- Información principal del proyecto -->
+      <div class="project-details">
+        <div class="detail-card">
+          <div class="detail-header">
+            <h3>📊 Información del Proyecto</h3>
+          </div>
+          <div class="detail-content">
+            <div class="detail-row">
+              <div class="detail-item">
+                <span class="detail-label">Responsable:</span>
+                <span class="detail-value">{{ proyecto.responsable }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Fecha de Entrega:</span>
+                <span class="detail-value">{{ proyecto.fechaEntregaEstimada | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-item">
+                <span class="detail-label">Prioridad:</span>
+                <span class="detail-value" [class]="getPrioridadClass(proyecto.prioridad)">
+                  {{ getPrioridadText(proyecto.prioridad) }}
+                </span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Presupuesto:</span>
+                <span class="detail-value">{{ proyecto.presupuesto | currency:'CLP' }}</span>
+              </div>
+            </div>
+            <div class="detail-row" *ngIf="proyecto.descripcion">
+              <div class="detail-item full-width">
+                <span class="detail-label">Descripción:</span>
+                <span class="detail-value">{{ proyecto.descripcion }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de progreso -->
+        <div class="progress-card">
+          <div class="progress-header">
+            <h3>📈 Progreso del Proyecto</h3>
+            <span class="progress-percentage">{{ proyecto.progreso }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="proyecto.progreso"></div>
+          </div>
+          <div class="progress-stats">
+            <span class="stat-item">
+              <span class="stat-number">{{ tareasCompletadas.length }}</span>
+              <span class="stat-label">Tareas Completadas</span>
+            </span>
+            <span class="stat-item">
+              <span class="stat-number">{{ tareasPendientes.length }}</span>
+              <span class="stat-label">Tareas Pendientes</span>
+            </span>
+            <span class="stat-item">
+              <span class="stat-number">{{ tareas.length }}</span>
+              <span class="stat-label">Total de Tareas</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gestión de tareas -->
+      <div class="tasks-section">
+        <div class="tasks-header">
+          <h2>📋 Gestión de Tareas</h2>
+          <p>Organiza y gestiona las tareas de este proyecto</p>
+        </div>
+
+        <!-- Formulario para agregar nueva tarea -->
+        <div class="add-task-form">
+          <form [formGroup]="tareaForm" (ngSubmit)="agregarTarea()" class="task-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="descripcion">Descripción de la Tarea *</label>
+                <input 
+                  type="text" 
+                  id="descripcion" 
+                  formControlName="descripcion"
+                  placeholder="Describe la tarea a realizar">
+                <div class="error-message" *ngIf="tareaForm.get('descripcion')?.invalid && tareaForm.get('descripcion')?.touched">
+                  La descripción es requerida y debe tener al menos 3 caracteres
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="prioridad">Prioridad</label>
+                <select id="prioridad" formControlName="prioridad">
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="responsable">Responsable</label>
+                <input 
+                  type="text" 
+                  id="responsable" 
+                  formControlName="responsable"
+                  placeholder="Nombre del responsable">
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn-add-task" [disabled]="tareaForm.invalid">
+                  <span class="btn-icon">➕</span>
+                  Agregar Tarea
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Lista de tareas -->
+        <div class="tasks-list">
+          <!-- Tareas pendientes -->
+          <div class="tasks-group" *ngIf="tareasPendientes.length > 0">
+            <h3 class="group-title">⏳ Tareas Pendientes ({{ tareasPendientes.length }})</h3>
+            <div class="task-item" *ngFor="let tarea of tareasPendientes">
+              <div class="task-content">
+                <div class="task-checkbox">
+                  <input 
+                    type="checkbox" 
+                    [checked]="tarea.completada"
+                    (change)="actualizarEstadoTarea(tarea, $event.target.checked)">
+                </div>
+                <div class="task-info">
+                  <span class="task-description">{{ tarea.descripcion }}</span>
+                  <div class="task-meta">
+                    <span class="task-priority" [class]="getPrioridadClass(tarea.prioridad)">
+                      {{ getPrioridadText(tarea.prioridad) }}
+                    </span>
+                    <span class="task-responsable" *ngIf="tarea.responsable">
+                      • {{ tarea.responsable }}
+                    </span>
+                    <span class="task-date">
+                      • {{ tarea.fechaCreacion | date:'dd/MM/yyyy' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="task-actions">
+                <button class="btn-delete-task" (click)="eliminarTarea(tarea.id!)">
+                  <span class="btn-icon">🗑️</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tareas completadas -->
+          <div class="tasks-group completed" *ngIf="tareasCompletadas.length > 0">
+            <h3 class="group-title">✅ Tareas Completadas ({{ tareasCompletadas.length }})</h3>
+            <div class="task-item completed" *ngFor="let tarea of tareasCompletadas">
+              <div class="task-content">
+                <div class="task-checkbox">
+                  <input 
+                    type="checkbox" 
+                    [checked]="tarea.completada"
+                    (change)="actualizarEstadoTarea(tarea, $event.target.checked)">
+                </div>
+                <div class="task-info">
+                  <span class="task-description">{{ tarea.descripcion }}</span>
+                  <div class="task-meta">
+                    <span class="task-priority" [class]="getPrioridadClass(tarea.prioridad)">
+                      {{ getPrioridadText(tarea.prioridad) }}
+                    </span>
+                    <span class="task-responsable" *ngIf="tarea.responsable">
+                      • {{ tarea.responsable }}
+                    </span>
+                    <span class="task-date">
+                      • Completada: {{ tarea.fechaCompletada | date:'dd/MM/yyyy' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="task-actions">
+                <button class="btn-delete-task" (click)="eliminarTarea(tarea.id!)">
+                  <span class="btn-icon">🗑️</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estado vacío -->
+          <div class="empty-tasks" *ngIf="tareas.length === 0">
+            <div class="empty-content">
+              <div class="empty-icon">📋</div>
+              <h3>No hay tareas creadas</h3>
+              <p>Comienza agregando la primera tarea para este proyecto</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
