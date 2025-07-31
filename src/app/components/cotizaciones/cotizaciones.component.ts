@@ -80,66 +80,7 @@ export class CotizacionesComponent implements OnInit {
     }
   }
 
-  async crearCotizacionPrueba(): Promise<void> {
-    try {
-      console.log('🧪 CotizacionesComponent: Creando cotización de prueba...');
-      const cotizacionPrueba = {
-        codigo: `COT-${Date.now()}`,
-        nombre: 'Cliente de Prueba',
-        email: 'prueba@test.com',
-        rut: '12345678-9',
-        empresa: 'Empresa de Prueba',
-        moneda: 'CLP',
-        servicios: [
-          {
-            nombre: 'Servicio de Prueba',
-            detalle: 'Descripción del servicio de prueba',
-            modalidad: 'Online',
-            alumnos: 5,
-            tipoCobro: 'sesion',
-            subtotal: 50000,
-            detallesCobro: {
-              sesiones: 2,
-              valorSesion: 25000
-            }
-          }
-        ],
-        atendido: 'Rodrigo Carrillo',
-        subtotal: 50000,
-        descuento: 0,
-        descuentoValor: 0,
-        totalConDescuento: 50000,
-        total: 50000,
-        notas: 'Cotización de prueba creada automáticamente',
-        estado: 'Pendiente'
-      };
 
-      await this.firebaseService.createCotizacion(cotizacionPrueba);
-      console.log('✅ CotizacionesComponent: Cotización de prueba creada exitosamente');
-      alert('✅ Cotización de prueba creada exitosamente!');
-      
-      // Recargar cotizaciones
-      this.cargarCotizaciones();
-    } catch (error) {
-      console.error('❌ CotizacionesComponent: Error al crear cotización de prueba:', error);
-      alert('❌ Error al crear cotización de prueba: ' + error);
-    }
-  }
-
-  async crearDatosCompletos(): Promise<void> {
-    try {
-      console.log('🧪 CotizacionesComponent: Creando datos completos de prueba...');
-      await this.firebaseService.crearDatosPrueba();
-      console.log('✅ CotizacionesComponent: Datos completos creados exitosamente');
-      alert('✅ Datos de prueba creados exitosamente! (Cotización + Contrato)');
-      
-      // Recargar cotizaciones
-      this.cargarCotizaciones();
-    } catch (error) {
-      console.error('❌ CotizacionesComponent: Error al crear datos completos:', error);
-      alert('❌ Error al crear datos completos: ' + error);
-    }
-  }
 
   async cargarCotizaciones(): Promise<void> {
     console.log('🚀 CotizacionesComponent: Iniciando carga de cotizaciones...');
@@ -245,27 +186,5 @@ export class CotizacionesComponent implements OnInit {
     return this.cotizacionesFiltradas.filter(cotizacion => cotizacion.estado === estado);
   }
 
-  async probarConexionDirecta(): Promise<void> {
-    try {
-      console.log('🧪 CotizacionesComponent: Probando conexión directa...');
-      await this.firebaseService.pruebaConexionDirecta();
-      console.log('✅ CotizacionesComponent: Conexión directa exitosa');
-      alert('✅ Conexión directa a Firebase exitosa!');
-    } catch (error) {
-      console.error('❌ CotizacionesComponent: Error en conexión directa:', error);
-      alert('❌ Error en conexión directa: ' + error);
-    }
-  }
 
-  async verificarReglasEspecificas(): Promise<void> {
-    try {
-      console.log('🔍 CotizacionesComponent: Verificando reglas específicas...');
-      await this.firebaseService.verificarReglasEspecificas();
-      console.log('✅ CotizacionesComponent: Reglas verificadas correctamente');
-      alert('✅ Reglas de Firestore verificadas correctamente!');
-    } catch (error) {
-      console.error('❌ CotizacionesComponent: Error en verificación de reglas:', error);
-      alert('❌ Error en verificación de reglas: ' + error);
-    }
-  }
 }

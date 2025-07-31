@@ -655,20 +655,7 @@ export class CotizacionesComponent implements OnInit {
     }
   }
 
-  async crearCotizacionPrueba() {
-    try {
-      console.log('🧪 CotizacionesComponent: Creando 1 cotización de prueba...');
-      await this.firebaseService.crearCotizacionPrueba();
-      console.log('✅ CotizacionesComponent: Cotización de prueba creada exitosamente');
-      this.notificationService.showSuccess('1 cotización de prueba creada exitosamente');
-      
-      // Recargar cotizaciones después de crear los datos
-      await this.cargarCotizaciones();
-    } catch (error) {
-      console.error('❌ CotizacionesComponent: Error al crear cotización de prueba:', error);
-      this.notificationService.showError('Error al crear cotización de prueba: ' + error);
-    }
-  }
+
 
   navegarACrearCotizacion() {
     console.log('🔗 CotizacionesComponent: Navegando a crear cotización...');

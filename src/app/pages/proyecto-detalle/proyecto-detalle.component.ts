@@ -238,4 +238,10 @@ export class ProyectoDetalleComponent implements OnInit, OnDestroy {
   getPrioridadClass(prioridad: string): string {
     return `prioridad-${prioridad}`;
   }
+
+  // Manejar cambio de checkbox
+  onCheckboxChange(tarea: Tarea, event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.actualizarEstadoTarea(tarea, target?.checked || false);
+  }
 }

@@ -177,7 +177,7 @@
                   <input 
                     type="checkbox" 
                     [checked]="tarea.completada"
-                    (change)="actualizarEstadoTarea(tarea, $event.target.checked)">
+                    (change)="onCheckboxChange(tarea, $event)">
                 </div>
                 <div class="task-info">
                   <span class="task-description">{{ tarea.descripcion }}</span>
@@ -211,7 +211,7 @@
                   <input 
                     type="checkbox" 
                     [checked]="tarea.completada"
-                    (change)="actualizarEstadoTarea(tarea, $event.target.checked)">
+                    (change)="onCheckboxChange(tarea, $event)">
                 </div>
                 <div class="task-info">
                   <span class="task-description">{{ tarea.descripcion }}</span>

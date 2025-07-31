@@ -106,9 +106,9 @@ body {
   background: var(--bg-principal);
   color: var(--texto-principal);
   line-height: 1.6;
-  overflow-x: hidden;
+  /* overflow-x: hidden; */ /* Comentado para evitar problemas de visibilidad */
   min-height: 100vh;
-  padding-top: 140px; /* Compensar header fijo */
+  /* padding-top: 140px; */ /* Comentado para evitar problemas de posicionamiento */
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 

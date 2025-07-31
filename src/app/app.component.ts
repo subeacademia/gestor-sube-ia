@@ -4,10 +4,11 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
 import { ThemeService } from './core/services/theme.service';
 import { LoadingComponent } from './shared/components/loading/loading.component';
+import { AsistenteIaAvanzadoComponent } from './shared/components/asistente-ia-avanzado/asistente-ia-avanzado.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, LoadingComponent],
+  imports: [RouterOutlet, CommonModule, LoadingComponent, AsistenteIaAvanzadoComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

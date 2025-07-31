@@ -131,6 +131,100 @@
   max-width: 200px;
 }
 
+/* Botón del asistente IA */
+.btn-asistente {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.btn-asistente::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-asistente:hover::before {
+  left: 100%;
+}
+
+.btn-asistente:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+}
+
+/* Botón de la página del asistente IA */
+.btn-asistente-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #ff0000, #ff6600);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn-asistente-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-asistente-page:hover::before {
+  left: 100%;
+}
+
+.btn-asistente-page:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(255, 0, 0, 0.4);
+  color: white;
+  text-decoration: none;
+}
+
+.btn-asistente-page.active {
+  background: linear-gradient(135deg, #ff6600, #ff0000);
+  box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+}
+
 /* Botón de cambio de tema */
 .btn-theme-toggle {
   display: inline-flex;

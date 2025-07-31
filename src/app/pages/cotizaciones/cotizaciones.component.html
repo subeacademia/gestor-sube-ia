@@ -80,10 +80,7 @@
           <span class="btn-icon">🔍</span>
           Aplicar Filtros
         </button>
-        <button (click)="crearCotizacionPrueba()" class="btn btn-test">
-          <span class="btn-icon">🧪</span>
-          Crear 1 Cotización de Prueba
-        </button>
+
         <button (click)="navegarACrearCotizacion()" class="btn btn-primary">
           <span class="btn-icon">➕</span>
           Crear Nueva Cotización
@@ -279,12 +276,7 @@
 
         <!-- Lista con datos -->
         <div *ngIf="cotizacionesFiltradas.length > 0">
-          <!-- Debug info temporal -->
-          <div class="debug-info" style="background: rgba(255, 0, 0, 0.1); padding: 10px; margin: 10px; border-radius: 5px; color: white;">
-            <strong>DEBUG:</strong> Total cotizaciones: {{ cotizaciones.length }} | Filtradas: {{ cotizacionesFiltradas.length }}
-            <br>
-            <strong>Primera cotización:</strong> {{ cotizacionesFiltradas[0].codigo || 'NO HAY DATOS' }}
-          </div>
+
           
           <div class="list-header">
             <div class="list-column">Código</div>

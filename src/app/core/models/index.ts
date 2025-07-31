@@ -244,3 +244,41 @@ declare global {
     emailjs: EmailJS;
   }
 } 
+
+// Nuevas interfaces para el sistema de chat
+export interface ChatMessage {
+  id?: string;
+  autor: 'usuario' | 'ia';
+  texto: string;
+  timestamp: Date;
+  tipo?: 'texto' | 'analisis' | 'reporte';
+  metadata?: {
+    analisisTipo?: string;
+    datosUtilizados?: any;
+    recomendaciones?: string[];
+  };
+}
+
+export interface ChatSession {
+  id?: string;
+  titulo: string;
+  mensajes: ChatMessage[];
+  fechaCreacion: Date;
+  fechaUltimaActividad: Date;
+  usuarioId: string;
+  estado: 'activo' | 'archivado';
+  etiquetas?: string[];
+  metadata?: {
+    tipoAnalisis?: string;
+    totalMensajes?: number;
+    ultimoAnalisis?: string;
+  };
+}
+
+export interface ChatHistory {
+  id?: string;
+  sesiones: ChatSession[];
+  usuarioId: string;
+  fechaCreacion: Date;
+  fechaActualizacion: Date;
+} 

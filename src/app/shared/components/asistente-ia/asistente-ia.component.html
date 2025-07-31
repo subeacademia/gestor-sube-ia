@@ -1,0 +1,215 @@
+<!-- Botón flotante del asistente -->
+<div class="asistente-boton" (click)="toggleChat()" [class.activo]="chatAbierto">
+  <div class="boton-icono">
+    <span *ngIf="!chatAbierto">🤖</span>
+    <span *ngIf="chatAbierto">✕</span>
+  </div>
+  <div class="boton-texto" *ngIf="!chatAbierto">
+    <span>Asistente IA</span>
+    <small>Consultor de Negocio</small>
+  </div>
+</div>
+
+<!-- Ventana del asistente -->
+<div class="asistente-ventana" [class.abierta]="chatAbierto">
+  <!-- Header del asistente -->
+  <div class="asistente-header">
+    <div class="header-info">
+      <div class="avatar">
+        <span>🤖</span>
+      </div>
+      <div class="info">
+        <h3>Asistente IA SUBE TECH</h3>
+        <p>Consultor de Negocio Inteligente</p>
+      </div>
+    </div>
+    <div class="header-acciones">
+      <button class="btn-accion" (click)="limpiarChat()" title="Limpiar chat">
+        🗑️
+      </button>
+      <button class="btn-accion" (click)="toggleChat()" title="Cerrar">
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <!-- Panel de análisis rápido -->
+  <div class="panel-analisis" *ngIf="datosSistema">
+    <div class="panel-header">
+      <h4>📊 Análisis Rápido</h4>
+      <p>Selecciona un área para análisis instantáneo</p>
+    </div>
+    <div class="botones-analisis">
+      <button class="btn-analisis" (click)="generarAnalisisRapido('ventas')" [disabled]="cargando">
+        💰 Ventas
+      </button>
+      <button class="btn-analisis" (click)="generarAnalisisRapido('productividad')" [disabled]="cargando">
+        ⚡ Productividad
+      </button>
+      <button class="btn-analisis" (click)="generarAnalisisRapido('costos')" [disabled]="cargando">
+        💸 Costos
+      </button>
+      <button class="btn-analisis" (click)="generarAnalisisRapido('clientes')" [disabled]="cargando">
+        👥 Clientes
+      </button>
+      <button class="btn-analisis" (click)="generarAnalisisRapido('proyectos')" [disabled]="cargando">
+        📦 Proyectos
+      </button>
+    </div>
+  </div>
+
+  <!-- Cuerpo del chat -->
+  <div class="asistente-cuerpo" #cuerpoChat>
+    <div class="mensajes-container">
+      <div *ngFor="let mensaje of mensajes" 
+           class="mensaje" 
+           [class.mensaje-usuario]="mensaje.autor === 'usuario'"
+           [class.mensaje-ia]="mensaje.autor === 'ia'">
+        
+        <!-- Mensaje de texto normal -->
+        <div *ngIf="mensaje.tipo === 'texto' || !mensaje.tipo" class="mensaje-texto">
+          <div class="mensaje-avatar">
+            <span *ngIf="mensaje.autor === 'usuario'">👤</span>
+            <span *ngIf="mensaje.autor === 'ia'">🤖</span>
+          </div>
+          <div class="mensaje-contenido">
+            <div class="mensaje-texto-contenido" [innerHTML]="mensaje.texto | nl2br"></div>
+            <div class="mensaje-timestamp">
+              {{ mensaje.timestamp | date:'HH:mm' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje de análisis -->
+        <div *ngIf="mensaje.tipo === 'analisis'" class="mensaje-analisis">
+          <div class="mensaje-avatar">
+            <span>📊</span>
+          </div>
+          <div class="mensaje-contenido">
+            <div class="analisis-card">
+              <div class="analisis-header">
+                <h4>{{ mensaje.datos?.titulo }}</h4>
+                <span class="impacto-badge" [class]="'impacto-' + mensaje.datos?.impacto">
+                  {{ mensaje.datos?.impacto?.toUpperCase() }}
+                </span>
+              </div>
+              <div class="analisis-descripcion">
+                {{ mensaje.datos?.descripcion }}
+              </div>
+              <div class="analisis-recomendaciones" *ngIf="mensaje.datos?.recomendaciones?.length">
+                <h5>💡 Recomendaciones:</h5>
+                <ul>
+                  <li *ngFor="let rec of mensaje.datos.recomendaciones">{{ rec }}</li>
+                </ul>
+              </div>
+            </div>
+            <div class="mensaje-timestamp">
+              {{ mensaje.timestamp | date:'HH:mm' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje de audio -->
+        <div *ngIf="mensaje.tipo === 'audio'" class="mensaje-audio">
+          <div class="mensaje-avatar">
+            <span>🎤</span>
+          </div>
+          <div class="mensaje-contenido">
+            <div class="audio-indicator">
+              <div class="audio-waves">
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+              </div>
+              <span>{{ mensaje.texto }}</span>
+            </div>
+            <div class="mensaje-timestamp">
+              {{ mensaje.timestamp | date:'HH:mm' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicador de carga -->
+      <div *ngIf="cargando" class="mensaje mensaje-ia">
+        <div class="mensaje-texto">
+          <div class="mensaje-avatar">
+            <span>🤖</span>
+          </div>
+          <div class="mensaje-contenido">
+            <div class="loading-indicator">
+              <div class="loading-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+              </div>
+              <span>Procesando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de documentos -->
+  <div class="panel-documentos" *ngIf="documentos.length > 0">
+    <div class="panel-header">
+      <h4>📎 Documentos Cargados</h4>
+      <p>{{ documentos.length }} documento(s) disponible(s)</p>
+    </div>
+    <div class="documentos-lista">
+      <div *ngFor="let doc of documentos" class="documento-item">
+        <span class="doc-icon">
+          {{ doc.tipo === 'pdf' ? '📄' : doc.tipo === 'excel' ? '📊' : '🖼️' }}
+        </span>
+        <span class="doc-nombre">{{ doc.nombre }}</span>
+        <button class="btn-remover" (click)="removerDocumento(doc.id)">
+          ✕
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer con controles -->
+  <div class="asistente-footer">
+    <div class="controles-archivo">
+      <button class="btn-control" (click)="seleccionarArchivo()" title="Cargar archivo">
+        📎
+      </button>
+      <input #fileInput type="file" 
+             (change)="onFileSelected($event)" 
+             accept=".pdf,.xlsx,.xls,.csv,.txt"
+             style="display: none;">
+    </div>
+
+    <div class="controles-audio" *ngIf="audioDisponible">
+      <button class="btn-control" 
+              (click)="grabando ? detenerGrabacion() : iniciarGrabacion()"
+              [class.grabando]="grabando"
+              [title]="grabando ? 'Detener grabación' : 'Iniciar grabación'">
+        {{ grabando ? '⏹️' : '🎤' }}
+      </button>
+    </div>
+
+    <div class="input-container">
+      <textarea #inputMensaje
+                [(ngModel)]="mensajeUsuario"
+                (keypress)="onKeyPress($event)"
+                placeholder="Escribe tu pregunta o solicita un análisis..."
+                rows="1"
+                class="input-mensaje"></textarea>
+      <button class="btn-enviar" 
+              (click)="enviarMensaje()" 
+              [disabled]="!mensajeUsuario.trim() || cargando">
+        <span *ngIf="!cargando">➤</span>
+        <span *ngIf="cargando" class="loading-spinner">⏳</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay de fondo -->
+<div class="asistente-overlay" 
+     [class.activo]="chatAbierto" 
+     (click)="toggleChat()"></div> 

@@ -59,11 +59,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/cliente-detalle/cliente-detalle.component').then(c => c.ClienteDetalleComponent),
     canActivate: [authGuard]
   },
+
   {
-    path: 'test-theme',
-    loadComponent: () => import('./pages/test-theme/test-theme.component').then(c => c.TestThemeComponent),
+    path: 'asistente-ia',
+    loadComponent: () => import('./pages/asistente-ia/asistente-ia-page.component').then(c => c.AsistenteIaPageComponent),
     canActivate: [authGuard]
   },
+
   {
     path: 'proyectos',
     loadComponent: () => import('./pages/proyectos/proyectos.component').then(c => c.ProyectosComponent),
