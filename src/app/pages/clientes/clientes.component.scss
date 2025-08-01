@@ -35,9 +35,14 @@
 
 /* ===== CONTENIDO PRINCIPAL ===== */
 .main-content {
-  padding: 2rem;
+  padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
+  margin-top: 90px; /* Compensar el header fijo */
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* ===== HEADER DEL CONTENIDO ===== */
@@ -478,36 +483,42 @@
   }
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 1024px) {
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1400px) {
   .main-content {
-    padding: 1rem;
+    max-width: 100%;
+    padding: var(--spacing-lg);
   }
+}
 
-  .content-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-
-  .clientes-table {
-    font-size: 0.75rem;
-
-    thead th, tbody td {
-      padding: 0.75rem 0.5rem;
-    }
+@media (max-width: 1200px) {
+  .main-content {
+    padding: var(--spacing-md);
   }
 }
 
 @media (max-width: 768px) {
-  .clientes-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
+  .main-content {
+    padding: var(--spacing-sm);
   }
+  
+  .content-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+  
+  .page-title {
+    font-size: 1.75rem;
+  }
+}
 
-  .modal-content {
-    margin: 1rem;
-    max-width: calc(100vw - 2rem);
+@media (max-width: 480px) {
+  .main-content {
+    padding: var(--spacing-xs);
+  }
+  
+  .page-title {
+    font-size: 1.5rem;
   }
 }

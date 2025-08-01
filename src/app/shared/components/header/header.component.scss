@@ -10,6 +10,12 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
+/* Asegurar que todo el texto en el header sea visible */
+.admin-header * {
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+}
+
 /* Barra de Navegación Principal */
 .main-nav {
   padding: 1rem 0;
@@ -18,11 +24,13 @@
 .nav-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 2rem;
+  flex-wrap: wrap;
+  min-height: 70px;
 }
 
 /* Logo */
@@ -37,6 +45,7 @@
   margin: 0;
   letter-spacing: -0.025em;
   white-space: nowrap;
+  color: var(--texto-principal); /* Fallback para navegadores que no soportan background-clip */
 }
 
 /* Navegación Principal */
@@ -63,6 +72,9 @@
   position: relative;
   overflow: hidden;
   white-space: nowrap;
+  /* Asegurar que el texto sea siempre visible */
+  text-shadow: none;
+  -webkit-text-fill-color: currentColor;
 }
 
 .nav-link::before {
@@ -113,12 +125,17 @@
   align-items: center;
   gap: 1rem;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  min-width: 0;
+  max-width: 200px;
 }
 
 .user-email {
@@ -128,7 +145,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  max-width: 180px;
+  min-width: 0;
+  /* Asegurar que el texto sea siempre visible */
+  text-shadow: none;
+  -webkit-text-fill-color: currentColor;
 }
 
 /* Botón del asistente IA */
@@ -270,6 +291,7 @@
   white-space: nowrap;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .btn-logout::before {
@@ -294,6 +316,21 @@
 }
 
 /* Responsive Design */
+@media (min-width: 1400px) {
+  .nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  .user-actions {
+    gap: 1.5rem;
+  }
+  
+  .user-email {
+    max-width: 200px;
+  }
+}
+
 @media (max-width: 1024px) {
   .nav-container {
     padding: 0 1rem;
@@ -311,6 +348,10 @@
   
   .user-email {
     max-width: 150px;
+  }
+  
+  .user-actions {
+    gap: 0.75rem;
   }
 }
 

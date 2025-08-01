@@ -1306,3 +1306,104 @@ h3 {
     width: 100%;
   }
 }
+
+/* ===== COMPENSACIÓN PARA HEADER FIJO ===== */
+/* Aplicar margen superior a contenedores principales cuando hay header fijo */
+.dashboard-main,
+.admin-main,
+.main-content,
+.container {
+  margin-top: 90px !important;
+}
+
+/* Asegurar que el contenido no se superponga con el header */
+body {
+  padding-top: 0;
+}
+
+/* ===== REGLAS GLOBALES PARA RESPONSIVIDAD ===== */
+/* Asegurar que el contenido no se expanda más allá del 100% de la pantalla */
+.admin-container,
+.admin-main,
+.admin-content,
+.dashboard-container,
+.dashboard-main,
+.main-content,
+.container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Asegurar que las secciones principales estén centradas */
+.cotizaciones-section,
+.contratos-section,
+.stats-section,
+.filters-section,
+.dashboard-header,
+.content-header,
+.header-section {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Responsive para pantallas grandes */
+@media (min-width: 1400px) {
+  .admin-content,
+  .dashboard-main,
+  .main-content,
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}
+
+/* Responsive para pantallas medianas */
+@media (max-width: 1399px) and (min-width: 768px) {
+  .admin-content,
+  .dashboard-main,
+  .main-content,
+  .container {
+    max-width: 100%;
+    padding: 0 var(--spacing-lg);
+  }
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 767px) {
+  .admin-content,
+  .dashboard-main,
+  .main-content,
+  .container {
+    max-width: 100%;
+    padding: 0 var(--spacing-md);
+  }
+}
+
+/* Responsive para pantallas muy pequeñas */
+@media (max-width: 480px) {
+  .admin-content,
+  .dashboard-main,
+  .main-content,
+  .container {
+    max-width: 100%;
+    padding: 0 var(--spacing-sm);
+  }
+}
+
+/* ===== PREVENCIÓN DE SCROLL HORIZONTAL ===== */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ===== CONSISTENCIA EN TÍTULOS ===== */
+.page-title,
+.dashboard-title,
+.header-title {
+  margin-top: 0;
+  padding-top: 0;
+}

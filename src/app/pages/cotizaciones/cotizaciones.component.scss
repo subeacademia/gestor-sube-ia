@@ -72,15 +72,20 @@
 /* ===== MAIN CONTENT ===== */
 .admin-main {
   flex: 1;
-  padding: var(--spacing-2xl) 0;
+  padding: var(--spacing-lg) 0;
+  margin-top: 90px; /* Compensar el header fijo */
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .admin-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 var(--spacing-xl);
+  padding: 0 var(--spacing-lg);
   overflow-x: hidden;
   box-sizing: border-box;
+  width: 100%;
 }
 
 /* ===== SECCIÓN DE ESTADÍSTICAS ===== */
@@ -768,7 +773,22 @@
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1400px) {
+  .admin-content {
+    max-width: 100%;
+    padding: 0 var(--spacing-md);
+  }
+  
+  .cotizaciones-section {
+    padding: var(--spacing-lg);
+  }
+}
+
 @media (max-width: 1200px) {
+  .admin-content {
+    padding: 0 var(--spacing-md);
+  }
+  
   .kanban-board {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
@@ -786,7 +806,11 @@
 
 @media (max-width: 768px) {
   .admin-content {
-    padding: 0 var(--spacing-md);
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .cotizaciones-section {
+    padding: var(--spacing-md);
   }
   
   .stats-section {
@@ -828,7 +852,11 @@
 
 @media (max-width: 480px) {
   .admin-content {
-    padding: 0 var(--spacing-md);
+    padding: 0 var(--spacing-xs);
+  }
+  
+  .cotizaciones-section {
+    padding: var(--spacing-sm);
   }
   
   .section-header h2 {

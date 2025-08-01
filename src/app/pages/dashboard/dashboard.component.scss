@@ -41,12 +41,20 @@
   background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
   color: var(--color-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .dashboard-main {
   padding: var(--spacing-lg);
   max-width: 1400px;
   margin: 0 auto;
+  margin-top: 90px; /* Compensar el header fijo */
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* ===== HEADER DEL DASHBOARD ===== */
@@ -54,6 +62,9 @@
   text-align: center;
   margin-bottom: var(--spacing-xl);
   padding: var(--spacing-lg) 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-title {
@@ -533,111 +544,71 @@
   transform: translateX(4px);
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1400px) {
+  .dashboard-main {
+    max-width: 100%;
+    padding: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 1200px) {
   .dashboard-main {
     padding: var(--spacing-md);
   }
+  
+  .kpis-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
 
+@media (max-width: 768px) {
+  .dashboard-main {
+    padding: var(--spacing-sm);
+  }
+  
   .dashboard-title {
     font-size: 2rem;
-    flex-direction: column;
-    gap: var(--spacing-xs);
   }
-
+  
   .title-icon {
     font-size: 2rem;
   }
-
+  
+  .dashboard-subtitle {
+    font-size: 1rem;
+  }
+  
   .kpis-grid {
     grid-template-columns: 1fr;
     gap: var(--spacing-sm);
   }
-
+  
   .metrics-grid {
     grid-template-columns: 1fr;
     gap: var(--spacing-sm);
-  }
-
-  .charts-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-  }
-
-  .chart-bars {
-    height: 200px;
-    gap: var(--spacing-xs);
-  }
-
-  .chart-bar {
-    min-width: 30px;
-  }
-
-  .bar-label {
-    font-size: 0.6rem;
-    bottom: -25px;
-  }
-
-  .navigation-cards {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-  }
-
-  .nav-card {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--spacing-sm);
-  }
-
-  .nav-card-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 1.5rem;
-  }
-
-  .nav-card-features {
-    justify-content: center;
   }
 }
 
 @media (max-width: 480px) {
   .dashboard-main {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-xs);
   }
-
+  
   .dashboard-title {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
-
+  
   .title-icon {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
-
+  
   .dashboard-subtitle {
-    font-size: 1rem;
-  }
-
-  .section-title {
-    font-size: 1.3rem;
-  }
-
-  .metric-card,
-  .nav-card,
-  .chart-container {
-    padding: var(--spacing-sm);
-  }
-
-  .chart-bars {
-    height: 150px;
-  }
-
-  .chart-bar {
-    min-width: 25px;
-  }
-
-  .bar-label {
-    font-size: 0.5rem;
-    bottom: -20px;
+    font-size: 0.9rem;
   }
 }
 
