@@ -1,466 +1,713 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AsistenteIaService } from '../../core/services/asistente-ia.service';
 import { ChatHistoryService } from '../../core/services/chat-history.service';
-import { ChatSidebarComponent } from '../../shared/components/chat-sidebar/chat-sidebar.component';
+import { FirebaseService } from '../../core/services/firebase.service';
 import { ChatSession, ChatMessage } from '../../core/models';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-asistente-ia-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChatSidebarComponent],
+  imports: [CommonModule, FormsModule],
   template: `
-    <!-- Barra lateral de historial -->
-    <app-chat-sidebar></app-chat-sidebar>
-    
-    <div class="asistente-page">
-      <!-- Header de la página -->
-      <div class="page-header">
-        <div class="header-content">
-          <div class="header-info">
-            <h1>🤖 Asistente de IA - SUBE TECH</h1>
-            <p>Análisis Inteligente de Negocio y Consultoría Estratégica</p>
-          </div>
-          <div class="header-actions">
-            <button class="btn-historial" (click)="toggleSidebar()">
-              📚 Historial de Chats
-            </button>
-            <button class="btn-nueva-conversacion" (click)="crearNuevaConversacion()">
-              ➕ Nueva Conversación
-            </button>
-          </div>
+    <div class="chatgpt-layout">
+      <!-- Sidebar izquierda -->
+      <div class="sidebar" [class.sidebar-open]="sidebarOpen">
+        <div class="sidebar-header">
+          <button class="btn-new-chat" (click)="crearNuevaConversacion()">
+            <span class="icon">➕</span>
+            Nueva conversación
+          </button>
         </div>
-      </div>
 
-      <!-- Panel de análisis rápido -->
-      <div class="analisis-panel">
-        <h2>Análisis Rápido</h2>
-        <div class="botones-analisis">
-          <button class="btn-analisis" (click)="analizarVentas()">
-            <span class="icon">💰</span>
-            <span class="text">Ventas</span>
-          </button>
-          <button class="btn-analisis" (click)="analizarProductividad()">
-            <span class="icon">⚡</span>
-            <span class="text">Productividad</span>
-          </button>
-          <button class="btn-analisis" (click)="analizarCostos()">
-            <span class="icon">💸</span>
-            <span class="text">Costos</span>
-          </button>
-          <button class="btn-analisis" (click)="analizarClientes()">
-            <span class="icon">👥</span>
-            <span class="text">Clientes</span>
-          </button>
-          <button class="btn-analisis" (click)="analizarProyectos()">
-            <span class="icon">📦</span>
-            <span class="text">Proyectos</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Chat principal -->
-      <div class="chat-container">
-        <div class="chat-header">
-          <h3>Chat con IA</h3>
-          <button class="btn-limpiar" (click)="limpiarChat()">🗑️ Limpiar</button>
-        </div>
-        
-        <div class="mensajes-container">
-          <div *ngFor="let mensaje of mensajes" 
-               class="mensaje" 
-               [class.mensaje-usuario]="mensaje.autor === 'usuario'"
-               [class.mensaje-ia]="mensaje.autor === 'ia'">
-            
-            <div class="mensaje-avatar">
-              <span *ngIf="mensaje.autor === 'usuario'">👤</span>
-              <span *ngIf="mensaje.autor === 'ia'">🤖</span>
+        <div class="sidebar-content">
+          <div class="chat-history">
+            <div *ngIf="cargando" class="loading">
+              <div class="spinner"></div>
+              <span>Cargando...</span>
             </div>
-            
-            <div class="mensaje-contenido">
-              <div class="mensaje-texto" [innerHTML]="mensaje.texto"></div>
-              <div class="mensaje-timestamp">
-                {{ mensaje.timestamp | date:'HH:mm' }}
+
+            <div *ngFor="let session of chatSessions" 
+                 class="chat-item"
+                 [class.active]="session.id === sessionActual?.id"
+                 (click)="cargarConversacion(session)">
+              <div class="chat-item-content">
+                <span class="chat-title">{{ session.titulo }}</span>
+                <span class="chat-date">{{ formatearFecha(session.fechaUltimaActividad) }}</span>
+              </div>
+              <button class="btn-delete" 
+                      (click)="eliminarConversacion(session.id!, $event)"
+                      title="Eliminar conversación">
+                🗑️
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <button class="btn-back" (click)="volverAlSistema()">
+            <span class="icon">🏠</span>
+            Volver al Sistema
+          </button>
+          <div class="connection-status" [class.connected]="firebaseConnected">
+            <span class="status-dot"></span>
+            <span class="status-text">{{ firebaseConnected ? 'Conectado' : 'Desconectado' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenido principal -->
+      <div class="main-content">
+        <!-- Header fijo para PC y móvil -->
+        <div class="main-header">
+          <div class="header-content">
+            <div class="header-left">
+              <button class="btn-menu" (click)="toggleSidebar()">
+                <span class="icon">☰</span>
+              </button>
+            </div>
+            <div class="header-center">
+              <h1>Asistente IA</h1>
+            </div>
+            <div class="header-right">
+              <button class="btn-back-header" (click)="volverAlSistema()">
+                <span class="icon">🏠</span>
+                Volver al Sistema
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Área de chat -->
+        <div class="chat-area">
+          <div class="messages-container" #messagesContainer>
+            <div *ngFor="let mensaje of mensajes" 
+                 class="message"
+                 [class.user-message]="mensaje.autor === 'usuario'"
+                 [class.ai-message]="mensaje.autor === 'ia'">
+              
+              <div class="message-avatar">
+                <span *ngIf="mensaje.autor === 'usuario'">👤</span>
+                <span *ngIf="mensaje.autor === 'ia'">🤖</span>
+              </div>
+              
+              <div class="message-content">
+                <div class="message-text" [innerHTML]="mensaje.texto"></div>
+                <div class="message-time">{{ mensaje.timestamp | date:'HH:mm' }}</div>
+              </div>
+            </div>
+
+            <!-- Indicador de carga -->
+            <div *ngIf="cargando" class="message ai-message">
+              <div class="message-avatar">
+                <span>🤖</span>
+              </div>
+              <div class="message-content">
+                <div class="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="input-container">
-          <textarea 
-            [(ngModel)]="mensajeUsuario"
-            (keypress)="onKeyPress($event)"
-            placeholder="Escribe tu pregunta o solicita un análisis..."
-            rows="3"
-            class="input-mensaje">
-          </textarea>
-          <button 
-            class="btn-enviar" 
-            (click)="enviarMensaje()" 
-            [disabled]="!mensajeUsuario.trim() || cargando">
-            <span *ngIf="!cargando">➤ Enviar</span>
-            <span *ngIf="cargando">⏳ Procesando...</span>
-          </button>
+        <!-- Input de mensaje -->
+        <div class="input-area">
+          <div class="input-container">
+            <textarea 
+              [(ngModel)]="mensajeUsuario"
+              (keydown)="onKeyDown($event)"
+              placeholder="Escribe tu mensaje..."
+              rows="1"
+              class="message-input"
+              #messageInput>
+            </textarea>
+            <button 
+              class="send-button"
+              (click)="enviarMensaje()"
+              [disabled]="!mensajeUsuario.trim() || cargando">
+              <span class="icon">➤</span>
+            </button>
+          </div>
+          <div class="input-footer">
+            <span class="connection-info">
+              {{ firebaseConnected ? '✅ Conectado a Firebase' : '❌ Desconectado de Firebase' }}
+            </span>
+          </div>
         </div>
       </div>
 
-      <!-- Panel de funcionalidades -->
-      <div class="funcionalidades-panel">
-        <h2>Funcionalidades Avanzadas</h2>
-        <div class="funcionalidades-grid">
-          <button class="btn-funcionalidad" (click)="cargarArchivo()">
-            <span class="icon">📎</span>
-            <span class="text">Cargar Archivo</span>
-          </button>
-          <button class="btn-funcionalidad" (click)="generarReporte()">
-            <span class="icon">📊</span>
-            <span class="text">Generar Reporte</span>
-          </button>
-          <button class="btn-funcionalidad" (click)="exportarDatos()">
-            <span class="icon">📤</span>
-            <span class="text">Exportar Datos</span>
-          </button>
-          <button class="btn-funcionalidad" (click)="analizarArchivo()">
-            <span class="icon">🔍</span>
-            <span class="text">Analizar Archivo</span>
-          </button>
-        </div>
-      </div>
+      <!-- Overlay para móviles -->
+      <div class="sidebar-overlay" 
+           [class.active]="sidebarOpen" 
+           (click)="toggleSidebar()"></div>
     </div>
   `,
   styles: [`
-    .asistente-page {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-      min-height: 100vh;
+    .chatgpt-layout {
+      display: flex;
+      height: 100vh;
+      background: #343541;
+      color: #ececf1;
+      overflow: hidden;
     }
 
-    .page-header {
-      margin-bottom: 40px;
-      padding: 40px;
-      background: linear-gradient(135deg, #ff0000, #ff6600);
-      border-radius: 20px;
-      color: white;
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: #202123;
+      border-right: 1px solid #4a4b53;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid #4a4b53;
+    }
+
+    .btn-new-chat {
+      width: 100%;
+      padding: 12px 16px;
+      background: #40414f;
+      border: 1px solid #565869;
+      border-radius: 6px;
+      color: #ececf1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-new-chat:hover {
+      background: #4a4b53;
+      transform: translateY(-1px);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .chat-history {
+      padding: 0 8px;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      color: #8e8ea0;
+      font-size: 14px;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #4a4b53;
+      border-top: 2px solid #ececf1;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .chat-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      margin: 2px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .chat-item:hover {
+      background: #40414f;
+      transform: translateX(2px);
+    }
+
+    .chat-item.active {
+      background: #40414f;
+      border-left: 3px solid #7c3aed;
+    }
+
+    .chat-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .chat-title {
+      display: block;
+      font-size: 14px;
+      color: #ececf1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-date {
+      display: block;
+      font-size: 12px;
+      color: #8e8ea0;
+      margin-top: 2px;
+    }
+
+    .btn-delete {
+      background: none;
+      border: none;
+      color: #8e8ea0;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      opacity: 0;
+      transition: all 0.2s ease;
+    }
+
+    .chat-item:hover .btn-delete {
+      opacity: 1;
+    }
+
+    .btn-delete:hover {
+      background: #4a4b53;
+      color: #ef4444;
+    }
+
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid #4a4b53;
+    }
+
+    .btn-back {
+      width: 100%;
+      padding: 12px 16px;
+      background: #40414f;
+      border: 1px solid #565869;
+      border-radius: 6px;
+      color: #ececf1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      margin-bottom: 12px;
+    }
+
+    .btn-back:hover {
+      background: #4a4b53;
+      transform: translateY(-1px);
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #8e8ea0;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ef4444;
+      transition: background-color 0.2s;
+    }
+
+    .connection-status.connected .status-dot {
+      background: #10b981;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #343541;
+      position: relative;
+    }
+
+    /* Header Principal - Siempre visible */
+    .main-header {
+      background: linear-gradient(135deg, #202123 0%, #2d2d30 100%);
+      border-bottom: 1px solid #4a4b53;
+      padding: 12px 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      z-index: 100;
     }
 
     .header-content {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 20px;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    .header-info {
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-center {
       flex: 1;
-      text-align: left;
+      text-align: center;
     }
 
-    .header-actions {
+    .header-right {
       display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-
-    .btn-historial, .btn-nueva-conversacion {
-      padding: 12px 20px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      color: white;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-    }
-
-    .btn-historial:hover, .btn-nueva-conversacion:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.5);
-      transform: translateY(-2px);
-    }
-
-    .page-header h1 {
-      font-size: 2.5rem;
-      margin: 0 0 10px 0;
-      color: white;
-    }
-
-    .page-header p {
-      font-size: 1.2rem;
-      margin: 0;
-      opacity: 0.9;
-    }
-
-    .analisis-panel {
-      background: white;
-      border-radius: 15px;
-      padding: 30px;
-      margin-bottom: 30px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-
-    .analisis-panel h2 {
-      margin: 0 0 20px 0;
-      color: #333;
-    }
-
-    .botones-analisis {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-    }
-
-    .btn-analisis {
-      display: flex;
-      flex-direction: column;
       align-items: center;
-      padding: 20px;
-      border: none;
-      background: #f8f9fa;
-      border-radius: 10px;
+      gap: 8px;
+    }
+
+    .btn-menu, .btn-back-header {
+      background: rgba(64, 65, 79, 0.5);
+      border: 1px solid #565869;
+      color: #ececf1;
       cursor: pointer;
-      transition: all 0.3s ease;
-      border: 2px solid transparent;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(5px);
     }
 
-    .btn-analisis:hover {
-      background: #ff0000;
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(255,0,0,0.3);
-    }
-
-    .btn-analisis .icon {
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
-
-    .btn-analisis .text {
-      font-weight: 600;
-    }
-
-    .chat-container {
-      background: white;
-      border-radius: 15px;
-      padding: 30px;
-      margin-bottom: 30px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-
-    .chat-header {
+    .btn-back-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      gap: 6px;
+      font-size: 14px;
     }
 
-    .chat-header h3 {
+    .btn-menu:hover, .btn-back-header:hover {
+      background: rgba(64, 65, 79, 0.8);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .main-header h1 {
       margin: 0;
-      color: #333;
+      font-size: 20px;
+      font-weight: 600;
+      color: #ececf1;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
-    .btn-limpiar {
-      padding: 8px 16px;
-      border: none;
-      background: #f8f9fa;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .btn-limpiar:hover {
-      background: #ff0000;
-      color: white;
-    }
-
-    .mensajes-container {
-      max-height: 400px;
+    /* Chat Area */
+    .chat-area {
+      flex: 1;
       overflow-y: auto;
-      margin-bottom: 20px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 10px;
+      padding: 20px 0;
+      position: relative;
     }
 
-    .mensaje {
+    .messages-container {
+      max-width: 768px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .message {
       display: flex;
-      gap: 15px;
-      margin-bottom: 20px;
+      gap: 16px;
+      margin-bottom: 24px;
+      animation: fadeIn 0.3s ease;
     }
 
-    .mensaje-usuario {
-      flex-direction: row-reverse;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .mensaje-avatar {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
+      font-size: 16px;
       flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    .mensaje-usuario .mensaje-avatar {
-      background: #ff0000;
-      color: white;
+    .user-message .message-avatar {
+      background: linear-gradient(135deg, #10a37f 0%, #0d9488 100%);
     }
 
-    .mensaje-ia .mensaje-avatar {
-      background: #ff6600;
-      color: white;
+    .ai-message .message-avatar {
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
     }
 
-    .mensaje-contenido {
+    .message-content {
       flex: 1;
+      min-width: 0;
     }
 
-    .mensaje-texto {
-      padding: 15px;
-      border-radius: 15px;
-      margin-bottom: 5px;
-      line-height: 1.5;
+    .message-text {
+      line-height: 1.6;
+      margin-bottom: 8px;
+      padding: 12px 16px;
+      background: rgba(64, 65, 79, 0.3);
+      border-radius: 8px;
+      border: 1px solid rgba(86, 88, 105, 0.3);
     }
 
-    .mensaje-usuario .mensaje-texto {
-      background: #ff0000;
-      color: white;
-      border-bottom-right-radius: 5px;
+    .user-message .message-text {
+      background: rgba(16, 163, 127, 0.1);
+      border-color: rgba(16, 163, 127, 0.3);
     }
 
-    .mensaje-ia .mensaje-texto {
-      background: white;
-      color: #333;
-      border: 1px solid #e9ecef;
-      border-bottom-left-radius: 5px;
+    .ai-message .message-text {
+      background: rgba(124, 58, 237, 0.1);
+      border-color: rgba(124, 58, 237, 0.3);
     }
 
-    .mensaje-timestamp {
-      font-size: 0.8rem;
-      color: #6c757d;
-      padding: 0 5px;
+    .message-time {
+      font-size: 12px;
+      color: #8e8ea0;
+      margin-top: 4px;
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 12px 16px;
+    }
+
+    .typing-indicator span {
+      width: 8px;
+      height: 8px;
+      background: #8e8ea0;
+      border-radius: 50%;
+      animation: typing 1.4s infinite ease-in-out;
+    }
+
+    .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes typing {
+      0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Input Area */
+    .input-area {
+      border-top: 1px solid #4a4b53;
+      background: linear-gradient(135deg, #343541 0%, #2d2d30 100%);
+      padding: 20px;
+      position: relative;
     }
 
     .input-container {
-      display: flex;
-      gap: 15px;
-      align-items: flex-end;
+      max-width: 768px;
+      margin: 0 auto;
+      position: relative;
     }
 
-    .input-mensaje {
-      flex: 1;
-      padding: 15px;
-      border: 2px solid #e9ecef;
-      border-radius: 10px;
+    .message-input {
+      width: 100%;
+      padding: 16px 56px 16px 20px;
+      background: rgba(64, 65, 79, 0.5);
+      border: 2px solid #565869;
+      border-radius: 12px;
+      color: #ececf1;
+      font-size: 16px;
+      line-height: 1.5;
       resize: none;
-      font-family: inherit;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-    }
-
-    .input-mensaje:focus {
       outline: none;
-      border-color: #ff0000;
-      box-shadow: 0 0 0 3px rgba(255,0,0,0.1);
-    }
-
-    .btn-enviar {
-      padding: 15px 30px;
-      border: none;
-      background: #ff0000;
-      color: white;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
       transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
     }
 
-    .btn-enviar:hover:not(:disabled) {
-      background: #ff6600;
-      transform: translateY(-2px);
+    .message-input:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+      transform: translateY(-1px);
     }
 
-    .btn-enviar:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    .message-input::placeholder {
+      color: #8e8ea0;
     }
 
-    .funcionalidades-panel {
-      background: white;
-      border-radius: 15px;
-      padding: 30px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-
-    .funcionalidades-panel h2 {
-      margin: 0 0 20px 0;
-      color: #333;
-    }
-
-    .funcionalidades-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 15px;
-    }
-
-    .btn-funcionalidad {
+    .send-button {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 15px;
-      padding: 20px;
-      border: none;
-      background: #f8f9fa;
-      border-radius: 10px;
-      cursor: pointer;
+      justify-content: center;
       transition: all 0.3s ease;
-      border: 2px solid transparent;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
     }
 
-    .btn-funcionalidad:hover {
-      background: #ff0000;
-      color: white;
+    .send-button:hover:not(:disabled) {
+      background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(255,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
     }
 
-    .btn-funcionalidad .icon {
-      font-size: 1.5rem;
+    .send-button:disabled {
+      background: #4a4b53;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
-    .btn-funcionalidad .text {
-      font-weight: 600;
+    .input-footer {
+      max-width: 768px;
+      margin: 12px auto 0;
+      text-align: center;
     }
 
+    .connection-info {
+      font-size: 12px;
+      color: #8e8ea0;
+      padding: 8px 16px;
+      background: rgba(64, 65, 79, 0.3);
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    /* Overlay */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(2px);
+    }
+
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
-      .asistente-page {
-        padding: 10px;
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1000;
+        transform: translateX(-100%);
       }
 
-      .page-header {
-        padding: 20px;
+      .sidebar.sidebar-open {
+        transform: translateX(0);
       }
 
-      .page-header h1 {
-        font-size: 2rem;
+      .main-header {
+        padding: 10px 16px;
       }
 
-      .botones-analisis {
-        grid-template-columns: 1fr;
+      .main-header h1 {
+        font-size: 18px;
       }
 
-      .funcionalidades-grid {
-        grid-template-columns: 1fr;
+      .btn-back-header {
+        display: none;
       }
 
-      .input-container {
-        flex-direction: column;
+      .chat-area {
+        padding-top: 10px;
       }
+
+      .messages-container {
+        padding: 0 16px;
+      }
+
+      .input-area {
+        padding: 16px;
+      }
+
+      .message-input {
+        padding: 14px 52px 14px 16px;
+        font-size: 16px;
+      }
+
+      .send-button {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
+    }
+
+    /* Scrollbar personalizado */
+    .sidebar-content::-webkit-scrollbar,
+    .chat-area::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .sidebar-content::-webkit-scrollbar-track,
+    .chat-area::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .sidebar-content::-webkit-scrollbar-thumb,
+    .chat-area::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #4a4b53 0%, #565869 100%);
+      border-radius: 4px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    .sidebar-content::-webkit-scrollbar-thumb:hover,
+    .chat-area::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #565869 0%, #6b7280 100%);
+    }
+
+    /* Animaciones adicionales */
+    .icon {
+      transition: transform 0.2s ease;
+    }
+
+    .btn-new-chat:hover .icon,
+    .btn-back:hover .icon {
+      transform: scale(1.1);
+    }
+
+    /* Efectos de hover mejorados */
+    .chat-item:hover .chat-title {
+      color: #ffffff;
+    }
+
+    .message:hover .message-text {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
   `]
 })
@@ -469,15 +716,23 @@ export class AsistenteIaPageComponent implements OnInit, OnDestroy {
   mensajes: ChatMessage[] = [];
   cargando = false;
   sessionActual: ChatSession | null = null;
+  chatSessions: ChatSession[] = [];
+  sidebarOpen = false;
+  firebaseConnected = false;
   private subscription = new Subscription();
 
   constructor(
     private asistenteIaService: AsistenteIaService,
-    private chatHistoryService: ChatHistoryService
+    private chatHistoryService: ChatHistoryService,
+    private firebaseService: FirebaseService,
+    private router: Router
   ) {}
 
   ngOnInit() {
     console.log('🤖 Asistente IA Page Component inicializado');
+    
+    // Verificar conexión con Firebase
+    this.verificarConexionFirebase();
     
     // Suscribirse a la sesión actual
     this.subscription.add(
@@ -490,15 +745,36 @@ export class AsistenteIaPageComponent implements OnInit, OnDestroy {
         }
       })
     );
+
+    // Suscribirse a las sesiones de chat
+    this.subscription.add(
+      this.chatHistoryService.chatSessions$.subscribe(sessions => {
+        this.chatSessions = sessions;
+      })
+    );
   }
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
   }
 
+  async verificarConexionFirebase() {
+    try {
+      await this.firebaseService.testConnection();
+      this.firebaseConnected = true;
+      console.log('✅ Conexión con Firebase exitosa');
+    } catch (error) {
+      this.firebaseConnected = false;
+      console.error('❌ Error de conexión con Firebase:', error);
+    }
+  }
+
   toggleSidebar() {
-    // Este método se implementará para comunicarse con el componente sidebar
-    console.log('🤖 Toggle sidebar llamado desde página');
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  volverAlSistema() {
+    this.router.navigate(['/dashboard']);
   }
 
   async crearNuevaConversacion() {
@@ -509,8 +785,29 @@ export class AsistenteIaPageComponent implements OnInit, OnDestroy {
         this.chatHistoryService.setCurrentSession(nuevaSession);
         this.generarMensajeBienvenida();
       }
+      this.toggleSidebar();
     } catch (error) {
       console.error('Error al crear nueva conversación:', error);
+    }
+  }
+
+  async cargarConversacion(session: ChatSession) {
+    try {
+      await this.chatHistoryService.loadChatSession(session.id!);
+      this.toggleSidebar();
+    } catch (error) {
+      console.error('Error al cargar conversación:', error);
+    }
+  }
+
+  async eliminarConversacion(sessionId: string, event: Event) {
+    event.stopPropagation();
+    if (confirm('¿Estás seguro de que quieres eliminar esta conversación?')) {
+      try {
+        await this.chatHistoryService.deleteChatSession(sessionId);
+      } catch (error) {
+        console.error('Error al eliminar conversación:', error);
+      }
     }
   }
 
@@ -545,45 +842,72 @@ export class AsistenteIaPageComponent implements OnInit, OnDestroy {
   }
 
   private async procesarMensajeIA(mensaje: string) {
-    this.asistenteIaService.obtenerDatosSistema().subscribe({
-      next: async (datos) => {
-        const respuesta = this.generarRespuestaInteligente(mensaje, datos);
-        
-        setTimeout(async () => {
-          const mensajeIA: ChatMessage = {
+    try {
+      // Verificar conexión con Firebase antes de procesar
+      if (!this.firebaseConnected) {
+        await this.verificarConexionFirebase();
+      }
+
+      this.asistenteIaService.obtenerDatosSistema().subscribe({
+        next: async (datos) => {
+          const respuesta = this.generarRespuestaInteligente(mensaje, datos);
+          
+          setTimeout(async () => {
+            const mensajeIA: ChatMessage = {
+              autor: 'ia',
+              texto: respuesta,
+              timestamp: new Date()
+            };
+            
+            this.mensajes.push(mensajeIA);
+            
+            // Guardar respuesta de la IA en Firebase
+            if (this.sessionActual) {
+              await this.chatHistoryService.addMessageToSession(this.sessionActual.id!, mensajeIA);
+            }
+            
+            this.cargando = false;
+          }, 1000);
+        },
+        error: async (error) => {
+          console.error('Error al obtener datos:', error);
+          const mensajeError: ChatMessage = {
             autor: 'ia',
-            texto: respuesta,
+            texto: `
+              <strong>❌ Error de Conexión</strong><br><br>
+              No pude conectarme con la base de datos para obtener información actualizada.<br><br>
+              <strong>Estado de conexión:</strong><br>
+              • Firebase: ${this.firebaseConnected ? '✅ Conectado' : '❌ Desconectado'}<br><br>
+              <strong>💡 Soluciones:</strong><br>
+              • Verifica tu conexión a internet<br>
+              • Intenta recargar la página<br>
+              • Contacta al administrador del sistema<br><br>
+              <strong>Mensaje original:</strong> "${mensaje}"
+            `,
             timestamp: new Date()
           };
           
-          this.mensajes.push(mensajeIA);
+          this.mensajes.push(mensajeError);
           
-          // Guardar respuesta de la IA en Firebase
+          // Guardar mensaje de error en Firebase
           if (this.sessionActual) {
-            await this.chatHistoryService.addMessageToSession(this.sessionActual.id!, mensajeIA);
+            await this.chatHistoryService.addMessageToSession(this.sessionActual.id!, mensajeError);
           }
           
           this.cargando = false;
-        }, 1000);
-      },
-      error: async (error) => {
-        console.error('Error al obtener datos:', error);
-        const mensajeError: ChatMessage = {
-          autor: 'ia',
-          texto: 'Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.',
-          timestamp: new Date()
-        };
-        
-        this.mensajes.push(mensajeError);
-        
-        // Guardar mensaje de error en Firebase
-        if (this.sessionActual) {
-          await this.chatHistoryService.addMessageToSession(this.sessionActual.id!, mensajeError);
         }
-        
-        this.cargando = false;
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Error en procesarMensajeIA:', error);
+      const mensajeError: ChatMessage = {
+        autor: 'ia',
+        texto: 'Lo siento, hubo un error interno. Por favor, intenta de nuevo.',
+        timestamp: new Date()
+      };
+      
+      this.mensajes.push(mensajeError);
+      this.cargando = false;
+    }
   }
 
   private generarRespuestaInteligente(mensaje: string, datos: any): string {
@@ -663,48 +987,7 @@ export class AsistenteIaPageComponent implements OnInit, OnDestroy {
     `;
   }
 
-  analizarVentas() {
-    this.mensajeUsuario = 'Analiza las ventas y cotizaciones del sistema';
-    this.enviarMensaje();
-  }
-
-  analizarProductividad() {
-    this.mensajeUsuario = 'Analiza la productividad del equipo';
-    this.enviarMensaje();
-  }
-
-  analizarCostos() {
-    this.mensajeUsuario = 'Analiza los costos y optimización';
-    this.enviarMensaje();
-  }
-
-  analizarClientes() {
-    this.mensajeUsuario = 'Analiza los clientes y retención';
-    this.enviarMensaje();
-  }
-
-  analizarProyectos() {
-    this.mensajeUsuario = 'Analiza los proyectos y eficiencia';
-    this.enviarMensaje();
-  }
-
-  cargarArchivo() {
-    alert('📎 Función de carga de archivos en desarrollo');
-  }
-
-  generarReporte() {
-    alert('📊 Función de generación de reportes en desarrollo');
-  }
-
-  exportarDatos() {
-    alert('📤 Función de exportación de datos en desarrollo');
-  }
-
-  analizarArchivo() {
-    alert('🔍 Función de análisis de archivos en desarrollo');
-  }
-
-  onKeyPress(event: KeyboardEvent) {
+  onKeyDown(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       this.enviarMensaje();
@@ -732,9 +1015,8 @@ export class AsistenteIaPageComponent implements OnInit, OnDestroy {
         • Análisis en tiempo real<br>
         • Recomendaciones estratégicas<br>
         • Generación de reportes<br>
-        • Carga y análisis de archivos<br>
         • Chat inteligente<br><br>
-        <strong>🎯 Usa los botones de análisis rápido o escribe tu pregunta!</strong>
+        <strong>🎯 ¡Escribe tu pregunta y te ayudaré!</strong>
       `,
       timestamp: new Date()
     };
@@ -744,6 +1026,25 @@ export class AsistenteIaPageComponent implements OnInit, OnDestroy {
     // Guardar mensaje de bienvenida en Firebase si hay sesión actual
     if (this.sessionActual) {
       await this.chatHistoryService.addMessageToSession(this.sessionActual.id!, mensajeBienvenida);
+    }
+  }
+
+  formatearFecha(fecha: Date): string {
+    const ahora = new Date();
+    const diffMs = ahora.getTime() - fecha.getTime();
+    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDias === 0) {
+      return 'Hoy';
+    } else if (diffDias === 1) {
+      return 'Ayer';
+    } else if (diffDias < 7) {
+      return `Hace ${diffDias} días`;
+    } else {
+      return fecha.toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: '2-digit' 
+      });
     }
   }
 } 

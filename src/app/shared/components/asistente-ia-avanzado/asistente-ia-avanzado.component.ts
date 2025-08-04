@@ -4,18 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { AsistenteIaService } from '../../../core/services/asistente-ia.service';
 import { ChatHistoryService } from '../../../core/services/chat-history.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
-import { ChatSidebarComponent } from '../chat-sidebar/chat-sidebar.component';
 import { ChatSession, ChatMessage } from '../../../core/models';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-asistente-ia-avanzado',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChatSidebarComponent],
+  imports: [CommonModule, FormsModule],
   template: `
-    <!-- Barra lateral de historial -->
-    <app-chat-sidebar></app-chat-sidebar>
-
     <!-- Botón flotante principal -->
     <div class="asistente-boton-principal" (click)="toggleChat()" [class.activo]="chatAbierto">
       <div class="boton-icono">
