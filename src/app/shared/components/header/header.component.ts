@@ -42,7 +42,7 @@ export class HeaderComponent implements OnInit {
     });
   }
 
-  async cerrarSesion() {
+  async logout() {
     try {
       await this.authService.logout();
       console.log('Sesión cerrada exitosamente');
@@ -53,5 +53,13 @@ export class HeaderComponent implements OnInit {
 
   toggleTheme(): void {
     this.themeService.toggleTheme();
+  }
+
+  navegarACrearCotizacion(): void {
+    this.router.navigate(['/crear-cotizacion']);
+  }
+
+  navegarAGestionContratos(): void {
+    this.router.navigate(['/contratos']);
   }
 }

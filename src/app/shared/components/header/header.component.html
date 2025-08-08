@@ -1,72 +1,16 @@
-<header class="admin-header">
-  <!-- Barra de Navegación Principal -->
-  <nav class="main-nav">
-    <div class="nav-container">
-      <!-- Logo -->
-      <div class="logo">
-        <h1>🚀 SUBE IA TECH</h1>
-      </div>
-      
-      <!-- Navegación Principal -->
-      <div class="nav-links">
-        <a routerLink="/dashboard" 
-           routerLinkActive="active" 
-           class="nav-link">
-          📊 Dashboard
-        </a>
-        
-        <a routerLink="/cotizaciones" 
-           routerLinkActive="active" 
-           class="nav-link">
-          📋 Cotizaciones
-        </a>
-        
-        <a routerLink="/contratos" 
-           routerLinkActive="active" 
-           class="nav-link">
-          📄 Contratos
-        </a>
-        
-        <a routerLink="/clientes" 
-           routerLinkActive="active" 
-           class="nav-link">
-          👥 Clientes
-        </a>
-        
-        <a routerLink="/proyectos" 
-           routerLinkActive="active" 
-           class="nav-link">
-          📦 Entregas
-        </a>
-        
-        <span class="nav-link disabled">
-          💰 Finanzas
-        </span>
-        
-        <a routerLink="/asistente-ia" 
-           routerLinkActive="active" 
-           class="nav-link">
-          🤖 Asistente IA
-        </a>
-      </div>
-      
-      <!-- Acciones de Usuario -->
-      <div class="user-actions">
-        <!-- Botón de cambio de tema -->
-        <button (click)="toggleTheme()" 
-                class="btn-theme-toggle"
-                [title]="currentTheme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
-          <span *ngIf="currentTheme === 'dark'">☀️</span>
-          <span *ngIf="currentTheme === 'light'">🌙</span>
-        </button>
-        
-        <div class="user-info" *ngIf="userInfo">
-          <span class="user-email">{{ userInfo.email }}</span>
-        </div>
-        <button (click)="cerrarSesion()" class="btn-logout">
-          🚪 Cerrar Sesión
-        </button>
-      </div>
+<header>
+  <div class="header-content">
+    <div class="header-logo-title">
+      <img src="assets/logo-blanco.png" alt="Logo SUBE IA">
+      <h1>Gestor SUBE IA</h1>
     </div>
-  </nav>
+    <nav class="header-nav">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">Dashboard</a>
+      <a routerLink="/cotizaciones" routerLinkActive="active" class="nav-link">Cotizaciones</a>
+      <a routerLink="/contratos" routerLinkActive="active" class="nav-link">Contratos</a>
+      <a routerLink="/clientes" routerLinkActive="active" class="nav-link">Clientes</a>
+      <a routerLink="/proyectos" routerLinkActive="active" class="nav-link">Proyectos</a>
+      <button (click)="logout()" class="btn-logout">Cerrar Sesión</button>
+    </nav>
+  </div>
 </header>
